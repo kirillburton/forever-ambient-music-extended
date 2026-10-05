@@ -1,0 +1,14 @@
+# Raw DB2 exports from wago.tools -- re-fetched by tools/make_originals.py.
+tools/cache/db2/
+
+# Audio you extracted from your own install stays on your machine.  Only the
+# README in Music/ is tracked; never commit Blizzard audio.
+ForeverAmbientMusicExtended/Music/*
+!ForeverAmbientMusicExtended/Music/README.txt
+
+__pycache__/
+*.pyc
+.DS_Store
+
+# Packaged builds -- attach to a release instead.
+*.zip

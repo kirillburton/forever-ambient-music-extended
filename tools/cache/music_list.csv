@@ -1,0 +1,984 @@
+fileDataID,path,era,skip,tags
+2143495,sound/music/battleforazeroth/mus_80_ashvanecompany_h.mp3,bfa,,coast kultiran tense
+2146580,sound/music/battleforazeroth/mus_80_beforethestorm_maintitle.mp3,bfa,1,
+1780911,sound/music/battleforazeroth/mus_80_bloodsacrifice_h.mp3,bfa,,
+2146583,sound/music/battleforazeroth/mus_80_classicbattle_h.mp3,bfa,1,
+1780914,sound/music/battleforazeroth/mus_80_drustvar_h.mp3,bfa,,darkforest drust eerie
+2146594,sound/music/battleforazeroth/mus_80_freeholdcombat_h.mp3,bfa,1,coast festive playful
+2146608,sound/music/battleforazeroth/mus_80_islands_adventure_h1.mp3,bfa,,
+1781896,sound/music/battleforazeroth/mus_80_kultiran_highseas_h.mp3,bfa,,coast heroic kultiran sea
+2144139,sound/music/battleforazeroth/mus_80_kultiras_sky_d.mp3,bfa,,coast kultiran sea
+2146252,sound/music/battleforazeroth/mus_80_loa_bwonsamdi_h.mp3,bfa,,eerie jungle troll
+2143515,sound/music/battleforazeroth/mus_80_lordaeronalliance_3_h.mp3,bfa,,blighted somber undead
+2143525,sound/music/battleforazeroth/mus_80_lordaeronhorde_2_h.mp3,bfa,,blighted somber undead
+2146639,sound/music/battleforazeroth/mus_80_sethrak_2_h.mp3,bfa,,desert mysterious
+2145681,sound/music/battleforazeroth/mus_80_shrineofstorms_1_h.mp3,bfa,,coast ominous sea
+2150462,sound/music/battleforazeroth/mus_80_stormsong_h.mp3,bfa,,calm coast kultiran plains
+2143540,sound/music/battleforazeroth/mus_80_warfrontsbattle_h.mp3,bfa,1,
+2146766,sound/music/battleforazeroth/mus_80_windrunner_h.mp3,bfa,,forest melancholy undead
+1780953,sound/music/battleforazeroth/mus_80_zuldazarintro_h.mp3,bfa,,grand jungle troll
+2143546,sound/music/battleforazeroth/mus_80_zuldazarjungle_h.mp3,bfa,,grand jungle troll
+3038650,sound/music/battleforazeroth/mus_82_mechagonjukebox_1_a.mp3,bfa,1,
+3038649,sound/music/battleforazeroth/mus_82_mechagonjukebox_1_h.mp3,bfa,1,
+3038648,sound/music/battleforazeroth/mus_82_mechagonjukebox_2.mp3,bfa,1,
+3038651,sound/music/battleforazeroth/mus_82_mechagonjukebox_3.mp3,bfa,1,
+3038647,sound/music/battleforazeroth/mus_82_mechagonjukebox_4_a.mp3,bfa,1,
+3038646,sound/music/battleforazeroth/mus_82_mechagonjukebox_4_h.mp3,bfa,1,
+3038653,sound/music/battleforazeroth/mus_82_mechagonjukebox_5_a.mp3,bfa,1,
+3038652,sound/music/battleforazeroth/mus_82_mechagonjukebox_5_h.mp3,bfa,1,
+3038645,sound/music/battleforazeroth/mus_82_mechagonjukebox_6.mp3,bfa,1,
+2109035,sound/music/battleforazeroth/rtc_40_ufs_unsheathgun_load.mp3,bfa,1,
+2174245,sound/music/battleforazeroth/rtc_80_ard_anvil_strike.ogg,bfa,1,
+2202399,sound/music/battleforazeroth/rtc_80_kag_transitionfx_in_old.ogg,bfa,1,
+2202398,sound/music/battleforazeroth/rtc_80_kag_transitionfx_out.ogg,bfa,1,
+1880888,sound/music/battleforazeroth/rtc_80_trogs_attack_warning_bell_sweetener.ogg,bfa,1,
+2174875,sound/music/battleforazeroth/rtc_80_tsc_shipwreck.ogg,bfa,1,
+2174876,sound/music/battleforazeroth/rtc_80_tsc_shipwreck_groan.ogg,bfa,1,
+2174877,sound/music/battleforazeroth/rtc_80_tsc_windy.ogg,bfa,1,
+2182421,sound/music/battleforazeroth/rtc_80_vzi_lightningbolt_shoot.ogg,bfa,1,
+2843500,sound/music/battleforazeroth/rtc_815_revealofnzoth_tentacleloop.ogg,bfa,1,
+2851181,sound/music/battleforazeroth/rtc_815_zdb_bowcreak.ogg,bfa,1,
+2851182,sound/music/battleforazeroth/rtc_815_zdb_bowcreak_02_fast.ogg,bfa,1,
+2851183,sound/music/battleforazeroth/rtc_815_zdb_marching.ogg,bfa,1,
+2851184,sound/music/battleforazeroth/rtc_815_zdb_marching_04.ogg,bfa,1,
+2565266,sound/music/battleforazeroth/rtc_81_tnw_battlebg_weapons_loop.ogg,bfa,1,
+2565249,sound/music/battleforazeroth/rtc_81_wsw_harpoon_impact.ogg,bfa,1,
+2563774,sound/music/battleforazeroth/rtc_81_zuldazarraid_jaina_iceberg_transition_ice_cast_01_03.ogg,bfa,1,grand jungle troll
+3090075,sound/music/battleforazeroth/rtc_825_wcg_chestthump_a_nested.ogg,bfa,1,
+3090076,sound/music/battleforazeroth/rtc_825_wcg_chestthump_b_nested.ogg,bfa,1,
+3090074,sound/music/battleforazeroth/rtc_825_wcg_horde_kneel.ogg,bfa,1,
+3088224,sound/music/battleforazeroth/rtc_825_wcg_horn.ogg,bfa,1,
+2974009,sound/music/battleforazeroth/rtc_82_mce_azerite_cast_sweetener.ogg,bfa,1,
+3014245,sound/music/battleforazeroth/rtc_82_mvr_dragon_wound_02.mp3,bfa,1,dragon
+3034388,sound/music/battleforazeroth/rtc_82_nsa_alliance_naga_horn.ogg,bfa,1,
+3034335,sound/music/battleforazeroth/rtc_82_nsa_alliance_naga_walla.ogg,bfa,1,
+575699,sound/music/cataclysm/mus_43_twilightshammer_uu02.mp3,cata,,eerie ominous
+441525,sound/music/cataclysm/mus_alliancehero_uu01.mp3,cata,,heroic human
+443286,sound/music/cataclysm/mus_arathihighlandsa_gd01.mp3,cata,,arathi calm plains
+441610,sound/music/cataclysm/mus_fire_uu01.mp3,cata,,elemental tense volcanic
+441609,sound/music/cataclysm/mus_firelands_gu01.mp3,cata,,elemental ominous volcanic
+441628,sound/music/cataclysm/mus_goblin_uu17.mp3,cata,,goblin playful
+441705,sound/music/cataclysm/mus_nightelves_gu01.mp3,cata,,nightelf
+441716,sound/music/cataclysm/mus_rift_uu01.mp3,cata,,arcane eerie
+441737,sound/music/cataclysm/mus_shattering_uu01.mp3,cata,,grand ominous
+441744,sound/music/cataclysm/mus_skywall_gu01.mp3,cata,,elemental grand sky
+441753,sound/music/cataclysm/mus_skywall_gu10.mp3,cata,,elemental grand sky
+441802,sound/music/cataclysm/mus_twilightshammer_uu01.mp3,cata,,eerie ominous
+443307,sound/music/cataclysm/mus_westplaguea_gd01.mp3,cata,,blighted somber undead
+53183,sound/music/citymusic/darnassus/darnassus intro.mp3,classic,,city nightelf sacred
+53184,sound/music/citymusic/darnassus/darnassus walking 1.mp3,classic,,city nightelf sacred
+53185,sound/music/citymusic/darnassus/darnassus walking 2.mp3,classic,,city nightelf sacred
+53186,sound/music/citymusic/darnassus/darnassus walking 3.mp3,classic,,city nightelf sacred
+53187,sound/music/citymusic/darnassus/druid grove.mp3,classic,,city nightelf sacred
+53188,sound/music/citymusic/darnassus/warrior terrace.mp3,classic,,city nightelf sacred
+53189,sound/music/citymusic/gnomeragon/gnomeragon01-zone.mp3,classic,,gnome underground
+53190,sound/music/citymusic/gnomeragon/gnomeragon02-zone.mp3,classic,,gnome underground
+53191,sound/music/citymusic/ironforge/ironforge intro.mp3,classic,,city dwarf grand
+53192,sound/music/citymusic/ironforge/ironforge walking 01.mp3,classic,,city dwarf grand
+53193,sound/music/citymusic/ironforge/ironforge walking 02.mp3,classic,,city dwarf grand
+53194,sound/music/citymusic/ironforge/ironforge walking 03 (glenn).mp3,classic,,city dwarf grand
+53195,sound/music/citymusic/ironforge/ironforge walking 04.mp3,classic,,city dwarf grand
+53196,sound/music/citymusic/ironforge/tinkertownintro_moment.mp3,classic,1,city dwarf gnome grand
+53197,sound/music/citymusic/orgrimmar/orgrimmar01-moment.mp3,classic,,city grand orc
+53198,sound/music/citymusic/orgrimmar/orgrimmar01-zone.mp3,classic,,city grand orc
+53199,sound/music/citymusic/orgrimmar/orgrimmar02-moment.mp3,classic,,city grand orc
+53200,sound/music/citymusic/orgrimmar/orgrimmar02-zone.mp3,classic,,city grand orc
+53201,sound/music/citymusic/orgrimmar/orgrimmar_intro-moment.mp3,classic,1,city grand orc
+53202,sound/music/citymusic/stormwind/stormwind01-moment.mp3,classic,,city grand human
+53203,sound/music/citymusic/stormwind/stormwind02-moment.mp3,classic,,city grand human
+53204,sound/music/citymusic/stormwind/stormwind03-moment.mp3,classic,,city grand human
+53205,sound/music/citymusic/stormwind/stormwind04-zone.mp3,classic,,city grand human
+53206,sound/music/citymusic/stormwind/stormwind05-zone.mp3,classic,,city grand human
+53207,sound/music/citymusic/stormwind/stormwind06-zone.mp3,classic,,city grand human
+53208,sound/music/citymusic/stormwind/stormwind07-zone.mp3,classic,,city grand human
+53209,sound/music/citymusic/stormwind/stormwind08-zone.mp3,classic,,city grand human
+53210,sound/music/citymusic/stormwind/stormwind_highseas-moment.mp3,classic,,city coast grand heroic human sea
+53211,sound/music/citymusic/stormwind/stormwind_intro-moment.mp3,classic,1,city grand human
+53212,sound/music/citymusic/thunderbluff/thunderbluff intro.mp3,classic,,calm city tauren
+53213,sound/music/citymusic/thunderbluff/thunderbluff walking 01.mp3,classic,,calm city tauren
+53214,sound/music/citymusic/thunderbluff/thunderbluff walking 02.mp3,classic,,calm city tauren
+53215,sound/music/citymusic/thunderbluff/thunderbluff walking 03.mp3,classic,,calm city tauren
+53216,sound/music/citymusic/undercity/undercity01-zone.mp3,classic,,city ominous undead
+53217,sound/music/citymusic/undercity/undercity02-zone.mp3,classic,,city ominous undead
+53218,sound/music/citymusic/undercity/undercity03-zone.mp3,classic,,city ominous undead
+53219,sound/music/citymusic/undercity/undercityintro-moment.mp3,classic,,city ominous undead
+1068302,sound/music/draenor/mus_60_aherossacrifice_v1.mp3,wod,,heroic somber
+1068308,sound/music/draenor/mus_60_alightinthedarkness_v1.mp3,wod,,melancholy sacred
+1042428,sound/music/draenor/mus_60_asiegeofworlds_maintitle.mp3,wod,1,
+1064154,sound/music/draenor/mus_60_bfreedom_h1.mp3,wod,,heroic
+1064156,sound/music/draenor/mus_60_cavernsoflife_h.mp3,wod,,cave underground
+1067039,sound/music/draenor/mus_60_chieftansgather_h.mp3,wod,,heroic orc plains
+1080507,sound/music/draenor/mus_60_coldmountain_duet_h.mp3,wod,,melancholy mountain snow
+1061104,sound/music/draenor/mus_60_etherealembers_h.mp3,wod,,arcane mysterious
+1064160,sound/music/draenor/mus_60_herdingclans_h.mp3,wod,,orc plains
+1067046,sound/music/draenor/mus_60_malach_h1.mp3,wod,,ominous
+1061135,sound/music/draenor/mus_60_mandown_h1.mp3,wod,,somber
+1064164,sound/music/draenor/mus_60_proudmoore_h.mp3,wod,,heroic human
+1067568,sound/music/draenor/mus_60_quietheart_h.mp3,wod,,calm melancholy
+1067066,sound/music/draenor/mus_60_risetothedark_h1.mp3,wod,,ominous
+1061157,sound/music/draenor/mus_60_shadowmoon_v1.mp3,wod,,nightelf sacred sky
+1067572,sound/music/draenor/mus_60_shadowmoonpt1_h.mp3,wod,,nightelf sacred sky
+1067069,sound/music/draenor/mus_60_shadowmoonsunsetintro_h.mp3,wod,,nightelf sacred sky
+1067577,sound/music/draenor/mus_60_traversingthespires_h2.mp3,wod,,grand mountain
+1061177,sound/music/draenor/mus_60_tshaveit_h.mp3,wod,,playful
+1064165,sound/music/draenor/mus_60_village_h.mp3,wod,,
+1064173,sound/music/draenor/mus_60_worldexpo_h.mp3,wod,,goblin playful
+4872416,sound/music/dragonflight/mus_100_azurespan_explorer_h.mp3,df,,calm dragon forest snow
+4872418,sound/music/dragonflight/mus_100_azurespan_ruins_h.mp3,df,,calm dragon forest mysterious ruins snow
+4872424,sound/music/dragonflight/mus_100_azurespan_tundra_2_h.mp3,df,,calm dragon forest snow
+4872450,sound/music/dragonflight/mus_100_brackenhidehollow_h.mp3,df,,dragon eerie swamp wild
+4872428,sound/music/dragonflight/mus_100_djaradin_2_h.mp3,df,,dragon mountain ominous
+4887933,sound/music/dragonflight/mus_100_dragonrace_h.mp3,df,1,dragon
+4880319,sound/music/dragonflight/mus_100_forbiddenreach_2_h.mp3,df,,coast dragon ruins
+4872498,sound/music/dragonflight/mus_100_lifepools_growth_1_h.mp3,df,,calm dragon mountain
+4872504,sound/music/dragonflight/mus_100_lifepools_growth_3_h.mp3,df,,calm dragon mountain
+4872466,sound/music/dragonflight/mus_100_ohnahran_centaur_2_h.mp3,df,,calm centaur dragon plains
+4872470,sound/music/dragonflight/mus_100_ohnahran_centaur_4_h.mp3,df,,calm centaur dragon plains
+4872460,sound/music/dragonflight/mus_100_ohnahran_groves_1_h.mp3,df,,calm centaur dragon forest plains
+4872472,sound/music/dragonflight/mus_100_ohnahran_plains_1_h.mp3,df,,calm centaur dragon plains
+4872440,sound/music/dragonflight/mus_100_thaldraszus_3_h.mp3,df,,dragon grand mountain
+4880327,sound/music/dragonflight/mus_100_theislesawaken_maintitle.mp3,df,1,dragon
+4861186,sound/music/dragonflight/mus_100_theislesawaken_maintitle_beta.mp3,df,1,dragon
+4887931,sound/music/dragonflight/mus_100_theislesawaken_maintitle_short.mp3,df,1,dragon
+4872490,sound/music/dragonflight/mus_100_tuskarr_1_h.mp3,df,,calm coast dragon snow tuskarr
+4872492,sound/music/dragonflight/mus_100_tuskarr_2_h.mp3,df,,calm coast dragon snow tuskarr
+4872434,sound/music/dragonflight/mus_100_valdrakken_2_h.mp3,df,,city dragon grand
+4872442,sound/music/dragonflight/mus_100_valdrakken_3_h.mp3,df,,city dragon grand
+4887999,sound/music/dragonflight/mus_100_wakingshore_d.mp3,df,,coast dragon
+5700456,sound/music/dragonflight/mus_1026_plunderstorm_a.mp3,df,1,dragon
+369053,sound/music/event/gnomeregan_event_b.mp3,other,1,
+369054,sound/music/event/gnomeregan_event_c.mp3,other,1,
+369055,sound/music/event/gnomeregan_event_complete.mp3,other,1,
+369056,sound/music/event/gnomeregan_event_d.mp3,other,1,
+369057,sound/music/event/gnomeregan_event_e.mp3,other,1,
+369058,sound/music/event/gnomeregan_event_intro.mp3,other,1,
+3152528,sound/music/event/mus_event_amaraswish.mp3,other,1,
+371365,sound/music/event/zfbigbattle13.mp3,other,1,
+371366,sound/music/event/zfbigbattle14.mp3,other,1,
+371367,sound/music/event/zfbigbattle16.mp3,other,1,
+371368,sound/music/event/zfmagic17.mp3,other,1,
+371369,sound/music/event/zfmagic18.mp3,other,1,
+371370,sound/music/event/zfmedbattle3.mp3,other,1,
+371371,sound/music/event/zfmedbattle4.mp3,other,1,
+371372,sound/music/event/zfmedbattle5.mp3,other,1,
+371373,sound/music/event/zfmedbattle6.mp3,other,1,
+371374,sound/music/event/zfquiet1.mp3,other,1,
+371375,sound/music/event/zfquiet2.mp3,other,1,
+371376,sound/music/event/zfquiet7.mp3,other,1,
+371377,sound/music/event/zfquietshort8.mp3,other,1,
+371378,sound/music/event/zfrally9.mp3,other,1,
+371379,sound/music/event/zfstinger10.mp3,other,1,
+371380,sound/music/event/zfstinger11.mp3,other,1,
+371381,sound/music/event/zfstinger12.mp3,other,1,
+371382,sound/music/event/zfstinger15.mp3,other,1,
+8158694,sound/music/forever/mus_c60_bolderok_a.mp3,forever,,mountain underground
+8158696,sound/music/forever/mus_c60_bolderok_b.mp3,forever,,mountain underground
+8158698,sound/music/forever/mus_c60_bolderok_c.mp3,forever,,mountain underground
+8158700,sound/music/forever/mus_c60_bolderok_d.mp3,forever,,mountain underground
+8173701,sound/music/forever/mus_c60_cradle_of_tranquility_a.mp3,forever,,calm enchanted forest
+8173703,sound/music/forever/mus_c60_cradle_of_tranquility_b.mp3,forever,,calm enchanted forest
+8175594,sound/music/forever/mus_c60_cradle_of_tranquility_c.mp3,forever,,calm enchanted forest
+8198465,sound/music/forever/mus_c60_daegun_a.mp3,forever,,mountain mysterious
+8198467,sound/music/forever/mus_c60_daegun_b.mp3,forever,,mountain mysterious
+8269348,sound/music/forever/mus_c60_daegun_c.mp3,forever,,mountain mysterious
+8269350,sound/music/forever/mus_c60_daegun_d.mp3,forever,,mountain mysterious
+8181339,sound/music/forever/mus_c60_darkmoon_faire.mp3,forever,1,
+8280452,sound/music/forever/mus_c60_dungeons_alpine_a.mp3,forever,,mountain snow
+8280454,sound/music/forever/mus_c60_dungeons_alpine_b.mp3,forever,,mountain snow
+8280456,sound/music/forever/mus_c60_dungeons_alpine_c.mp3,forever,,mountain snow
+8280458,sound/music/forever/mus_c60_dungeons_alpine_d.mp3,forever,,mountain snow
+8280857,sound/music/forever/mus_c60_dungeons_battle_boss_a.mp3,forever,1,
+8284574,sound/music/forever/mus_c60_dungeons_battle_boss_b.mp3,forever,1,
+8280873,sound/music/forever/mus_c60_dungeons_battle_boss_c.mp3,forever,1,
+8284576,sound/music/forever/mus_c60_dungeons_battle_boss_d.mp3,forever,1,
+8270371,sound/music/forever/mus_c60_dungeons_forest_a.mp3,forever,,forest
+8270373,sound/music/forever/mus_c60_dungeons_forest_b.mp3,forever,,forest
+8270375,sound/music/forever/mus_c60_dungeons_forest_c.mp3,forever,,forest
+8270377,sound/music/forever/mus_c60_dungeons_forest_d.mp3,forever,,forest
+8280849,sound/music/forever/mus_c60_dungeons_horror_a.mp3,forever,,eerie ominous
+8280851,sound/music/forever/mus_c60_dungeons_horror_b.mp3,forever,,eerie ominous
+8280853,sound/music/forever/mus_c60_dungeons_horror_c.mp3,forever,,eerie ominous
+8280855,sound/music/forever/mus_c60_dungeons_horror_d.mp3,forever,,eerie ominous
+8284598,sound/music/forever/mus_c60_dungeons_ruins_a.mp3,forever,,mysterious ruins
+8284600,sound/music/forever/mus_c60_dungeons_ruins_b.mp3,forever,,mysterious ruins
+8284602,sound/music/forever/mus_c60_dungeons_ruins_c.mp3,forever,,mysterious ruins
+8284604,sound/music/forever/mus_c60_dungeons_ruins_d.mp3,forever,,mysterious ruins
+8281552,sound/music/forever/mus_c60_dungeons_underground_percussive_a.mp3,forever,,cave underground
+8281554,sound/music/forever/mus_c60_dungeons_underground_percussive_b.mp3,forever,,cave underground
+8281556,sound/music/forever/mus_c60_dungeons_underground_percussive_c.mp3,forever,,cave underground
+8281558,sound/music/forever/mus_c60_dungeons_underground_percussive_d.mp3,forever,,cave underground
+8270379,sound/music/forever/mus_c60_dungeons_wetlands_a.mp3,forever,,coast swamp
+8270381,sound/music/forever/mus_c60_dungeons_wetlands_b.mp3,forever,,coast swamp
+8270383,sound/music/forever/mus_c60_dungeons_wetlands_c.mp3,forever,,coast swamp
+8270385,sound/music/forever/mus_c60_dungeons_wetlands_d.mp3,forever,,coast swamp
+8158702,sound/music/forever/mus_c60_eastwind_shore_a.mp3,forever,,calm coast
+8158704,sound/music/forever/mus_c60_eastwind_shore_b.mp3,forever,,calm coast
+8158706,sound/music/forever/mus_c60_eastwind_shore_c.mp3,forever,,calm coast
+8197333,sound/music/forever/mus_c60_elderwild_a.mp3,forever,,forest mysterious wild
+8197335,sound/music/forever/mus_c60_elderwild_b.mp3,forever,,forest mysterious wild
+8197337,sound/music/forever/mus_c60_elderwild_c.mp3,forever,,forest mysterious wild
+8158708,sound/music/forever/mus_c60_farholde_keep_a.mp3,forever,,human mountain
+8158710,sound/music/forever/mus_c60_farholde_keep_b.mp3,forever,,human mountain
+8269352,sound/music/forever/mus_c60_farholde_keep_c.mp3,forever,,human mountain
+8269354,sound/music/forever/mus_c60_farholde_keep_d.mp3,forever,,human mountain
+8173705,sound/music/forever/mus_c60_farholde_keep_intro.mp3,forever,1,human mountain
+8173707,sound/music/forever/mus_c60_felblood_scar_a.mp3,forever,,blighted demon ominous
+8269356,sound/music/forever/mus_c60_felblood_scar_b.mp3,forever,,blighted demon ominous
+8269358,sound/music/forever/mus_c60_felblood_scar_c.mp3,forever,,blighted demon ominous
+8158738,sound/music/forever/mus_c60_gustberry_lowlands_a.mp3,forever,,calm plains
+8158740,sound/music/forever/mus_c60_gustberry_lowlands_b.mp3,forever,,calm plains
+8246678,sound/music/forever/mus_c60_gustberry_lowlands_c.mp3,forever,,calm plains
+8246680,sound/music/forever/mus_c60_gustberry_lowlands_d.mp3,forever,,calm plains
+8158670,sound/music/forever/mus_c60_hyjal_general_a.mp3,forever,,forest mountain nightelf sacred
+8158672,sound/music/forever/mus_c60_hyjal_general_b.mp3,forever,,forest mountain nightelf sacred
+8158674,sound/music/forever/mus_c60_hyjal_general_c.mp3,forever,,forest mountain nightelf sacred
+8173713,sound/music/forever/mus_c60_hyjal_general_d.mp3,forever,,forest mountain nightelf sacred
+8190628,sound/music/forever/mus_c60_malornes_retreat_a.mp3,forever,,forest nightelf sacred
+8190630,sound/music/forever/mus_c60_malornes_retreat_b.mp3,forever,,forest nightelf sacred
+8190632,sound/music/forever/mus_c60_malornes_retreat_c.mp3,forever,,forest nightelf sacred
+8190634,sound/music/forever/mus_c60_malornes_retreat_d.mp3,forever,,forest nightelf sacred
+8190636,sound/music/forever/mus_c60_malornes_retreat_e.mp3,forever,,forest nightelf sacred
+8190638,sound/music/forever/mus_c60_malornes_retreat_f.mp3,forever,,forest nightelf sacred
+8158676,sound/music/forever/mus_c60_mournings_rest_a.mp3,forever,,blighted somber
+8158678,sound/music/forever/mus_c60_mournings_rest_b.mp3,forever,,blighted somber
+8158680,sound/music/forever/mus_c60_mournings_rest_c.mp3,forever,,blighted somber
+8158714,sound/music/forever/mus_c60_riverglades_general_a.mp3,forever,,calm forest human
+8158716,sound/music/forever/mus_c60_riverglades_general_b.mp3,forever,,calm forest human
+8158718,sound/music/forever/mus_c60_riverglades_general_c.mp3,forever,,calm forest human
+8173715,sound/music/forever/mus_c60_riverglades_general_d.mp3,forever,,calm forest human
+8173717,sound/music/forever/mus_c60_riverglades_general_e.mp3,forever,,calm forest human
+8158720,sound/music/forever/mus_c60_rogmar_outpost_a.mp3,forever,,mountain orc
+8158722,sound/music/forever/mus_c60_rogmar_outpost_b.mp3,forever,,mountain orc
+8158724,sound/music/forever/mus_c60_rogmar_outpost_c.mp3,forever,,mountain orc
+8158726,sound/music/forever/mus_c60_rogmar_outpost_d.mp3,forever,,mountain orc
+8158742,sound/music/forever/mus_c60_shadowgale_forest_a.mp3,forever,,darkforest eerie
+8158744,sound/music/forever/mus_c60_shadowgale_forest_b.mp3,forever,,darkforest eerie
+8246682,sound/music/forever/mus_c60_shadowgale_forest_c.mp3,forever,,darkforest eerie
+8158746,sound/music/forever/mus_c60_shendar_hub_a.mp3,forever,,forest mysterious nightelf
+8158748,sound/music/forever/mus_c60_shendar_hub_b.mp3,forever,,forest mysterious nightelf
+8246684,sound/music/forever/mus_c60_shendar_hub_c.mp3,forever,,forest mysterious nightelf
+8246686,sound/music/forever/mus_c60_shendar_hub_d.mp3,forever,,forest mysterious nightelf
+8158750,sound/music/forever/mus_c60_shrine_of_akir_a.mp3,forever,,mysterious ruins sacred
+8158752,sound/music/forever/mus_c60_shrine_of_akir_b.mp3,forever,,mysterious ruins sacred
+8246688,sound/music/forever/mus_c60_shrine_of_akir_c.mp3,forever,,mysterious ruins sacred
+8246690,sound/music/forever/mus_c60_shrine_of_akir_d.mp3,forever,,mysterious ruins sacred
+8282397,sound/music/forever/mus_c60_shrine_of_aviana_a.mp3,forever,,forest nightelf sacred
+8282399,sound/music/forever/mus_c60_shrine_of_aviana_b.mp3,forever,,forest nightelf sacred
+8281865,sound/music/forever/mus_c60_shrine_of_aviana_c.mp3,forever,,forest nightelf sacred
+8281867,sound/music/forever/mus_c60_shrine_of_aviana_d.mp3,forever,,forest nightelf sacred
+8232434,sound/music/forever/mus_c60_skyborne_intro.mp3,forever,1,grand sky
+8243231,sound/music/forever/mus_c60_skyborne_race_intro.mp3,forever,1,grand sky
+8158682,sound/music/forever/mus_c60_summit_of_eternity_a.mp3,forever,,grand mountain sky
+8158684,sound/music/forever/mus_c60_summit_of_eternity_b.mp3,forever,,grand mountain sky
+8282581,sound/music/forever/mus_c60_summit_of_eternity_c.mp3,forever,,grand mountain sky
+8158686,sound/music/forever/mus_c60_summit_of_eternity_intro.mp3,forever,1,grand mountain sky
+8173719,sound/music/forever/mus_c60_sunnyglade_a.mp3,forever,,calm forest
+8173721,sound/music/forever/mus_c60_sunnyglade_b.mp3,forever,,calm forest
+8173723,sound/music/forever/mus_c60_sunnyglade_c.mp3,forever,,calm forest
+8269360,sound/music/forever/mus_c60_tainted_foothills_a.mp3,forever,,blighted mountain ominous
+8269362,sound/music/forever/mus_c60_tainted_foothills_b.mp3,forever,,blighted mountain ominous
+8269364,sound/music/forever/mus_c60_tainted_foothills_c.mp3,forever,,blighted mountain ominous
+8158754,sound/music/forever/mus_c60_thendal_village_a.mp3,forever,,calm forest nightelf
+8158756,sound/music/forever/mus_c60_thendal_village_b.mp3,forever,,calm forest nightelf
+8246692,sound/music/forever/mus_c60_thendal_village_c.mp3,forever,,calm forest nightelf
+8246694,sound/music/forever/mus_c60_thendal_village_d.mp3,forever,,calm forest nightelf
+8158728,sound/music/forever/mus_c60_twilights_shroud_a.mp3,forever,,darkforest ominous
+8158730,sound/music/forever/mus_c60_twilights_shroud_b.mp3,forever,,darkforest ominous
+8269366,sound/music/forever/mus_c60_twilights_shroud_c.mp3,forever,,darkforest ominous
+8269368,sound/music/forever/mus_c60_twilights_shroud_d.mp3,forever,,darkforest ominous
+8175596,sound/music/forever/mus_c60_valanaar_a.mp3,forever,,mysterious ruins
+8175598,sound/music/forever/mus_c60_valanaar_b.mp3,forever,,mysterious ruins
+8175600,sound/music/forever/mus_c60_valanaar_c.mp3,forever,,mysterious ruins
+8175602,sound/music/forever/mus_c60_valanaar_intro.mp3,forever,1,mysterious ruins
+8158732,sound/music/forever/mus_c60_wheelers_grange_a.mp3,forever,,calm human plains
+8158734,sound/music/forever/mus_c60_wheelers_grange_b.mp3,forever,,calm human plains
+8158736,sound/music/forever/mus_c60_wheelers_grange_c.mp3,forever,,calm human plains
+8176626,sound/music/forever/mus_c_ahnqiraj_exterior_walking_1.mp3,forever,,
+8176628,sound/music/forever/mus_c_ahnqiraj_exterior_walking_2.mp3,forever,,
+8176630,sound/music/forever/mus_c_ahnqiraj_exterior_walking_3.mp3,forever,,
+8176632,sound/music/forever/mus_c_ahnqiraj_exterior_walking_4.mp3,forever,,
+8176671,sound/music/forever/mus_c_ahnqiraj_interior_1.mp3,forever,,
+8176673,sound/music/forever/mus_c_ahnqiraj_interior_2.mp3,forever,,
+8176675,sound/music/forever/mus_c_ahnqiraj_interior_3.mp3,forever,,
+8176681,sound/music/forever/mus_c_ahnqiraj_interior_center_room_1.mp3,forever,,
+8176683,sound/music/forever/mus_c_ahnqiraj_interior_intro_main.mp3,forever,1,
+8176685,sound/music/forever/mus_c_ahnqiraj_king_room.mp3,forever,,
+8176687,sound/music/forever/mus_c_ahnqiraj_ruins_triangle_room.mp3,forever,,mysterious ruins
+8176689,sound/music/forever/mus_c_ahnqiraj_triangle_room_1.mp3,forever,,
+8176691,sound/music/forever/mus_c_ahnqiraj_triangle_room_2.mp3,forever,,
+8176693,sound/music/forever/mus_c_ahnqiraj_triangle_room_3.mp3,forever,,
+8176695,sound/music/forever/mus_c_ahnqiraj_triangle_room_4.mp3,forever,,
+8176697,sound/music/forever/mus_c_ahnqiraj_triangle_room_5.mp3,forever,,
+8176699,sound/music/forever/mus_c_ahnqiraj_triangle_room_6.mp3,forever,,
+8176701,sound/music/forever/mus_c_ahnqiraj_triangle_room_7.mp3,forever,,
+8181319,sound/music/forever/mus_c_angelic_1.mp3,forever,,calm sacred
+8180899,sound/music/forever/mus_c_battle_1.mp3,forever,1,
+8180901,sound/music/forever/mus_c_battle_2.mp3,forever,1,
+8180903,sound/music/forever/mus_c_battle_3.mp3,forever,1,
+8180905,sound/music/forever/mus_c_battle_4.mp3,forever,1,
+8180907,sound/music/forever/mus_c_battle_5.mp3,forever,1,
+8180909,sound/music/forever/mus_c_battle_6.mp3,forever,1,
+8180738,sound/music/forever/mus_c_cursed_land_1.mp3,forever,,blighted ominous undead
+8180740,sound/music/forever/mus_c_cursed_land_2.mp3,forever,,blighted ominous undead
+8180742,sound/music/forever/mus_c_cursed_land_3.mp3,forever,,blighted ominous undead
+8180744,sound/music/forever/mus_c_cursed_land_4.mp3,forever,,blighted ominous undead
+8180746,sound/music/forever/mus_c_cursed_land_5.mp3,forever,,blighted ominous undead
+8180748,sound/music/forever/mus_c_cursed_land_6.mp3,forever,,blighted ominous undead
+8285938,sound/music/forever/mus_c_dalaran_1.mp3,forever,,arcane city mysterious
+8285940,sound/music/forever/mus_c_dalaran_2.mp3,forever,,arcane city mysterious
+8285942,sound/music/forever/mus_c_dalaran_3.mp3,forever,,arcane city mysterious
+8285944,sound/music/forever/mus_c_dalaran_4.mp3,forever,,arcane city mysterious
+8285946,sound/music/forever/mus_c_dalaran_intro.mp3,forever,1,arcane city mysterious
+8451330,sound/music/forever/mus_c_dalaran_sewer_1.mp3,forever,,arcane city mysterious
+8451332,sound/music/forever/mus_c_dalaran_sewer_2.mp3,forever,,arcane city mysterious
+8451334,sound/music/forever/mus_c_dalaran_sewer_3.mp3,forever,,arcane city mysterious
+8451336,sound/music/forever/mus_c_dalaran_sewer_4.mp3,forever,,arcane city mysterious
+8451379,sound/music/forever/mus_c_dalaran_spire.mp3,forever,,arcane city mysterious
+8180750,sound/music/forever/mus_c_darnasssus_intro.mp3,forever,1,city nightelf sacred
+8180752,sound/music/forever/mus_c_darnasssus_walking_1.mp3,forever,,city nightelf sacred
+8180754,sound/music/forever/mus_c_darnasssus_walking_2.mp3,forever,,city nightelf sacred
+8180756,sound/music/forever/mus_c_darnasssus_walking_3.mp3,forever,,city nightelf sacred
+8181049,sound/music/forever/mus_c_day_barren_dry_1.mp3,forever,,barrens day
+8181051,sound/music/forever/mus_c_day_barren_dry_2.mp3,forever,,barrens day
+8181053,sound/music/forever/mus_c_day_barren_dry_3.mp3,forever,,barrens day
+8181127,sound/music/forever/mus_c_day_desert_1.mp3,forever,,day desert
+8181129,sound/music/forever/mus_c_day_desert_2.mp3,forever,,day desert
+8181131,sound/music/forever/mus_c_day_desert_3.mp3,forever,,day desert
+8180772,sound/music/forever/mus_c_day_evil_forest_1.mp3,forever,,darkforest day
+8180774,sound/music/forever/mus_c_day_evil_forest_2.mp3,forever,,darkforest day
+8180776,sound/music/forever/mus_c_day_evil_forest_3.mp3,forever,,darkforest day
+8180778,sound/music/forever/mus_c_day_forest_1.mp3,forever,,day forest
+8180780,sound/music/forever/mus_c_day_forest_2.mp3,forever,,day forest
+8180782,sound/music/forever/mus_c_day_forest_3.mp3,forever,,day forest
+8181259,sound/music/forever/mus_c_day_jungle_1.mp3,forever,,day jungle
+8181261,sound/music/forever/mus_c_day_jungle_2.mp3,forever,,day jungle
+8181263,sound/music/forever/mus_c_day_jungle_3.mp3,forever,,day jungle
+8181287,sound/music/forever/mus_c_day_mountain_1.mp3,forever,,day mountain
+8181289,sound/music/forever/mus_c_day_mountain_2.mp3,forever,,day mountain
+8181291,sound/music/forever/mus_c_day_mountain_3.mp3,forever,,day mountain
+8181305,sound/music/forever/mus_c_day_plains_1.mp3,forever,,day plains
+8181307,sound/music/forever/mus_c_day_plains_2.mp3,forever,,day plains
+8181275,sound/music/forever/mus_c_day_volcanic_1.mp3,forever,,day volcanic
+8181277,sound/music/forever/mus_c_day_volcanic_2.mp3,forever,,day volcanic
+8181323,sound/music/forever/mus_c_druid_grove.mp3,forever,,enchanted forest nightelf sacred
+8195263,sound/music/forever/mus_c_dwarves_tavern_1a.mp3,forever,,dwarf festive tavern
+8195265,sound/music/forever/mus_c_dwarves_tavern_1b.mp3,forever,,dwarf festive tavern
+8195267,sound/music/forever/mus_c_dwarves_tavern_2a.mp3,forever,,dwarf festive tavern
+8195269,sound/music/forever/mus_c_dwarves_tavern_2b.mp3,forever,,dwarf festive tavern
+8195271,sound/music/forever/mus_c_dwarves_tavern_3.mp3,forever,,dwarf festive tavern
+8180784,sound/music/forever/mus_c_enchanted_forest_1.mp3,forever,,enchanted forest mysterious nightelf
+8180786,sound/music/forever/mus_c_enchanted_forest_2.mp3,forever,,enchanted forest mysterious nightelf
+8180788,sound/music/forever/mus_c_enchanted_forest_3.mp3,forever,,enchanted forest mysterious nightelf
+8180790,sound/music/forever/mus_c_enchanted_forest_4.mp3,forever,,enchanted forest mysterious nightelf
+8180792,sound/music/forever/mus_c_enchanted_forest_5.mp3,forever,,enchanted forest mysterious nightelf
+8200668,sound/music/forever/mus_c_freehold_1.mp3,forever,,coast festive playful
+8200670,sound/music/forever/mus_c_freehold_2.mp3,forever,,coast festive playful
+8200672,sound/music/forever/mus_c_freehold_3.mp3,forever,,coast festive playful
+8181321,sound/music/forever/mus_c_ghost_music_3.mp3,forever,,blighted eerie
+8181325,sound/music/forever/mus_c_gloomy_1.mp3,forever,,darkforest melancholy
+8181327,sound/music/forever/mus_c_gloomy_2.mp3,forever,,darkforest melancholy
+8181329,sound/music/forever/mus_c_gnomeragon_1.mp3,forever,,gnome underground
+8181331,sound/music/forever/mus_c_gnomeragon_2.mp3,forever,,gnome underground
+8204579,sound/music/forever/mus_c_goblin_11.mp3,forever,,goblin playful
+8204581,sound/music/forever/mus_c_goblin_13.mp3,forever,,goblin playful
+8204583,sound/music/forever/mus_c_goblin_15.mp3,forever,,goblin playful
+8204585,sound/music/forever/mus_c_goblin_18.mp3,forever,,goblin playful
+8204587,sound/music/forever/mus_c_goblin_30.mp3,forever,,goblin playful
+8204589,sound/music/forever/mus_c_goblin_33.mp3,forever,,goblin playful
+8181313,sound/music/forever/mus_c_haunted_1.mp3,forever,,blighted eerie
+8181315,sound/music/forever/mus_c_haunted_2.mp3,forever,,blighted eerie
+8180975,sound/music/forever/mus_c_human_tavern_1a.mp3,forever,,festive human tavern
+8180977,sound/music/forever/mus_c_human_tavern_1b.mp3,forever,,festive human tavern
+8180979,sound/music/forever/mus_c_human_tavern_2a.mp3,forever,,festive human tavern
+8180981,sound/music/forever/mus_c_human_tavern_2b.mp3,forever,,festive human tavern
+8285919,sound/music/forever/mus_c_hyjalextwalk_1.mp3,forever,,forest mountain nightelf sacred
+8285931,sound/music/forever/mus_c_hyjalextwalk_11.mp3,forever,,forest mountain nightelf sacred
+8285933,sound/music/forever/mus_c_hyjalextwalk_12.mp3,forever,,forest mountain nightelf sacred
+8285921,sound/music/forever/mus_c_hyjalextwalk_2.mp3,forever,,forest mountain nightelf sacred
+8285923,sound/music/forever/mus_c_hyjalextwalk_3.mp3,forever,,forest mountain nightelf sacred
+8285925,sound/music/forever/mus_c_hyjalextwalk_4.mp3,forever,,forest mountain nightelf sacred
+8285927,sound/music/forever/mus_c_hyjalextwalk_5.mp3,forever,,forest mountain nightelf sacred
+8285929,sound/music/forever/mus_c_hyjalextwalk_6.mp3,forever,,forest mountain nightelf sacred
+8180963,sound/music/forever/mus_c_ironforge_intro.mp3,forever,1,city dwarf grand
+8180965,sound/music/forever/mus_c_ironforge_walking_1.mp3,forever,,city dwarf grand
+8180967,sound/music/forever/mus_c_ironforge_walking_2.mp3,forever,,city dwarf grand
+8180969,sound/music/forever/mus_c_ironforge_walking_3.mp3,forever,,city dwarf grand
+8180971,sound/music/forever/mus_c_ironforge_walking_4.mp3,forever,,city dwarf grand
+8180953,sound/music/forever/mus_c_magic_1_moment.mp3,forever,1,arcane mysterious
+8180955,sound/music/forever/mus_c_magic_1_zone_1.mp3,forever,,arcane mysterious
+8180957,sound/music/forever/mus_c_magic_1_zone_2.mp3,forever,,arcane mysterious
+8180933,sound/music/forever/mus_c_mystery_1.mp3,forever,,mysterious
+8180951,sound/music/forever/mus_c_mystery_10.mp3,forever,,mysterious
+8180935,sound/music/forever/mus_c_mystery_2.mp3,forever,,mysterious
+8180937,sound/music/forever/mus_c_mystery_3.mp3,forever,,mysterious
+8180939,sound/music/forever/mus_c_mystery_4.mp3,forever,,mysterious
+8180941,sound/music/forever/mus_c_mystery_5.mp3,forever,,mysterious
+8180943,sound/music/forever/mus_c_mystery_6.mp3,forever,,mysterious
+8180945,sound/music/forever/mus_c_mystery_7.mp3,forever,,mysterious
+8180947,sound/music/forever/mus_c_mystery_8.mp3,forever,,mysterious
+8180949,sound/music/forever/mus_c_mystery_9.mp3,forever,,mysterious
+8200662,sound/music/forever/mus_c_naga_incursion_1.mp3,forever,,coast naga tense
+8200664,sound/music/forever/mus_c_naga_incursion_2.mp3,forever,,coast naga tense
+8200666,sound/music/forever/mus_c_naga_incursion_3.mp3,forever,,coast naga tense
+8180911,sound/music/forever/mus_c_naxxramas_walking_1.mp3,forever,,
+8180913,sound/music/forever/mus_c_naxxramas_walking_2.mp3,forever,,
+8180915,sound/music/forever/mus_c_naxxramas_walking_3.mp3,forever,,
+8180917,sound/music/forever/mus_c_naxxramas_walking_4.mp3,forever,,
+8180919,sound/music/forever/mus_c_naxxramas_walking_5.mp3,forever,,
+8180921,sound/music/forever/mus_c_naxxramas_walking_6.mp3,forever,,
+8270576,sound/music/forever/mus_c_nerubian_nest_c.mp3,forever,,eerie nerubian underground
+8270578,sound/music/forever/mus_c_nerubian_nest_e.mp3,forever,,eerie nerubian underground
+8181055,sound/music/forever/mus_c_night_barren_dry_1.mp3,forever,,barrens night
+8181057,sound/music/forever/mus_c_night_barren_dry_2.mp3,forever,,barrens night
+8181059,sound/music/forever/mus_c_night_barren_dry_3.mp3,forever,,barrens night
+8181133,sound/music/forever/mus_c_night_desert_1.mp3,forever,,desert night
+8181135,sound/music/forever/mus_c_night_desert_2.mp3,forever,,desert night
+8181137,sound/music/forever/mus_c_night_desert_3.mp3,forever,,desert night
+8180758,sound/music/forever/mus_c_night_evil_forest_1.mp3,forever,,darkforest night
+8180760,sound/music/forever/mus_c_night_evil_forest_2.mp3,forever,,darkforest night
+8180762,sound/music/forever/mus_c_night_evil_forest_3.mp3,forever,,darkforest night
+8180764,sound/music/forever/mus_c_night_forest_1.mp3,forever,,forest night
+8180766,sound/music/forever/mus_c_night_forest_2.mp3,forever,,forest night
+8180768,sound/music/forever/mus_c_night_forest_3.mp3,forever,,forest night
+8180770,sound/music/forever/mus_c_night_forest_4.mp3,forever,,forest night
+8181265,sound/music/forever/mus_c_night_jungle_1.mp3,forever,,jungle night
+8181267,sound/music/forever/mus_c_night_jungle_2.mp3,forever,,jungle night
+8181269,sound/music/forever/mus_c_night_jungle_3.mp3,forever,,jungle night
+8181293,sound/music/forever/mus_c_night_mountain_1.mp3,forever,,mountain night
+8181295,sound/music/forever/mus_c_night_mountain_2.mp3,forever,,mountain night
+8181297,sound/music/forever/mus_c_night_mountain_3.mp3,forever,,mountain night
+8181299,sound/music/forever/mus_c_night_mountain_4.mp3,forever,,mountain night
+8181309,sound/music/forever/mus_c_night_plains_1.mp3,forever,,night plains
+8181311,sound/music/forever/mus_c_night_plains_2.mp3,forever,,night plains
+8181279,sound/music/forever/mus_c_night_volcanic_1.mp3,forever,,night volcanic
+8181281,sound/music/forever/mus_c_night_volcanic_2.mp3,forever,,night volcanic
+8195273,sound/music/forever/mus_c_orc_rest_area_1a.mp3,forever,,festive orc tavern
+8195275,sound/music/forever/mus_c_orc_rest_area_1b.mp3,forever,,festive orc tavern
+8195277,sound/music/forever/mus_c_orc_rest_area_2a.mp3,forever,,festive orc tavern
+8195279,sound/music/forever/mus_c_orc_rest_area_2b.mp3,forever,,festive orc tavern
+8195281,sound/music/forever/mus_c_orc_rest_area_3a.mp3,forever,,festive orc tavern
+8195283,sound/music/forever/mus_c_orc_rest_area_3b.mp3,forever,,festive orc tavern
+8181031,sound/music/forever/mus_c_orgrimmar_1_moment.mp3,forever,1,city grand orc
+8181033,sound/music/forever/mus_c_orgrimmar_1_zone.mp3,forever,,city grand orc
+8181035,sound/music/forever/mus_c_orgrimmar_2_moment.mp3,forever,1,city grand orc
+8181037,sound/music/forever/mus_c_orgrimmar_2_zone.mp3,forever,,city grand orc
+8181039,sound/music/forever/mus_c_orgrimmar_intro_moment.mp3,forever,1,city grand orc
+8195285,sound/music/forever/mus_c_pirate_tavern_1a.mp3,forever,,festive pirate playful tavern
+8195287,sound/music/forever/mus_c_pirate_tavern_1b.mp3,forever,,festive pirate playful tavern
+8195289,sound/music/forever/mus_c_pirate_tavern_2a.mp3,forever,,festive pirate playful tavern
+8195291,sound/music/forever/mus_c_pirate_tavern_2b.mp3,forever,,festive pirate playful tavern
+8195293,sound/music/forever/mus_c_pirate_tavern_3a.mp3,forever,,festive pirate playful tavern
+8195295,sound/music/forever/mus_c_pirate_tavern_3b.mp3,forever,,festive pirate playful tavern
+8181021,sound/music/forever/mus_c_pvp_1.mp3,forever,1,
+8181023,sound/music/forever/mus_c_pvp_2.mp3,forever,1,
+8181025,sound/music/forever/mus_c_pvp_3.mp3,forever,1,
+8181027,sound/music/forever/mus_c_pvp_4.mp3,forever,1,
+8181029,sound/music/forever/mus_c_pvp_5.mp3,forever,1,
+8200652,sound/music/forever/mus_c_riplash_1.mp3,forever,,coast naga sea
+8200654,sound/music/forever/mus_c_riplash_2.mp3,forever,,coast naga sea
+8200656,sound/music/forever/mus_c_riplash_3.mp3,forever,,coast naga sea
+8200658,sound/music/forever/mus_c_riplash_4.mp3,forever,,coast naga sea
+8200660,sound/music/forever/mus_c_riplash_5.mp3,forever,,coast naga sea
+8181301,sound/music/forever/mus_c_sacred_1.mp3,forever,,sacred
+8181303,sound/music/forever/mus_c_sacred_2.mp3,forever,,sacred
+8286116,sound/music/forever/mus_c_sholazar_walk_day_4.mp3,forever,,calm day jungle wild
+8286118,sound/music/forever/mus_c_sholazar_walk_day_5.mp3,forever,,calm day jungle wild
+8286120,sound/music/forever/mus_c_sholazar_walk_day_6.mp3,forever,,calm day jungle wild
+8286122,sound/music/forever/mus_c_sholazar_walk_night_1.mp3,forever,,calm jungle night wild
+8286124,sound/music/forever/mus_c_sholazar_walk_night_2.mp3,forever,,calm jungle night wild
+8286126,sound/music/forever/mus_c_sholazar_walk_night_3.mp3,forever,,calm jungle night wild
+8286128,sound/music/forever/mus_c_sholazar_walk_night_4.mp3,forever,,calm jungle night wild
+8286130,sound/music/forever/mus_c_sholazar_walk_night_5.mp3,forever,,calm jungle night wild
+8270580,sound/music/forever/mus_c_silken_path_a.mp3,forever,,mysterious nerubian underground
+8270582,sound/music/forever/mus_c_silken_path_e.mp3,forever,,mysterious nerubian underground
+8181011,sound/music/forever/mus_c_soggy_place_zone_1.mp3,forever,,eerie swamp
+8181013,sound/music/forever/mus_c_soggy_place_zone_2.mp3,forever,,eerie swamp
+8181015,sound/music/forever/mus_c_soggy_place_zone_3.mp3,forever,,eerie swamp
+8181017,sound/music/forever/mus_c_soggy_place_zone_4.mp3,forever,,eerie swamp
+8181019,sound/music/forever/mus_c_soggy_place_zone_5.mp3,forever,,eerie swamp
+8181333,sound/music/forever/mus_c_spooky_1_moment.mp3,forever,1,eerie
+8180866,sound/music/forever/mus_c_stormwind_1.mp3,forever,,city grand human
+8180868,sound/music/forever/mus_c_stormwind_2.mp3,forever,,city grand human
+8180870,sound/music/forever/mus_c_stormwind_3.mp3,forever,,city grand human
+8180872,sound/music/forever/mus_c_stormwind_4.mp3,forever,,city grand human
+8180874,sound/music/forever/mus_c_stormwind_5.mp3,forever,,city grand human
+8180876,sound/music/forever/mus_c_stormwind_6.mp3,forever,,city grand human
+8180878,sound/music/forever/mus_c_stormwind_7.mp3,forever,,city grand human
+8180880,sound/music/forever/mus_c_stormwind_8.mp3,forever,,city grand human
+8180882,sound/music/forever/mus_c_stormwind_high_seas_moment.mp3,forever,1,city grand human
+8180884,sound/music/forever/mus_c_stormwind_intro_moment.mp3,forever,1,city grand human
+8200674,sound/music/forever/mus_c_stranglethorn_1.mp3,forever,,jungle troll
+8200676,sound/music/forever/mus_c_stranglethorn_2.mp3,forever,,jungle troll
+8200678,sound/music/forever/mus_c_stranglethorn_3.mp3,forever,,jungle troll
+8200680,sound/music/forever/mus_c_stranglethorn_4.mp3,forever,,jungle troll
+8181335,sound/music/forever/mus_c_swamp_1.mp3,forever,,swamp
+8180886,sound/music/forever/mus_c_tauren_rest_area_1a.mp3,forever,,calm tauren tavern
+8180888,sound/music/forever/mus_c_tauren_rest_area_1b.mp3,forever,,calm tauren tavern
+8180890,sound/music/forever/mus_c_tauren_rest_area_2a.mp3,forever,,calm tauren tavern
+8180892,sound/music/forever/mus_c_tauren_rest_area_2b.mp3,forever,,calm tauren tavern
+8180894,sound/music/forever/mus_c_tauren_rest_area_3a.mp3,forever,,calm tauren tavern
+8180896,sound/music/forever/mus_c_tauren_rest_area_3b.mp3,forever,,calm tauren tavern
+8180983,sound/music/forever/mus_c_tavern_alliance_1.mp3,forever,,festive human tavern
+8180985,sound/music/forever/mus_c_tavern_alliance_2.mp3,forever,,festive human tavern
+8180987,sound/music/forever/mus_c_tavern_horde_1.mp3,forever,,festive orc tavern
+8180989,sound/music/forever/mus_c_tavern_horde_2.mp3,forever,,festive orc tavern
+8180991,sound/music/forever/mus_c_tavern_horde_3.mp3,forever,,festive orc tavern
+8286132,sound/music/forever/mus_c_terrokar_bone_wastes_walking_1.mp3,forever,,ruins somber
+8286134,sound/music/forever/mus_c_terrokar_bone_wastes_walking_2.mp3,forever,,ruins somber
+8286136,sound/music/forever/mus_c_terrokar_bone_wastes_walking_3.mp3,forever,,ruins somber
+8286138,sound/music/forever/mus_c_terrokar_bone_wastes_walking_4.mp3,forever,,ruins somber
+8180995,sound/music/forever/mus_c_thunder_bluff_intro.mp3,forever,1,calm city tauren
+8180997,sound/music/forever/mus_c_thunder_bluff_walking_1.mp3,forever,,calm city tauren
+8180999,sound/music/forever/mus_c_thunder_bluff_walking_2.mp3,forever,,calm city tauren
+8181001,sound/music/forever/mus_c_thunder_bluff_walking_3.mp3,forever,,calm city tauren
+8181317,sound/music/forever/mus_c_tinkertown_intro_moment.mp3,forever,1,city gnome
+8180993,sound/music/forever/mus_c_undead_dance.mp3,forever,,festive tavern undead
+8180923,sound/music/forever/mus_c_undead_tavern_1a.mp3,forever,,eerie tavern undead
+8180925,sound/music/forever/mus_c_undead_tavern_1b.mp3,forever,,eerie tavern undead
+8180927,sound/music/forever/mus_c_undead_tavern_2.mp3,forever,,eerie tavern undead
+8180929,sound/music/forever/mus_c_undead_tavern_3a.mp3,forever,,eerie tavern undead
+8180931,sound/music/forever/mus_c_undead_tavern_3b.mp3,forever,,eerie tavern undead
+8181003,sound/music/forever/mus_c_undercity_1.mp3,forever,,city ominous undead
+8181005,sound/music/forever/mus_c_undercity_2.mp3,forever,,city ominous undead
+8181007,sound/music/forever/mus_c_undercity_3.mp3,forever,,city ominous undead
+8181009,sound/music/forever/mus_c_undercity_intro_moment.mp3,forever,1,city ominous undead
+8181337,sound/music/forever/mus_c_warrior_terrace.mp3,forever,,heroic
+8270584,sound/music/forever/mus_c_weavers_lair_c.mp3,forever,,eerie nerubian underground
+8200682,sound/music/forever/mus_c_zalazanes_fall_1.mp3,forever,,jungle tense troll
+8200684,sound/music/forever/mus_c_zalazanes_fall_2.mp3,forever,,jungle tense troll
+8200686,sound/music/forever/mus_c_zalazanes_fall_3.mp3,forever,,jungle tense troll
+8200688,sound/music/forever/mus_c_zalazanes_fall_4.mp3,forever,,jungle tense troll
+8200690,sound/music/forever/mus_c_zulaman_amb_1.mp3,forever,,jungle ominous troll
+8200692,sound/music/forever/mus_c_zulaman_amb_2.mp3,forever,,jungle ominous troll
+8200694,sound/music/forever/mus_c_zulaman_amb_3.mp3,forever,,jungle ominous troll
+8200696,sound/music/forever/mus_c_zulaman_amb_4.mp3,forever,,jungle ominous troll
+8200642,sound/music/forever/mus_c_zulaman_battle_1.mp3,forever,1,jungle ominous troll
+8200644,sound/music/forever/mus_c_zulaman_battle_2.mp3,forever,1,jungle ominous troll
+8200646,sound/music/forever/mus_c_zulaman_battle_3.mp3,forever,1,jungle ominous troll
+8200648,sound/music/forever/mus_c_zulaman_battle_4.mp3,forever,1,jungle ominous troll
+8200650,sound/music/forever/mus_c_zulaman_battle_5.mp3,forever,1,jungle ominous troll
+8181341,sound/music/forever/mus_c_zulgurub_voodoo.mp3,forever,,jungle ominous troll
+53220,sound/music/gluescreenmusic/bc_main_theme.mp3,other,1,
+53221,sound/music/gluescreenmusic/bccredits_lament_of_the_highborne.mp3,other,1,
+53222,sound/music/gluescreenmusic/wotlk_main_title.mp3,other,1,
+53223,sound/music/gluescreenmusic/wow_main_theme.mp3,other,1,
+1417250,sound/music/legion/mus_70_anduinpt2_h.mp3,legion,,
+1500388,sound/music/legion/mus_70_canticleofsacrifice_h.mp3,legion,,
+1417235,sound/music/legion/mus_70_dalarandawn_h.mp3,legion,,arcane city mysterious
+1417269,sound/music/legion/mus_70_dalarankhadgar_night_h.mp3,legion,,arcane city mysterious night
+1417285,sound/music/legion/mus_70_demonhunterpt2_h.mp3,legion,,
+1417290,sound/music/legion/mus_70_demonhunterpt3_h.mp3,legion,,
+1417302,sound/music/legion/mus_70_emeraldnightmareorch_h.mp3,legion,,darkforest eerie ominous orc
+1500422,sound/music/legion/mus_70_highmountain10_h.mp3,legion,,grand mountain tauren
+1417318,sound/music/legion/mus_70_highmountain1_h.mp3,legion,,grand mountain tauren
+1417334,sound/music/legion/mus_70_holywarriorsgather_h.mp3,legion,,
+1496267,sound/music/legion/mus_70_kingdomswillburn_maintitle.mp3,legion,1,
+1417348,sound/music/legion/mus_70_lailademon_h.mp3,legion,,
+1417351,sound/music/legion/mus_70_laststand_h3end.mp3,legion,,
+1417356,sound/music/legion/mus_70_menaceofthedarktitans_h2.mp3,legion,,
+1477354,sound/music/legion/mus_70_mire5_h.mp3,legion,,eerie swamp
+1477360,sound/music/legion/mus_70_nossharah_h.mp3,legion,,desert ominous ruins
+1305140,sound/music/legion/mus_70_relentless_h.mp3,legion,,
+1477337,sound/music/legion/mus_70_stormheim_h.mp3,legion,,coast heroic mountain vrykul
+1477339,sound/music/legion/mus_70_suramar_pt1_h.mp3,legion,,arcane city mysterious nightelf
+1500406,sound/music/legion/mus_70_suramar_pt2_h.mp3,legion,,arcane city mysterious nightelf
+1500407,sound/music/legion/mus_70_tempest_h1.mp3,legion,,coast sea tense
+7688249,sound/music/midnight/mus_120_akilzon_loa_h.mp3,midnight,,jungle ominous troll
+7698286,sound/music/midnight/mus_120_arator_h.mp3,midnight,,heroic sacred
+7684186,sound/music/midnight/mus_120_atalaman_h.mp3,midnight,,jungle mysterious troll
+7681064,sound/music/midnight/mus_120_devouring_host_h.mp3,midnight,,ominous void
+7690533,sound/music/midnight/mus_120_eversong_woods_h.mp3,midnight,,calm forest highelf
+7682364,sound/music/midnight/mus_120_lake_eldrendar_h.mp3,midnight,,calm forest highelf
+7690541,sound/music/midnight/mus_120_lightbloom_d.mp3,midnight,,calm forest sacred
+7698306,sound/music/midnight/mus_120_lightbloom_harandar_h.mp3,midnight,,calm desert forest highelf mysterious sacred
+7684198,sound/music/midnight/mus_120_locus_point_h.mp3,midnight,,arcane mysterious void
+7670482,sound/music/midnight/mus_120_midnight_maintitle_beta.mp3,midnight,1,
+7698352,sound/music/midnight/mus_120_midnight_maintitle_intro.mp3,midnight,1,
+7681162,sound/music/midnight/mus_120_shadowguard_void_h.mp3,midnight,,eerie void
+7681130,sound/music/midnight/mus_120_silvermoon_city_h.mp3,midnight,,city grand highelf
+7713438,sound/music/midnight/mus_120_silvermoon_city_j.mp3,midnight,,city grand highelf
+7692176,sound/music/midnight/mus_120_teldrassil_roots_h.mp3,midnight,,calm forest melancholy nightelf
+7692188,sound/music/midnight/mus_120_the_light_h.mp3,midnight,,grand sacred
+7692208,sound/music/midnight/mus_120_void_combat_h.mp3,midnight,1,
+7692220,sound/music/midnight/mus_120_voidstorm_h.mp3,midnight,,ominous void
+7682398,sound/music/midnight/mus_120_world_soul_cradle_h.mp3,midnight,,grand sacred
+7698310,sound/music/midnight/mus_120_xalatath_midnight_h.mp3,midnight,,ominous void
+7682428,sound/music/midnight/mus_120_zulaman_h.mp3,midnight,,jungle ominous troll
+53224,sound/music/musical moments/angelic/angelic01.mp3,other,1,calm sacred
+53225,sound/music/musical moments/battle/battle01.mp3,other,1,
+53226,sound/music/musical moments/battle/battle02.mp3,other,1,
+53227,sound/music/musical moments/battle/battle03.mp3,other,1,
+53228,sound/music/musical moments/battle/battle04.mp3,other,1,
+53229,sound/music/musical moments/battle/battle05.mp3,other,1,
+53230,sound/music/musical moments/battle/battle06.mp3,other,1,
+53231,sound/music/musical moments/gloomy/gloomy01.mp3,other,1,darkforest melancholy
+53232,sound/music/musical moments/gloomy/gloomy02.mp3,other,1,darkforest melancholy
+53233,sound/music/musical moments/guldansentrancetheme.mp3,other,1,
+53234,sound/music/musical moments/haunted/haunted01.mp3,other,1,blighted eerie
+53235,sound/music/musical moments/haunted/haunted02.mp3,other,1,blighted eerie
+53236,sound/music/musical moments/magic/magic01-moment.mp3,other,1,
+53237,sound/music/musical moments/magic/magic01-zone1.mp3,other,1,
+53238,sound/music/musical moments/magic/magic01-zone2.mp3,other,1,
+53239,sound/music/musical moments/mystery/ahnqirajintro1.mp3,other,1,mysterious
+53240,sound/music/musical moments/mystery/mystery01-zone.mp3,other,1,mysterious
+53241,sound/music/musical moments/mystery/mystery02-zone.mp3,other,1,mysterious
+53242,sound/music/musical moments/mystery/mystery03-zone.mp3,other,1,mysterious
+53243,sound/music/musical moments/mystery/mystery04-zone.mp3,other,1,mysterious
+53244,sound/music/musical moments/mystery/mystery05-zone.mp3,other,1,mysterious
+53245,sound/music/musical moments/mystery/mystery06-zone.mp3,other,1,mysterious
+53246,sound/music/musical moments/mystery/mystery07-zone.mp3,other,1,mysterious
+53247,sound/music/musical moments/mystery/mystery08-zone.mp3,other,1,mysterious
+53248,sound/music/musical moments/mystery/mystery09-zone.mp3,other,1,mysterious
+53249,sound/music/musical moments/mystery/mystery10-zone.mp3,other,1,mysterious
+53250,sound/music/musical moments/sacred/sacred01.mp3,other,1,
+53251,sound/music/musical moments/sacred/sacred02.mp3,other,1,
+229735,sound/music/musical moments/sp_templeofstormsactionuni01.mp3,other,1,
+53252,sound/music/musical moments/spooky/spooky01-moment.mp3,other,1,eerie
+53253,sound/music/musical moments/swamp/swamp01.mp3,other,1,swamp
+53254,sound/music/musical moments/zulgurubvoodoo.mp3,other,1,jungle ominous troll
+642176,sound/music/pandaria/mus_50_balloonride_hero_01.mp3,mop,,calm forest pandaren playful
+625753,sound/music/pandaria/mus_50_heartofpandaria_01.mp3,mop,,calm forest pandaren
+642242,sound/music/pandaria/mus_50_monk_mistweaver_a_hero_02.mp3,mop,,calm forest pandaren
+642137,sound/music/pandaria/mus_50_monk_mistweaver_b_hero_01.mp3,mop,,calm forest pandaren
+629414,sound/music/pandaria/mus_50_serpentriders_hero_01.mp3,mop,,calm forest pandaren sky
+642577,sound/music/pandaria/mus_50_songofliulang_vox_hero_01.mp3,mop,,calm forest melancholy pandaren
+629418,sound/music/pandaria/mus_50_spiritpath_hero_01.mp3,mop,,calm forest mysterious pandaren
+629423,sound/music/pandaria/mus_50_templeofthefivedawns_hero_01.mp3,mop,,calm forest pandaren sacred
+642875,sound/music/pandaria/mus_50_theheartland_hero_04.mp3,mop,,calm forest pandaren plains
+629426,sound/music/pandaria/mus_50_veb_b_hero_01.mp3,mop,,calm forest pandaren
+3853232,sound/music/shadowlands/mus_90_aw_choice_oblivion_h.mp3,sl,,enchanted somber
+3853246,sound/music/shadowlands/mus_90_aw_choice_rebirth_h.mp3,sl,,enchanted sacred
+3853294,sound/music/shadowlands/mus_90_aw_nightfae_h.mp3,sl,,enchanted forest mysterious
+3853320,sound/music/shadowlands/mus_90_aw_nocturne_celestial_e.mp3,sl,,enchanted night sacred
+3853390,sound/music/shadowlands/mus_90_aw_nocturne_melancholy_dream_h.mp3,sl,,enchanted melancholy night
+3853414,sound/music/shadowlands/mus_90_ba_aspirantsjourney_arenastart_a.mp3,sl,1,heroic sacred
+3853440,sound/music/shadowlands/mus_90_ba_aspirantsjourney_doubt_h.mp3,sl,,heroic sacred
+3853508,sound/music/shadowlands/mus_90_ba_tobekyrian_doubt_h.mp3,sl,,grand sacred
+3853528,sound/music/shadowlands/mus_90_ba_tobekyrian_h.mp3,sl,,grand sacred
+3853564,sound/music/shadowlands/mus_90_maw_hopeabandoned_h.mp3,sl,,somber void
+3853576,sound/music/shadowlands/mus_90_maw_torghast_action_h.mp3,sl,,
+3853632,sound/music/shadowlands/mus_90_mx_deathisabattlefield_h1.mp3,sl,,
+3853650,sound/music/shadowlands/mus_90_mx_necrolord_h.mp3,sl,,blighted ominous undead
+3853688,sound/music/shadowlands/mus_90_mx_sansprimus_hero_h.mp3,sl,,blighted somber
+3857115,sound/music/shadowlands/mus_90_or_broker_opulence_h.mp3,sl,,city playful
+3853730,sound/music/shadowlands/mus_90_or_oribos_intro.mp3,sl,1,arcane city mysterious
+3853738,sound/music/shadowlands/mus_90_or_oribos_theeternalcity_e.mp3,sl,,arcane city mysterious
+3853786,sound/music/shadowlands/mus_90_rd_decadence_h.mp3,sl,,city ominous
+3853820,sound/music/shadowlands/mus_90_rd_decadence_pride_h.mp3,sl,,city ominous
+3853854,sound/music/shadowlands/mus_90_rd_ritual_h.mp3,sl,,eerie ominous
+3853882,sound/music/shadowlands/mus_90_rd_venthyr_h.mp3,sl,,city ominous
+3853904,sound/music/shadowlands/mus_90_shadow_death_h.mp3,sl,,
+3850493,sound/music/shadowlands/mus_90_shadow_domination_battle_h.mp3,sl,1,
+3850495,sound/music/shadowlands/mus_90_shadow_domination_h.mp3,sl,,
+3853912,sound/music/shadowlands/mus_90_shadow_revelation_h.mp3,sl,,mysterious void
+3850505,sound/music/shadowlands/mus_90_shadow_sylvanas_freewill_h.mp3,sl,,
+3850513,sound/music/shadowlands/mus_90_shadow_unbrokenwill_action_h.mp3,sl,,
+3850553,sound/music/shadowlands/mus_90_throughtheroofoftheworld_maintitle.mp3,sl,1,
+4202802,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_1.ogg,sl,1,
+4202804,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_2.ogg,sl,1,
+4202806,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_3.ogg,sl,1,
+4202808,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_4.ogg,sl,1,
+4202810,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_5.ogg,sl,1,
+4202812,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_6.ogg,sl,1,
+4202814,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_7.ogg,sl,1,
+4202772,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_1.ogg,sl,1,arcane mysterious
+4202774,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_2.ogg,sl,1,
+4202776,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_3.ogg,sl,1,
+4202778,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_4.ogg,sl,1,
+4202780,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_5.ogg,sl,1,
+4202782,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_6.ogg,sl,1,
+4202784,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_7.ogg,sl,1,
+4202786,sound/music/shadowlands/mus_91_tazavesh_stinger_brass_magic_8.ogg,sl,1,
+4202756,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_1.ogg,sl,1,
+4202758,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_2.ogg,sl,1,
+4202760,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_3.ogg,sl,1,
+4202762,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_4.ogg,sl,1,
+4202764,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_5.ogg,sl,1,
+4202766,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_6.ogg,sl,1,
+4202768,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_7.ogg,sl,1,
+4202770,sound/music/shadowlands/mus_91_tazavesh_stinger_guitar_8.ogg,sl,1,
+4202788,sound/music/shadowlands/mus_91_tazavesh_stinger_woodwind_1.ogg,sl,1,
+4202790,sound/music/shadowlands/mus_91_tazavesh_stinger_woodwind_2.ogg,sl,1,
+4202792,sound/music/shadowlands/mus_91_tazavesh_stinger_woodwind_3.ogg,sl,1,
+4202794,sound/music/shadowlands/mus_91_tazavesh_stinger_woodwind_ethnic_1.ogg,sl,1,
+4202796,sound/music/shadowlands/mus_91_tazavesh_stinger_woodwind_ethnic_2.ogg,sl,1,
+4202798,sound/music/shadowlands/mus_91_tazavesh_stinger_woodwind_ethnic_3.ogg,sl,1,
+4202800,sound/music/shadowlands/mus_91_tazavesh_stinger_woodwind_ethnic_4.ogg,sl,1,
+3931650,sound/music/shadowlands/mus_mx_cov_seatoftheprimus_01.mp3,sl,,blighted grand
+3885397,sound/music/shadowlands/raid_91_torghast_sanctum_raid_eye_intro_3885397.mp3,sl,1,
+6382930,sound/music/warwithin/mus_1107_plunderstorm_2_h.mp3,tww,1,
+6034298,sound/music/warwithin/mus_110_alleria_h.mp3,tww,,melancholy void
+6034310,sound/music/warwithin/mus_110_arathi_airships_h.mp3,tww,,arathi plains
+6050206,sound/music/warwithin/mus_110_cinderwold_h.mp3,tww,,darkforest ominous
+6068108,sound/music/warwithin/mus_110_dornogal_h.mp3,tww,,city earthen grand
+6034326,sound/music/warwithin/mus_110_earthen_countryside_h.mp3,tww,,calm earthen plains underground
+6065737,sound/music/warwithin/mus_110_isle_of_dorn_h.mp3,tww,,calm coast earthen plains
+6065463,sound/music/warwithin/mus_110_khaz_algar_inn_a.mp3,tww,,calm earthen tavern
+6037088,sound/music/warwithin/mus_110_mereldar_h.mp3,tww,,arathi plains sacred
+6075204,sound/music/warwithin/mus_110_nerubian_raid_h.mp3,tww,1,
+6034340,sound/music/warwithin/mus_110_proscenium_d.mp3,tww,,arcane mysterious
+6055566,sound/music/warwithin/mus_110_ringing_deeps_base_h.mp3,tww,,cave earthen underground
+6065812,sound/music/warwithin/mus_110_sacred_flame_h.mp3,tww,,arathi sacred
+6055578,sound/music/warwithin/mus_110_silken_path_h.mp3,tww,,mysterious nerubian underground
+6068130,sound/music/warwithin/mus_110_stormrider_h.mp3,tww,,grand sky
+6034358,sound/music/warwithin/mus_110_the_aegis_wall_h.mp3,tww,,arathi grand mountain
+6037118,sound/music/warwithin/mus_110_the_war_soul_saga_h.mp3,tww,,
+6075186,sound/music/warwithin/mus_110_thewarwithin_maintitle.mp3,tww,1,
+6074947,sound/music/warwithin/mus_110_warcraft_battle_h.mp3,tww,1,
+6068162,sound/music/warwithin/mus_110_weavers_lair_h.mp3,tww,,eerie nerubian underground
+6055592,sound/music/warwithin/mus_110_xalatath_h.mp3,tww,,ominous void
+53255,sound/music/worldevents/alliancefirepole.mp3,other,1,
+53256,sound/music/worldevents/darkmoonfaire_1.mp3,other,1,
+53257,sound/music/worldevents/darkmoonfaire_2.mp3,other,1,
+53258,sound/music/worldevents/darkmoonfaire_3.mp3,other,1,
+53259,sound/music/worldevents/darkmoonfaire_4.mp3,other,1,
+53260,sound/music/worldevents/hordefirepole.mp3,other,1,
+53261,sound/music/zonemusic/ahnqiraj/ahnqirajexteriorwalking1.mp3,classic,,
+53262,sound/music/zonemusic/ahnqiraj/ahnqirajexteriorwalking2.mp3,classic,,
+53263,sound/music/zonemusic/ahnqiraj/ahnqirajexteriorwalking3.mp3,classic,,
+53264,sound/music/zonemusic/ahnqiraj/ahnqirajexteriorwalking4.mp3,classic,,
+53265,sound/music/zonemusic/ahnqiraj/ahnqirajinterior1.mp3,classic,,
+53266,sound/music/zonemusic/ahnqiraj/ahnqirajinterior2.mp3,classic,,
+53267,sound/music/zonemusic/ahnqiraj/ahnqirajinterior3.mp3,classic,,
+53268,sound/music/zonemusic/ahnqiraj/ahnqirajinteriorcenterroom1.mp3,classic,,orc
+53269,sound/music/zonemusic/ahnqiraj/ahnqirajinteriorintromain.mp3,classic,,
+53270,sound/music/zonemusic/ahnqiraj/ahnqirajkingroom.mp3,classic,,
+53271,sound/music/zonemusic/ahnqiraj/ahnqirajtriangleroom1.mp3,classic,,
+53272,sound/music/zonemusic/ahnqiraj/ahnqirajtriangleroom2.mp3,classic,,
+53273,sound/music/zonemusic/ahnqiraj/ahnqirajtriangleroom3.mp3,classic,,
+53274,sound/music/zonemusic/ahnqiraj/ahnqirajtriangleroom4.mp3,classic,,
+53275,sound/music/zonemusic/ahnqiraj/ahnqirajtriangleroom5.mp3,classic,,
+53276,sound/music/zonemusic/ahnqiraj/ahnqirajtriangleroom6.mp3,classic,,
+53277,sound/music/zonemusic/ahnqiraj/ahnqirajtriangleroom7.mp3,classic,,
+53282,sound/music/zonemusic/azuremyst/ai_exodarintro01.mp3,classic,,arcane calm city draenei forest
+53299,sound/music/zonemusic/barrendry/daybarrendry01.mp3,classic,,barrens day
+53300,sound/music/zonemusic/barrendry/daybarrendry02.mp3,classic,,barrens day
+53301,sound/music/zonemusic/barrendry/daybarrendry03.mp3,classic,,barrens day
+53302,sound/music/zonemusic/barrendry/nightbarrendry01.mp3,classic,,barrens night
+53303,sound/music/zonemusic/barrendry/nightbarrendry02.mp3,classic,,barrens night
+53304,sound/music/zonemusic/barrendry/nightbarrendry03.mp3,classic,,barrens night
+53379,sound/music/zonemusic/cavernsoftime/ct_brazensflightintrouni.mp3,classic,,
+53380,sound/music/zonemusic/cavernsoftime/ct_cavernswalk1uni.mp3,classic,,
+53381,sound/music/zonemusic/cavernsoftime/ct_cavernswalk2uni.mp3,classic,,
+53382,sound/music/zonemusic/cavernsoftime/ct_cavernswalk3uni.mp3,classic,,
+53383,sound/music/zonemusic/cavernsoftime/ct_cavernswalk4uni.mp3,classic,,
+53384,sound/music/zonemusic/cavernsoftime/ct_cavernswalk5uni.mp3,classic,,
+53385,sound/music/zonemusic/cavernsoftime/ct_cavernswalk6uni.mp3,classic,,
+53386,sound/music/zonemusic/cavernsoftime/ct_cavernswalk7uni.mp3,classic,,
+53387,sound/music/zonemusic/cavernsoftime/ct_cavernswalk8uni.mp3,classic,,
+53388,sound/music/zonemusic/cavernsoftime/ct_cavernswalk9uni.mp3,classic,,
+53389,sound/music/zonemusic/cavernsoftime/ct_durnholdecellarwalk1uni.mp3,classic,,
+53390,sound/music/zonemusic/cavernsoftime/ct_durnholdecellarwalk2uni.mp3,classic,,
+53391,sound/music/zonemusic/cavernsoftime/ct_durnholdecellarwalk3uni.mp3,classic,,
+53392,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepextwalk1uni.mp3,classic,,
+53393,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepextwalk2uni.mp3,classic,,
+53394,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepextwalk3uni.mp3,classic,,
+53395,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepextwalk4uni.mp3,classic,,
+53396,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepextwalk5uni.mp3,classic,,
+53397,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepextwalk6uni.mp3,classic,,
+53398,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepintwalk1uni.mp3,classic,,
+53399,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepintwalk2uni.mp3,classic,,
+53400,sound/music/zonemusic/cavernsoftime/ct_durnholdekeepintwalk3uni.mp3,classic,,
+53401,sound/music/zonemusic/cavernsoftime/ct_escapedurnintrouni.mp3,classic,,
+53402,sound/music/zonemusic/cavernsoftime/ct_hillsbradextwalk1uni.mp3,classic,,
+53403,sound/music/zonemusic/cavernsoftime/ct_hillsbradextwalk2uni.mp3,classic,,
+53404,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalk7uni.mp3,classic,,forest mountain nightelf sacred
+53405,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalk8uni.mp3,classic,,forest mountain nightelf sacred
+53406,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalk9uni.mp3,classic,,forest mountain nightelf sacred
+53407,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni01.mp3,classic,,forest mountain nightelf sacred
+53408,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni02.mp3,classic,,forest mountain nightelf sacred
+53409,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni03.mp3,classic,,forest mountain nightelf sacred
+53410,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni04.mp3,classic,,forest mountain nightelf sacred
+53411,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni05.mp3,classic,,forest mountain nightelf sacred
+53412,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni06.mp3,classic,,forest mountain nightelf sacred
+53413,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni10.mp3,classic,,forest mountain nightelf sacred
+53414,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni11.mp3,classic,,forest mountain nightelf sacred
+53415,sound/music/zonemusic/cavernsoftime/ct_hyjalextwalkuni12.mp3,classic,,forest mountain nightelf sacred
+53416,sound/music/zonemusic/cavernsoftime/ct_morassportalintro01.mp3,classic,,
+53417,sound/music/zonemusic/cavernsoftime/ct_morasswalkuni01.mp3,classic,,
+53418,sound/music/zonemusic/cavernsoftime/ct_morasswalkuni02.mp3,classic,,
+53419,sound/music/zonemusic/cavernsoftime/ct_morasswalkuni03.mp3,classic,,
+53420,sound/music/zonemusic/cavernsoftime/ct_morasswalkuni04.mp3,classic,,
+53421,sound/music/zonemusic/cavernsoftime/ct_morasswalkuni05.mp3,classic,,
+53422,sound/music/zonemusic/cavernsoftime/ct_tarrenmillextwalk1uni.mp3,classic,,
+53423,sound/music/zonemusic/cavernsoftime/ct_tarrenmillextwalk2uni.mp3,classic,,
+53424,sound/music/zonemusic/cavernsoftime/ct_tarrenmillextwalk3uni.mp3,classic,,
+53425,sound/music/zonemusic/cavernsoftime/ct_thrallescapeintrouni.mp3,classic,,
+53426,sound/music/zonemusic/cursedland/cursedland01.mp3,classic,,blighted ominous undead
+53427,sound/music/zonemusic/cursedland/cursedland02.mp3,classic,,blighted ominous undead
+53428,sound/music/zonemusic/cursedland/cursedland03.mp3,classic,,blighted ominous undead
+53429,sound/music/zonemusic/cursedland/cursedland04.mp3,classic,,blighted ominous undead
+53430,sound/music/zonemusic/cursedland/cursedland05.mp3,classic,,blighted ominous undead
+53431,sound/music/zonemusic/cursedland/cursedland06.mp3,classic,,blighted ominous undead
+229800,sound/music/zonemusic/dalaran/dc_generalwalkuni01.mp3,classic,,arcane city mysterious
+229801,sound/music/zonemusic/dalaran/dc_generalwalkuni02.mp3,classic,,arcane city mysterious
+229802,sound/music/zonemusic/dalaran/dc_generalwalkuni03.mp3,classic,,arcane city mysterious
+229803,sound/music/zonemusic/dalaran/dc_generalwalkuni04.mp3,classic,,arcane city mysterious
+229804,sound/music/zonemusic/dalaran/dc_introuni01.mp3,classic,,arcane city mysterious
+575638,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfairea_hero_uu01.mp3,classic,1,
+575639,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfairea_uu01.mp3,classic,1,
+575640,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfaireb_hero_uu01.mp3,classic,1,
+575641,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfaireb_uu01.mp3,classic,1,
+575642,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfaireb_uu02.mp3,classic,1,
+575643,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfairec_uu02.mp3,classic,1,
+575816,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfaired_uu01.mp3,classic,1,
+575817,sound/music/zonemusic/darkmoonfaire/mus_43_darkmoonfaired_uu02.mp3,classic,1,
+772749,sound/music/zonemusic/darkmoonfaire/mus_51_darkmoonfaire_merrygoround_01.mp3,classic,1,
+53432,sound/music/zonemusic/desert/daydesert01.mp3,classic,,day desert
+53433,sound/music/zonemusic/desert/daydesert02.mp3,classic,,day desert
+53434,sound/music/zonemusic/desert/daydesert03.mp3,classic,,day desert
+53435,sound/music/zonemusic/desert/nightdesert01.mp3,classic,,desert night
+53436,sound/music/zonemusic/desert/nightdesert02.mp3,classic,,desert night
+53437,sound/music/zonemusic/desert/nightdesert03.mp3,classic,,desert night
+53438,sound/music/zonemusic/dmf_l70etc01.mp3,classic,1,
+53453,sound/music/zonemusic/enchantedforest/enchantedforest01.mp3,classic,,enchanted forest mysterious nightelf
+53454,sound/music/zonemusic/enchantedforest/enchantedforest02.mp3,classic,,enchanted forest mysterious nightelf
+53455,sound/music/zonemusic/enchantedforest/enchantedforest03.mp3,classic,,enchanted forest mysterious nightelf
+53456,sound/music/zonemusic/enchantedforest/enchantedforest04.mp3,classic,,enchanted forest mysterious nightelf
+53457,sound/music/zonemusic/enchantedforest/enchantedforest05.mp3,classic,,enchanted forest mysterious nightelf
+53473,sound/music/zonemusic/eversong/es_silvermoonintro01.mp3,classic,,calm city forest grand highelf
+53486,sound/music/zonemusic/evilforest/dayevilforest01.mp3,classic,,darkforest day
+53487,sound/music/zonemusic/evilforest/dayevilforest02.mp3,classic,,darkforest day
+53488,sound/music/zonemusic/evilforest/dayevilforest03.mp3,classic,,darkforest day
+53489,sound/music/zonemusic/evilforest/nightevilforest01.mp3,classic,,darkforest night
+53490,sound/music/zonemusic/evilforest/nightevilforest02.mp3,classic,,darkforest night
+53491,sound/music/zonemusic/evilforest/nightevilforest03.mp3,classic,,darkforest night
+53492,sound/music/zonemusic/forest/dayforest01.mp3,classic,,day forest
+53493,sound/music/zonemusic/forest/dayforest02.mp3,classic,,day forest
+53494,sound/music/zonemusic/forest/dayforest03.mp3,classic,,day forest
+53495,sound/music/zonemusic/forest/nightforest01.mp3,classic,,forest night
+53496,sound/music/zonemusic/forest/nightforest02.mp3,classic,,forest night
+53497,sound/music/zonemusic/forest/nightforest03.mp3,classic,,forest night
+53498,sound/music/zonemusic/forest/nightforest04.mp3,classic,,forest night
+53519,sound/music/zonemusic/ghostmusic/ghostmusic03.mp3,classic,,blighted eerie
+53541,sound/music/zonemusic/jungle/dayjungle01.mp3,classic,,day jungle
+53542,sound/music/zonemusic/jungle/dayjungle02.mp3,classic,,day jungle
+53543,sound/music/zonemusic/jungle/dayjungle03.mp3,classic,,day jungle
+53544,sound/music/zonemusic/jungle/nightjungle01.mp3,classic,,jungle night
+53545,sound/music/zonemusic/jungle/nightjungle02.mp3,classic,,jungle night
+53546,sound/music/zonemusic/jungle/nightjungle03.mp3,classic,,jungle night
+53577,sound/music/zonemusic/mountain/daymountain01.mp3,classic,,day mountain
+53578,sound/music/zonemusic/mountain/daymountain02.mp3,classic,,day mountain
+53579,sound/music/zonemusic/mountain/daymountain03.mp3,classic,,day mountain
+53580,sound/music/zonemusic/mountain/nightmountain01.mp3,classic,,mountain night
+53581,sound/music/zonemusic/mountain/nightmountain02.mp3,classic,,mountain night
+53582,sound/music/zonemusic/mountain/nightmountain03.mp3,classic,,mountain night
+53583,sound/music/zonemusic/mountain/nightmountain04.mp3,classic,,mountain night
+53591,sound/music/zonemusic/naxxramas/naxxramasabominationboss1.mp3,classic,,
+53592,sound/music/zonemusic/naxxramas/naxxramasabominationboss2.mp3,classic,,
+53593,sound/music/zonemusic/naxxramas/naxxramasabominationwing1.mp3,classic,,
+53594,sound/music/zonemusic/naxxramas/naxxramasabominationwing2.mp3,classic,,
+53595,sound/music/zonemusic/naxxramas/naxxramasabominationwing3.mp3,classic,,
+53596,sound/music/zonemusic/naxxramas/naxxramasfrostwyrm1.mp3,classic,,
+53597,sound/music/zonemusic/naxxramas/naxxramasfrostwyrm2.mp3,classic,,
+53598,sound/music/zonemusic/naxxramas/naxxramasfrostwyrm3.mp3,classic,,
+53599,sound/music/zonemusic/naxxramas/naxxramasfrostwyrm4.mp3,classic,,
+53600,sound/music/zonemusic/naxxramas/naxxramashubbase1.mp3,classic,,
+53601,sound/music/zonemusic/naxxramas/naxxramashubbase2.mp3,classic,,
+53602,sound/music/zonemusic/naxxramas/naxxramaskelthuzad1.mp3,classic,,
+53603,sound/music/zonemusic/naxxramas/naxxramaskelthuzad2.mp3,classic,,
+53604,sound/music/zonemusic/naxxramas/naxxramaskelthuzad3.mp3,classic,,
+53605,sound/music/zonemusic/naxxramas/naxxramasplagueboss1.mp3,classic,,
+53606,sound/music/zonemusic/naxxramas/naxxramasplaguewing1.mp3,classic,,
+53607,sound/music/zonemusic/naxxramas/naxxramasplaguewing2.mp3,classic,,
+53608,sound/music/zonemusic/naxxramas/naxxramasplaguewing3.mp3,classic,,
+53609,sound/music/zonemusic/naxxramas/naxxramasspiderboss1.mp3,classic,,
+53610,sound/music/zonemusic/naxxramas/naxxramasspiderboss2.mp3,classic,,
+53611,sound/music/zonemusic/naxxramas/naxxramasspiderwing1.mp3,classic,,
+53612,sound/music/zonemusic/naxxramas/naxxramasspiderwing2.mp3,classic,,
+53613,sound/music/zonemusic/naxxramas/naxxramasspiderwing3.mp3,classic,,
+53614,sound/music/zonemusic/naxxramas/naxxramaswalking1.mp3,classic,,
+53615,sound/music/zonemusic/naxxramas/naxxramaswalking2.mp3,classic,,
+53616,sound/music/zonemusic/naxxramas/naxxramaswalking3.mp3,classic,,
+53617,sound/music/zonemusic/naxxramas/naxxramaswalking4.mp3,classic,,
+53618,sound/music/zonemusic/naxxramas/naxxramaswalking5.mp3,classic,,
+53619,sound/music/zonemusic/naxxramas/naxxramaswalking6.mp3,classic,,
+371383,sound/music/zonemusic/os1.mp3,classic,,
+371384,sound/music/zonemusic/os2.mp3,classic,,
+371385,sound/music/zonemusic/os3.mp3,classic,,
+371386,sound/music/zonemusic/os4.mp3,classic,,
+371387,sound/music/zonemusic/os5.mp3,classic,,
+53680,sound/music/zonemusic/plains/dayplains01.mp3,classic,,day plains
+53681,sound/music/zonemusic/plains/dayplains02.mp3,classic,,day plains
+53682,sound/music/zonemusic/plains/nightplains01.mp3,classic,,night plains
+53683,sound/music/zonemusic/plains/nightplains02.mp3,classic,,night plains
+521021,sound/music/zonemusic/pvp/mus_pvp6_01.mp3,classic,1,
+521022,sound/music/zonemusic/pvp/mus_pvp6_02.mp3,classic,1,
+521030,sound/music/zonemusic/pvp/mus_pvp7_01.mp3,classic,1,
+521031,sound/music/zonemusic/pvp/mus_pvp7_02.mp3,classic,1,
+521023,sound/music/zonemusic/pvp/mus_pvp7moment1_01.mp3,classic,1,
+521024,sound/music/zonemusic/pvp/mus_pvp7moment1_02.mp3,classic,1,
+521025,sound/music/zonemusic/pvp/mus_pvp7moment2_01.mp3,classic,1,
+521026,sound/music/zonemusic/pvp/mus_pvp7moment2_02.mp3,classic,1,
+521027,sound/music/zonemusic/pvp/mus_pvp7moment3_01.mp3,classic,1,
+521028,sound/music/zonemusic/pvp/mus_pvp7stingerend_01.mp3,classic,1,
+521029,sound/music/zonemusic/pvp/mus_pvp7stingerintro_01.mp3,classic,1,
+53684,sound/music/zonemusic/pvp/pvp1.mp3,classic,1,
+53685,sound/music/zonemusic/pvp/pvp2.mp3,classic,1,
+53686,sound/music/zonemusic/pvp/pvp3.mp3,classic,1,
+53687,sound/music/zonemusic/pvp/pvp4.mp3,classic,1,
+53688,sound/music/zonemusic/pvp/pvp5.mp3,classic,1,
+229945,sound/music/zonemusic/sholazarbasin/sb_sholazarwalkday04.mp3,classic,,calm day jungle wild
+229946,sound/music/zonemusic/sholazarbasin/sb_sholazarwalkday05.mp3,classic,,calm day jungle wild
+229947,sound/music/zonemusic/sholazarbasin/sb_sholazarwalkday06.mp3,classic,,calm day jungle wild
+229948,sound/music/zonemusic/sholazarbasin/sb_sholazarwalknight01.mp3,classic,,calm jungle night wild
+229949,sound/music/zonemusic/sholazarbasin/sb_sholazarwalknight02.mp3,classic,,calm jungle night wild
+229950,sound/music/zonemusic/sholazarbasin/sb_sholazarwalknight03.mp3,classic,,calm jungle night wild
+229951,sound/music/zonemusic/sholazarbasin/sb_sholazarwalknight04.mp3,classic,,calm jungle night wild
+229952,sound/music/zonemusic/sholazarbasin/sb_sholazarwalknight05.mp3,classic,,calm jungle night wild
+53695,sound/music/zonemusic/soggyplace/soggyplace-zone1.mp3,classic,,eerie swamp
+53696,sound/music/zonemusic/soggyplace/soggyplace-zone2.mp3,classic,,eerie swamp
+53697,sound/music/zonemusic/soggyplace/soggyplace-zone3.mp3,classic,,eerie swamp
+53698,sound/music/zonemusic/soggyplace/soggyplace-zone4.mp3,classic,,eerie swamp
+53699,sound/music/zonemusic/soggyplace/soggyplace-zone5.mp3,classic,,eerie swamp
+53737,sound/music/zonemusic/tavernalliance/tavernalliance01.mp3,classic,,festive human tavern
+53738,sound/music/zonemusic/tavernalliance/tavernalliance02.mp3,classic,,festive human tavern
+53739,sound/music/zonemusic/taverndwarf/ra_dwarftavern1a.mp3,classic,,dwarf festive tavern
+53740,sound/music/zonemusic/taverndwarf/ra_dwarftavern1b.mp3,classic,,dwarf festive tavern
+53741,sound/music/zonemusic/taverndwarf/ra_dwarftavern2a.mp3,classic,,dwarf festive tavern
+53742,sound/music/zonemusic/taverndwarf/ra_dwarftavern2b.mp3,classic,,dwarf festive tavern
+53743,sound/music/zonemusic/taverndwarf/ra_dwarftavern3.mp3,classic,,dwarf festive tavern
+53744,sound/music/zonemusic/tavernhorde/tavernhorde01.mp3,classic,,festive orc tavern
+53745,sound/music/zonemusic/tavernhorde/tavernhorde02.mp3,classic,,festive orc tavern
+53746,sound/music/zonemusic/tavernhorde/tavernhorde03.mp3,classic,,festive orc tavern
+53747,sound/music/zonemusic/tavernhorde/undead_dance.mp3,classic,,festive orc tavern undead
+53748,sound/music/zonemusic/tavernhuman/ra_humantavern1a.mp3,classic,,festive human tavern
+53749,sound/music/zonemusic/tavernhuman/ra_humantavern1b.mp3,classic,,festive human tavern
+53750,sound/music/zonemusic/tavernhuman/ra_humantavern2a.mp3,classic,,festive human tavern
+53751,sound/music/zonemusic/tavernhuman/ra_humantavern2b.mp3,classic,,festive human tavern
+53752,sound/music/zonemusic/tavernhuman/ra_tavern1_revisiteda.mp3,classic,,festive human tavern
+53753,sound/music/zonemusic/tavernhuman/ra_tavern1_revisitedb.mp3,classic,,festive human tavern
+53754,sound/music/zonemusic/tavernnightelf/ra_templeofthemoona.mp3,classic,,calm nightelf sacred tavern
+53755,sound/music/zonemusic/tavernnightelf/ra_templeofthemoonb.mp3,classic,,calm nightelf sacred tavern
+53756,sound/music/zonemusic/tavernorc/ra_orcrestarea1a.mp3,classic,,festive orc tavern
+53757,sound/music/zonemusic/tavernorc/ra_orcrestarea1b.mp3,classic,,festive orc tavern
+53758,sound/music/zonemusic/tavernorc/ra_orcrestarea2a.mp3,classic,,festive orc tavern
+53759,sound/music/zonemusic/tavernorc/ra_orcrestarea2b.mp3,classic,,festive orc tavern
+53760,sound/music/zonemusic/tavernorc/ra_orcrestarea3a.mp3,classic,,festive orc tavern
+53761,sound/music/zonemusic/tavernorc/ra_orcrestarea3b.mp3,classic,,festive orc tavern
+53762,sound/music/zonemusic/tavernpirate/ra_piratetavern1a.mp3,classic,,festive pirate playful tavern
+53763,sound/music/zonemusic/tavernpirate/ra_piratetavern1b.mp3,classic,,festive pirate playful tavern
+53764,sound/music/zonemusic/tavernpirate/ra_piratetavern2a.mp3,classic,,festive pirate playful tavern
+53765,sound/music/zonemusic/tavernpirate/ra_piratetavern2b.mp3,classic,,festive pirate playful tavern
+53766,sound/music/zonemusic/tavernpirate/ra_piratetavern3a.mp3,classic,,festive pirate playful tavern
+53767,sound/music/zonemusic/tavernpirate/ra_piratetavern3b.mp3,classic,,festive pirate playful tavern
+53768,sound/music/zonemusic/taverntauren/ra_taurenrestarea1a.mp3,classic,,calm tauren tavern
+53769,sound/music/zonemusic/taverntauren/ra_taurenrestarea1b.mp3,classic,,calm tauren tavern
+53770,sound/music/zonemusic/taverntauren/ra_taurenrestarea2a.mp3,classic,,calm tauren tavern
+53771,sound/music/zonemusic/taverntauren/ra_taurenrestarea2b.mp3,classic,,calm tauren tavern
+53772,sound/music/zonemusic/taverntauren/ra_taurenrestarea3a.mp3,classic,,calm tauren tavern
+53773,sound/music/zonemusic/taverntauren/ra_taurenrestarea3b.mp3,classic,,calm tauren tavern
+53774,sound/music/zonemusic/tavernundead/ra_undeadtavern1a.mp3,classic,,eerie tavern undead
+53775,sound/music/zonemusic/tavernundead/ra_undeadtavern1b.mp3,classic,,eerie tavern undead
+53776,sound/music/zonemusic/tavernundead/ra_undeadtavern2.mp3,classic,,eerie tavern undead
+53777,sound/music/zonemusic/tavernundead/ra_undeadtavern3a.mp3,classic,,eerie tavern undead
+53778,sound/music/zonemusic/tavernundead/ra_undeadtavern3b.mp3,classic,,eerie tavern undead
+53799,sound/music/zonemusic/terokkar/tf_bonewalkuni01.mp3,classic,,forest ruins somber
+53800,sound/music/zonemusic/terokkar/tf_bonewalkuni02.mp3,classic,,forest ruins somber
+53801,sound/music/zonemusic/terokkar/tf_bonewalkuni03.mp3,classic,,forest ruins somber
+53802,sound/music/zonemusic/terokkar/tf_bonewalkuni04.mp3,classic,,forest ruins somber
+53812,sound/music/zonemusic/volcanic/dayvolcanic01.mp3,classic,,day volcanic
+53813,sound/music/zonemusic/volcanic/dayvolcanic02.mp3,classic,,day volcanic
+53814,sound/music/zonemusic/volcanic/nightvolcanic01.mp3,classic,,night volcanic
+53815,sound/music/zonemusic/volcanic/nightvolcanic02.mp3,classic,,night volcanic
+574607,sound/music/zonemusic/wanderingisle/mus_50_wanderingislea_hero_uu01.mp3,classic,,calm forest pandaren

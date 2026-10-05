@@ -1,0 +1,222 @@
+# Hand corrections on top of the keyword guess in tools/wagolib.py.
+#   fileDataID,tags
+# `tags` replaces the guess entirely.  An empty `tags` drops the track from
+# Tracks.lua.  Lines starting with # are ignored.
+#
+# Vocabulary -- keep to these so Zones.lua stays meaningful:
+#   biome    forest darkforest enchanted jungle swamp plains barrens desert
+#            mountain snow volcanic coast sea cave underground ruins blighted
+#            void arcane elemental sky city town tavern
+#            (every track needs at least one biome, or it can play nowhere)
+#   culture  human dwarf gnome nightelf highelf orc tauren troll undead goblin
+#            naga draenei pandaren titan dragon demon centaur tuskarr earthen
+#            arathi kultiran drust vrykul nerubian pirate wild
+#   mood     calm melancholy mysterious eerie ominous heroic sacred festive
+#            somber tense grand playful
+#   time     day night        (untagged = plays at any hour)
+
+# --- dropped: story/boss/combat cues the keyword pass could not classify ---
+1780911,
+2146608,
+1417250,
+1500388,
+1417285,
+1417290,
+1417334,
+1417348,
+1417351,
+1417356,
+1305140,
+3853576,
+3853632,
+3853904,
+3850495,
+3850505,
+3850513,
+6037118,
+# --- dropped: too tied to one encounter to float around the open world ---
+441610,
+441716,
+575699,
+441802,
+441737,
+7692208,
+7692220,
+7681064,
+7698310,
+6055592,
+6074947,
+6075204,
+6382930,
+5700456,
+
+# --- fixes ---
+53282,city arcane draenei grand
+53473,city highelf grand
+574607,forest pandaren calm mysterious
+53519,blighted eerie
+441609,volcanic elemental ominous
+441705,forest nightelf sacred
+441744,sky elemental grand
+441753,sky elemental mysterious
+441525,heroic human grand
+443286,plains arathi calm day
+443307,blighted undead somber day
+441628,goblin playful festive
+642176,sky pandaren playful
+629414,sky pandaren grand
+642577,pandaren melancholy
+629423,pandaren sacred mountain
+629418,pandaren mysterious forest
+642875,plains pandaren calm
+625753,forest pandaren calm
+642242,pandaren calm
+642137,pandaren calm
+1068302,somber heroic
+1068308,sacred melancholy
+1064154,heroic grand
+1064156,cave underground mysterious
+1067039,plains orc heroic
+1080507,snow mountain melancholy
+1061104,arcane mysterious
+1064160,plains orc wild
+1067046,ominous tense
+1061135,somber melancholy
+1064164,heroic human grand
+1067568,melancholy calm
+1067066,ominous tense
+1061157,sky nightelf sacred
+1067572,sky nightelf sacred
+1067577,mountain sky grand
+1061177,playful festive
+1064165,orc plains calm
+1064173,goblin playful festive
+1417235,city arcane calm day
+1417269,city arcane mysterious night
+1417302,darkforest eerie ominous
+1500422,mountain tauren grand
+1417318,mountain tauren calm
+1477354,swamp eerie mysterious
+1477360,desert ruins ominous
+1477337,mountain coast vrykul heroic
+1477339,city nightelf arcane mysterious
+1500406,city nightelf arcane melancholy
+1500407,sea coast tense
+2143495,coast kultiran tense
+1780914,darkforest drust eerie
+2146594,coast festive playful
+1781896,sea coast heroic
+2144139,coast sea kultiran day
+2146252,jungle troll eerie
+2143515,blighted undead somber
+2143525,blighted undead ominous
+2146639,desert mysterious
+2145681,coast sea ominous
+2150462,coast plains kultiran calm
+2146766,forest undead melancholy
+2143546,jungle troll grand
+3853294,forest enchanted mysterious
+3853320,enchanted sacred night
+3853390,enchanted melancholy night
+3853246,enchanted sacred
+3853232,enchanted somber
+3853440,sacred heroic
+3853508,sacred melancholy
+3853528,sacred grand
+3857115,city playful festive
+3853738,city arcane mysterious
+3853786,city ominous
+3853820,city ominous grand
+3853854,ominous eerie
+3853882,city ominous
+3853912,void mysterious
+3853650,blighted undead ominous
+3853688,blighted somber
+3931650,blighted grand
+3853564,void somber
+4872416,snow forest calm day
+4872418,snow ruins mysterious
+4872424,snow calm
+4872450,swamp wild eerie
+4872428,mountain ominous
+4880319,coast ruins dragon mysterious
+4872498,mountain dragon calm
+4872504,mountain dragon calm
+4872466,plains centaur wild
+4872470,plains centaur calm
+4872460,plains forest calm
+4872472,plains centaur calm day
+4872440,mountain dragon grand
+4872490,snow coast tuskarr calm
+4872492,snow coast tuskarr calm
+4872434,city dragon grand
+4872442,city dragon calm
+4887999,coast dragon day
+6034298,melancholy void
+6034310,plains arathi heroic
+6050206,darkforest ominous eerie
+6068108,city earthen grand
+6034326,plains earthen calm
+6065737,plains coast earthen calm
+6065463,tavern earthen calm
+6037088,plains arathi sacred
+6034340,arcane mysterious
+6055566,underground cave earthen
+6065812,sacred arathi grand
+6055578,underground nerubian mysterious
+6068130,sky grand heroic
+6034358,mountain arathi grand
+6068162,underground nerubian eerie
+7688249,jungle troll ominous
+7698286,sacred heroic
+7684186,jungle troll ruins mysterious
+7690533,forest highelf calm day
+7682364,forest highelf calm
+7690541,forest sacred calm day
+7698306,desert highelf mysterious
+7684198,void arcane mysterious
+7681162,void eerie
+7681130,city highelf grand
+7713438,city highelf calm
+7692176,forest nightelf melancholy
+7692188,sacred grand
+7682398,sacred grand mysterious
+7682428,jungle troll ominous
+
+# --- mood-only pieces worth keeping, given a biome so they can be placed ---
+1067568,plains orc melancholy calm
+1068308,sacred melancholy draenei
+8181319,sacred calm human
+8180933,ruins mysterious
+8180935,ruins mysterious
+8180937,ruins mysterious
+8180939,ruins mysterious
+8180941,ruins mysterious
+8180943,ruins mysterious
+8180945,ruins mysterious
+8180947,ruins mysterious
+8180949,ruins mysterious
+8180951,ruins mysterious
+
+# --- every track names where it belongs ---------------------------------
+# A track with no biome tag used to pass the biome check everywhere -- the
+# goblin pieces played across the open Barrens because the zone admits
+# goblins (for Ratchet).  The matcher now requires a biome, so these get one.
+#
+# Goblin settlement music: goblin towns only (the `town` biome, which only
+# the town profiles in Zones.lua allow).
+8204579,town goblin playful
+8204581,town goblin playful
+8204583,town goblin playful
+8204585,town goblin playful
+441628,town goblin playful festive
+1064173,town goblin playful festive
+# Orchestral pieces with a place of their own.
+441525,city heroic human grand
+1064164,coast sea kultiran heroic
+8181319,city sacred calm human
+642242,forest pandaren calm
+642137,forest pandaren calm
+642577,forest pandaren melancholy
+1068308,sky draenei sacred melancholy
+6065812,plains arathi sacred grand
