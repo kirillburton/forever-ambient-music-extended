@@ -12,3 +12,6 @@ __pycache__/
 
 # Packaged builds -- attach to a release instead.
 *.zip
+
+# Built packages (tools/package.py).
+dist/

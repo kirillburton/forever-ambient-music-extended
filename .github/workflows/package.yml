@@ -1,0 +1,66 @@
+# Checks the addon on every push, and on a version tag publishes the zip as a
+# GitHub release.
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# The tag has to match `## Version:` in the .toc, or the run fails before
+# anything is published -- so a release can never carry the wrong version.
+name: Package
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lua
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lua5.4
+
+      - name: Lua syntax
+        run: for f in ForeverAmbientMusicExtended/*.lua; do luac5.4 -p "$f"; done
+
+      - name: Data checks (tags, zones, game music data)
+        run: lua5.4 tools/check_zones.lua
+
+      - name: Behaviour checks (schedule, silences, fades, pools)
+        run: lua5.4 tools/smoke.lua
+
+      - name: Tag matches the .toc version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          toc=$(sed -n 's/^## Version:[[:space:]]*//p' ForeverAmbientMusicExtended/ForeverAmbientMusicExtended.toc | tr -d '\r')
+          if [ "v$toc" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match '## Version: $toc' in the .toc"
+            exit 1
+          fi
+
+      - name: Build zip
+        run: python3 tools/package.py
+
+      # Every run keeps its zip for 30 days under the run's Artifacts.  GitHub
+      # wraps artifacts in a zip of their own; the release asset below is the
+      # real file.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ForeverAmbientMusicExtended
+          path: dist/*.zip
+          retention-days: 30
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.zip \
+            --title "Forever Ambient Music Extended $GITHUB_REF_NAME" \
+            --generate-notes --verify-tag

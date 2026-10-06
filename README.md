@@ -210,6 +210,35 @@ checking in game.
 
 ---
 
+## Packaging and releases
+
+Build the zip with the script, not Finder's "Compress" or `zip -r`. On macOS
+both add a `__MACOSX/` folder and `.DS_Store`, and CurseForge rejects the
+upload for either.
+
+```
+python3 tools/package.py                  # -> dist/ForeverAmbientMusicExtended-<version>.zip
+python3 tools/package.py --check some.zip # check any zip against the same rules
+```
+
+The script packages an explicit list of files (the `.toc`, the Lua files,
+`Media/`, and `Music/README.txt`, never your own extracted audio) under a
+single `ForeverAmbientMusicExtended/` folder. It checks the result for
+`__MACOSX`, dotfiles and anything outside that folder before writing it, and
+confirms every file the `.toc` loads is included. The version comes from
+`## Version:` in the `.toc`. The same source always produces the same zip.
+
+On GitHub, `.github/workflows/package.yml` runs the syntax, data and
+behaviour checks on every push and keeps the built zip under the run's
+**Artifacts**. To publish a release:
+
+1. Bump `## Version:` in the `.toc` and commit.
+2. `git tag v0.1.1 && git push origin v0.1.1`
+
+The workflow fails before publishing if the tag doesn't match the `.toc`
+version. Otherwise it attaches the zip to a GitHub release named after the
+tag, which is the file to upload to CurseForge.
+
 ## Local files
 
 Audio you extracted from your own retail install can go in the rotation
