@@ -98,13 +98,6 @@ By era: 73 Classic pieces Forever doesn't use in these zones, 220 from the
 Forever soundtrack itself, and 115 across Cataclysm, Mists, Warlords, Legion,
 Battle for Azeroth, Shadowlands, Dragonflight, The War Within and Midnight.
 
-## Adding your own music
-
-You can add your own audio files to the rotation alongside the built-in tracks. 
-Place mp3 or ogg files in the addon's `Music` folder, generate their entries with 
-the helper script from the project's GitHub page, tag them, and restart the client. 
-Full instructions are in the `README`.
-
 **No Blizzard audio is bundled with or distributed by this addon.** Every
 built-in track is a file your Forever client already has — the list was
 generated from the client's own file manifest, so there is nothing to
@@ -113,7 +106,7 @@ download and nothing to go missing.
 ## Notes
 
 - Forever beta writes SavedVariables but does not always load them back, so a
-  setting changed with `/fame chance` may not survive a logout. The defaults
+  setting changed with `/fame chance`, or a ban, may not survive a logout. The defaults
   are what the addon is tuned for, so this rarely matters.
 - Tuned for interface 16001. If a patch moves it, the `.toc` needs one line
   changed.
