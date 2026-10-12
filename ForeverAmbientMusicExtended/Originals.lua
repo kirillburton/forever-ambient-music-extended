@@ -267,14 +267,18 @@ ns.intros = {
     [1691] = { name = "MUS_C60_Hyjal_Elderwild_Intro", delay = 3600, tracks = { { id = 8197333, len = 72 } } },
 }
 
--- uiMapID -> the zone's own area.  `sub` lists only the subzones whose
+-- uiMapID -> the zone's own area.  `name` is the area's English name,
+-- used only when the client cannot name the area itself: FAME checks
+-- GetZoneText() against it, and steps aside when the game says you are
+-- somewhere else -- out at sea on a ship, for instance.
+-- `sub` lists only the subzones whose
 -- music differs from the zone's, that open with an intro, or that are a
 -- town in Zones.lua: { areaID,
 -- English name, set (0 = same as the zone), intro (0 = none) }.  The
 -- English name is a fallback; at load FAME asks C_Map.GetAreaInfo for the
 -- client's own spelling, so subzone matching works in any locale.
 ns.zoneMusic = {
-    [1411] = { area = 14, set = 9, intro = 0, -- Durotar
+    [1411] = { area = 14, name = "Durotar", set = 9, intro = 0,
         sub = {
             { 368, "Echo Isles", 3, 0 },
             { 407, "Orgrimmar UNUSED", 14, 62 },
@@ -282,13 +286,13 @@ ns.zoneMusic = {
             { 367, "Sen'jin Village", 185, 0 },
             { 372, "Tiragarde Keep", 186, 301 },
         } },
-    [1412] = { area = 215, set = 9, intro = 0, -- Mulgore
+    [1412] = { area = 215, name = "Mulgore", set = 9, intro = 0,
         sub = {
             { 404, "Bael'dun Digsite", 9, 102 },
             { 222, "Bloodhoof Village", 226, 0 },
             { 637, "Kodo Rock", 9, 121 },
         } },
-    [1413] = { area = 17, set = 7, intro = 0, -- The Barrens
+    [1413] = { area = 17, name = "The Barrens", set = 7, intro = 0,
         sub = {
             { 378, "Camp Taurajo", 226, 0 },
             { 2138, "Dreadmist Den", 10, 0 },
@@ -305,7 +309,7 @@ ns.zoneMusic = {
             { 388, "The Stagnant Oasis", 3, 0 },
             { 401, "The Tidus Stair", 3, 0 },
         } },
-    [1416] = { area = 36, set = 1, intro = 0, -- Alterac Mountains
+    [1416] = { area = 36, name = "Alterac Mountains", set = 1, intro = 0,
         sub = {
             { 282, "Crushridge Hold", 10, 0 },
             { 279, "Dalaran", 3171, 1685 },
@@ -317,7 +321,7 @@ ns.zoneMusic = {
             { 283, "Slaughter Hollow", 10, 0 },
             { 280, "Strahnbrad", 10, 301 },
         } },
-    [1417] = { area = 45, set = 8, intro = 0, -- Arathi Highlands
+    [1417] = { area = 45, name = "Arathi Highlands", set = 8, intro = 0,
         sub = {
             { 315, "Dabyrie's Farmstead", 0, 301 },
             { 327, "Faldir's Cove", 3, 0 },
@@ -330,14 +334,14 @@ ns.zoneMusic = {
             { 1837, "Witherbark Caverns", 3, 0 },
             { 317, "Witherbark Village", 3, 0 },
         } },
-    [1418] = { area = 3, set = 7, intro = 0, -- Badlands
+    [1418] = { area = 3, name = "Badlands", set = 7, intro = 0,
         sub = {} },
-    [1419] = { area = 4, set = 7, intro = 0, -- Blasted Lands
+    [1419] = { area = 4, name = "Blasted Lands", set = 7, intro = 0,
         sub = {
             { 1441, "Altar of Storms", 10, 0 },
             { 1438, "Nethergarde Keep", 205, 303 },
         } },
-    [1420] = { area = 85, set = 2, intro = 0, -- Tirisfal Glades
+    [1420] = { area = 85, name = "Tirisfal Glades", set = 2, intro = 0,
         sub = {
             { 158, "Agamand Family Crypt", 15, 0 },
             { 157, "Agamand Mills", 15, 0 },
@@ -348,7 +352,7 @@ ns.zoneMusic = {
             { 16881, "Shadowvale", 15, 0 },
             { 16616, "Whispering Forest", 15, 0 },
         } },
-    [1421] = { area = 130, set = 2, intro = 0, -- Silverpine Forest
+    [1421] = { area = 130, name = "Silverpine Forest", set = 2, intro = 0,
         sub = {
             { 233, "Ambermill", 191, 301 },
             { 231, "Beren's Peril", 191, 0 },
@@ -358,7 +362,7 @@ ns.zoneMusic = {
             { 204, "Pyrewood Village", 191, 301 },
             { 228, "The Sepulcher", 15, 0 },
         } },
-    [1422] = { area = 28, set = 205, intro = 0, -- Western Plaguelands
+    [1422] = { area = 28, name = "Western Plaguelands", set = 205, intro = 0,
         sub = {
             { 200, "Dalson's Tears", 10, 0 },
             { 199, "Felstone Field", 10, 0 },
@@ -368,14 +372,14 @@ ns.zoneMusic = {
             { 202, "The Writhing Haunt", 10, 0 },
             { 196, "Uther's Tomb", 15, 0 },
         } },
-    [1423] = { area = 139, set = 205, intro = 0, -- Eastern Plaguelands
+    [1423] = { area = 139, name = "Eastern Plaguelands", set = 205, intro = 0,
         sub = {
             { 16335, "New Avalon", 3161, 0 },
             { 2276, "Quel'Lithien Lodge", 76, 0 },
             { 2266, "Tyr's Hand", 193, 0 },
             { 2273, "Zul'Mashar", 227, 0 },
         } },
-    [1424] = { area = 267, set = 1, intro = 0, -- Hillsbrad Foothills
+    [1424] = { area = 267, name = "Hillsbrad Foothills", set = 1, intro = 0,
         sub = {
             { 288, "Azurelode Mine", 0, 301 },
             { 275, "Durnholde Keep", 191, 302 },
@@ -383,47 +387,47 @@ ns.zoneMusic = {
             { 285, "Southpoint Tower", 2, 0 },
             { 272, "Tarren Mill", 182, 0 },
         } },
-    [1425] = { area = 47, set = 1, intro = 0, -- The Hinterlands
+    [1425] = { area = 47, name = "The Hinterlands", set = 1, intro = 0,
         sub = {
             { 354, "Jintha'Alor", 227, 0 },
             { 356, "Seradane", 76, 0 },
             { 353, "Shadra'Alor", 3, 0 },
             { 355, "The Altar of Zul", 176, 0 },
         } },
-    [1426] = { area = 1, set = 8, intro = 0, -- Dun Morogh
+    [1426] = { area = 1, name = "Dun Morogh", set = 8, intro = 0,
         sub = {
             { 135, "Frostmane Hold", 0, 121 },
             { 802, "Shimmer Ridge", 0, 121 },
         } },
-    [1427] = { area = 51, set = 10, intro = 0, -- Searing Gorge
+    [1427] = { area = 51, name = "Searing Gorge", set = 10, intro = 0,
         sub = {} },
-    [1428] = { area = 46, set = 10, intro = 0, -- Burning Steppes
+    [1428] = { area = 46, name = "Burning Steppes", set = 10, intro = 0,
         sub = {
             { 252, "Blackrock Stronghold", 0, 301 },
         } },
-    [1429] = { area = 12, set = 1, intro = 0, -- Elwynn Forest
+    [1429] = { area = 12, name = "Elwynn Forest", set = 1, intro = 0,
         sub = {
             { 56, "Heroes' Vigil", 1, 303 },
             { 797, "Jerod's Landing", 0, 301 },
             { 80, "Stormwind Mountains", 17, 0 },
             { 55, "Valley of Heroes UNUSED", 17, 0 },
         } },
-    [1430] = { area = 41, set = 2, intro = 0, -- Deadwind Pass
+    [1430] = { area = 41, name = "Deadwind Pass", set = 2, intro = 0,
         sub = {} },
-    [1431] = { area = 10, set = 2, intro = 0, -- Duskwood
+    [1431] = { area = 10, name = "Duskwood", set = 2, intro = 0,
         sub = {
             { 492, "Raven Hill Cemetery", 15, 0 },
             { 13, "The World Tree", 11, 0 },
             { 121, "Tranquil Gardens Cemetery", 15, 0 },
             { 93, "Vul'Gol Ogre Mound", 214, 0 },
         } },
-    [1432] = { area = 38, set = 1, intro = 0, -- Loch Modan
+    [1432] = { area = 38, name = "Loch Modan", set = 1, intro = 0,
         sub = {
             { 143, "Mo'grosh Stronghold", 14, 0 },
         } },
-    [1433] = { area = 44, set = 1, intro = 0, -- Redridge Mountains
+    [1433] = { area = 44, name = "Redridge Mountains", set = 1, intro = 0,
         sub = {} },
-    [1434] = { area = 33, set = 3, intro = 0, -- Stranglethorn Vale
+    [1434] = { area = 33, name = "Stranglethorn Vale", set = 3, intro = 0,
         sub = {
             { 2177, "Battle Ring", 0, 325 },
             { 35, "Booty Bay", 3, 0 },
@@ -431,13 +435,13 @@ ns.zoneMusic = {
             { 2338, "South Seas", 0, 122 },
             { 3357, "Yojamba Isle", 245, 0 },
         } },
-    [1435] = { area = 8, set = 223, intro = 0, -- Swamp of Sorrows
+    [1435] = { area = 8, name = "Swamp of Sorrows", set = 223, intro = 0,
         sub = {} },
-    [1436] = { area = 40, set = 9, intro = 0, -- Westfall
+    [1436] = { area = 40, name = "Westfall", set = 9, intro = 0,
         sub = {
             { 26, "Lighthouse", 7, 0 },
         } },
-    [1437] = { area = 11, set = 227, intro = 0, -- Wetlands
+    [1437] = { area = 11, name = "Wetlands", set = 227, intro = 0,
         sub = {
             { 298, "Baradin Bay", 3, 0 },
             { 205, "Dun Modr", 191, 0 },
@@ -446,7 +450,7 @@ ns.zoneMusic = {
             { 17738, "The Drunken Dwarf", 3562, 0 },
             { 118, "Whelgar's Excavation Site", 191, 0 },
         } },
-    [1438] = { area = 141, set = 11, intro = 0, -- Teldrassil
+    [1438] = { area = 141, name = "Teldrassil", set = 11, intro = 0,
         sub = {
             { 700, "Cenarion Enclave UNUSED", 76, 0 },
             { 696, "Craftsmen's Terrace UNUSED", 76, 0 },
@@ -456,14 +460,14 @@ ns.zoneMusic = {
             { 697, "Tradesmen's Terrace UNUSED", 76, 0 },
             { 701, "Warrior's Terrace UNUSED", 76, 0 },
         } },
-    [1439] = { area = 148, set = 191, intro = 0, -- Darkshore
+    [1439] = { area = 148, name = "Darkshore", set = 191, intro = 0,
         sub = {
             { 447, "Ameth'Aran", 15, 0 },
             { 442, "Auberdine", 0, 81 },
             { 448, "Grove of the Ancients", 0, 302 },
             { 443, "Ruins of Mathystra", 176, 0 },
         } },
-    [1440] = { area = 331, set = 11, intro = 0, -- Ashenvale
+    [1440] = { area = 331, name = "Ashenvale", set = 11, intro = 0,
         sub = {
             { 415, "Astranaar", 11, 81 },
             { 411, "Bathran's Haunt", 205, 0 },
@@ -492,12 +496,12 @@ ns.zoneMusic = {
             { 429, "Xavian", 3, 121 },
             { 2897, "Zoram'gar Outpost", 185, 0 },
         } },
-    [1441] = { area = 400, set = 9, intro = 0, -- Thousand Needles
+    [1441] = { area = 400, name = "Thousand Needles", set = 9, intro = 0,
         sub = {
             { 2097, "Darkcloud Pinnacle", 226, 0 },
             { 484, "Freewind Post", 226, 0 },
         } },
-    [1442] = { area = 406, set = 7, intro = 0, -- Stonetalon Mountains
+    [1442] = { area = 406, name = "Stonetalon Mountains", set = 7, intro = 0,
         sub = {
             { 2538, "Camp Aparaje", 226, 0 },
             { 2537, "Grimtotem Post", 226, 0 },
@@ -507,7 +511,7 @@ ns.zoneMusic = {
             { 460, "Sun Rock Retreat", 228, 0 },
             { 468, "The Talon Den", 11, 0 },
         } },
-    [1443] = { area = 405, set = 176, intro = 0, -- Desolace
+    [1443] = { area = 405, name = "Desolace", set = 176, intro = 0,
         sub = {
             { 600, "Bolgan's Hole", 7, 0 },
             { 2405, "Ethel Rethor", 227, 0 },
@@ -526,12 +530,12 @@ ns.zoneMusic = {
             { 599, "Thunder Axe Fortress", 193, 301 },
             { 607, "Valley of Spears", 7, 0 },
         } },
-    [1444] = { area = 357, set = 3, intro = 0, -- Feralas
+    [1444] = { area = 357, name = "Feralas", set = 3, intro = 0,
         sub = {
             { 1099, "Camp Mojache", 226, 0 },
             { 2577, "Dire Maul", 11, 0 },
         } },
-    [1445] = { area = 15, set = 227, intro = 0, -- Dustwallow Marsh
+    [1445] = { area = 15, name = "Dustwallow Marsh", set = 227, intro = 0,
         sub = {
             { 2079, "Alcaz Island", 3, 0 },
             { 501, "Beezil's Wreck", 3, 0 },
@@ -541,12 +545,12 @@ ns.zoneMusic = {
             { 503, "Sentry Point", 191, 0 },
             { 513, "Theramore Isle", 13, 401 },
         } },
-    [1446] = { area = 440, set = 176, intro = 0, -- Tanaris
+    [1446] = { area = 440, name = "Tanaris", set = 176, intro = 0,
         sub = {
             { 976, "Gadgetzan", 0, 0 },
             { 977, "Steamwheedle Port", 3, 0 },
         } },
-    [1447] = { area = 16, set = 205, intro = 0, -- Azshara
+    [1447] = { area = 16, name = "Azshara", set = 205, intro = 0,
         sub = {
             { 1227, "Bay of Storms", 176, 0 },
             { 1216, "Blackmaw Hold", 176, 0 },
@@ -567,22 +571,22 @@ ns.zoneMusic = {
             { 1229, "Tower of Eldara", 176, 0 },
             { 1237, "Valormok", 228, 0 },
         } },
-    [1448] = { area = 361, set = 193, intro = 0, -- Felwood
+    [1448] = { area = 361, name = "Felwood", set = 193, intro = 0,
         sub = {
             { 1761, "Deadwood Village", 194, 0 },
             { 1762, "Felpaw Village", 194, 0 },
             { 1763, "Jaedenar", 193, 161 },
         } },
-    [1449] = { area = 490, set = 223, intro = 0, -- Un'Goro Crater
+    [1449] = { area = 490, name = "Un'Goro Crater", set = 223, intro = 0,
         sub = {
             { 16986, "Pillar of Assimilation", 3522, 0 },
             { 16985, "The Shaper's Terrace", 3522, 0 },
         } },
-    [1450] = { area = 493, set = 191, intro = 201, -- Moonglade
+    [1450] = { area = 493, name = "Moonglade", set = 191, intro = 201,
         sub = {} },
-    [1451] = { area = 1377, set = 176, intro = 0, -- Silithus
+    [1451] = { area = 1377, name = "Silithus", set = 176, intro = 0,
         sub = {} },
-    [1452] = { area = 618, set = 8, intro = 0, -- Winterspring
+    [1452] = { area = 618, name = "Winterspring", set = 8, intro = 0,
         sub = {
             { 2256, "Darkwhisper Gorge", 205, 0 },
             { 16005, "Darkwhisper Gorge", 205, 0 },
@@ -590,23 +594,23 @@ ns.zoneMusic = {
             { 2245, "Mazthoril", 223, 301 },
             { 2253, "Starfall Village", 76, 103 },
         } },
-    [1453] = { area = 1519, set = 13, intro = 0, -- Stormwind City
+    [1453] = { area = 1519, name = "Stormwind City", set = 13, intro = 0,
         sub = {
             { 1617, "Valley of Heroes", 13, 61 },
         } },
-    [1454] = { area = 1637, set = 7, intro = 62, -- Orgrimmar
+    [1454] = { area = 1637, name = "Orgrimmar", set = 7, intro = 62,
         sub = {} },
-    [1455] = { area = 1537, set = 232, intro = 0, -- Ironforge
+    [1455] = { area = 1537, name = "Ironforge", set = 232, intro = 0,
         sub = {} },
-    [1456] = { area = 1638, set = 226, intro = 381, -- Thunder Bluff
+    [1456] = { area = 1638, name = "Thunder Bluff", set = 226, intro = 381,
         sub = {} },
-    [1457] = { area = 1657, set = 76, intro = 63, -- Darnassus
+    [1457] = { area = 1657, name = "Darnassus", set = 76, intro = 63,
         sub = {
             { 1658, "Cenarion Enclave", 0, 103 },
         } },
-    [1458] = { area = 1497, set = 182, intro = 0, -- Undercity
+    [1458] = { area = 1497, name = "Undercity", set = 182, intro = 0,
         sub = {} },
-    [2482] = { area = 616, set = 3546, intro = 0, -- Mount Hyjal
+    [2482] = { area = 616, name = "Mount Hyjal", set = 3546, intro = 0,
         sub = {
             { 17145, "Cradle of Tranquility", 3558, 1688 },
             { 16866, "Dae'gun", 3568, 0 },
@@ -618,7 +622,7 @@ ns.zoneMusic = {
             { 16849, "Summit of Eternity", 3548, 1686 },
             { 16853, "Tainted Foothills", 3549, 0 },
         } },
-    [2521] = { area = 16593, set = 3230, intro = 0, -- Zephras Isle
+    [2521] = { area = 16593, name = "Zephras Isle", set = 3230, intro = 0,
         sub = {
             { 17675, "East Pylon Watchtower", 3553, 0 },
             { 17684, "Fairweather Stables", 3553, 0 },
@@ -641,9 +645,9 @@ ns.zoneMusic = {
             { 16625, "Windsong Lake", 3554, 0 },
             { 17676, "Windsong Standing Stones", 3554, 0 },
         } },
-    [2524] = { area = 16606, set = 243, intro = 0, -- Darkspear Islands
+    [2524] = { area = 16606, name = "Darkspear Islands", set = 243, intro = 0,
         sub = {} },
-    [2548] = { area = 16591, set = 3531, intro = 0, -- Riverglades
+    [2548] = { area = 16591, name = "Riverglades", set = 3531, intro = 0,
         sub = {
             { 16726, "Bolder'ok", 3550, 0 },
             { 16728, "Eastwind Shore", 3533, 0 },
@@ -659,9 +663,9 @@ ns.zoneMusic = {
             { 16725, "Wheeler's Grange", 3534, 0 },
             { 16731, "Windstead", 3533, 0 },
         } },
-    [2652] = { area = 16651, set = 306, intro = 0, -- Shen'dralas
+    [2652] = { area = 16651, name = "Shen'dralas", set = 306, intro = 0,
         sub = {} },
-    [2665] = { area = 16593, set = 3230, intro = 0, -- Zephras Isle
+    [2665] = { area = 16593, name = "Zephras Isle", set = 3230, intro = 0,
         sub = {
             { 17675, "East Pylon Watchtower", 3553, 0 },
             { 17684, "Fairweather Stables", 3553, 0 },

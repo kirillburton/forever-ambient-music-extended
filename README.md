@@ -54,6 +54,42 @@ play in it.
   FAME hands the music channel back and the game plays its own music as
   normal. The same happens with `/fame off`, or with music turned off in the
   sound options.
+- **Death is the game's.** From the moment you die until you're alive again,
+  through the whole spirit walk back to your corpse, FAME stays out and the
+  game's own music rules apply. Coming back to life starts over like
+  arriving: the game's own track first.
+- **Ships are the game's.** The open seas (The Great Sea, The Forbidding Sea,
+  The Veiled Sea) are areas of their own in the game, each with its own
+  music. But a ship near the coast can still sit inside a zone's map, so
+  FAME checks the game's own zone name (`GetZoneText()`). If the game has you
+  somewhere other than the zone on the map, FAME steps aside until you land.
+  The name is compared in the client's own language via
+  `C_Map.GetAreaInfo`. If the client can't name the area, the check is
+  skipped rather than guessed.
+
+### Banning tracks
+
+`/fame ban` bans whatever is playing, whether it's the game's own track, an
+extended one or an intro, and ends it the way it would have ended anyway.
+Bans apply *before* each decision: the game's tracks and the extended pool
+are both filtered first, so a decision only ever lands on an unbanned track.
+If the roll asked for one kind and bans have emptied it, the other kind
+plays.
+
+If everything a place could play is banned, FAME plays nothing and says so
+in chat at decision time: *"All music for the zone was banned, playing
+nothing. Unban songs with /fame unban command"*. It then waits the game's
+usual silence (at least a minute, even with Loop Music on) before checking
+again. `/fame unban` resumes music immediately.
+
+`/fame banlist` lists each banned id with the zone it was banned in;
+`/fame unban <id>` and `/fame unban all` undo bans. Bans are by track, so
+banning a piece bans it everywhere. They don't reach places FAME leaves to
+the game (dungeons, raids, battlegrounds, death, the open sea): there the
+game chooses, so `/fame ban` explains it can't ban that music.
+
+Bans are kept in SavedVariables. On beta builds that write SavedVariables
+but never load them back, bans last until you log out.
 
 ### Why it runs the schedule itself
 
@@ -117,6 +153,9 @@ tavern.
 | `/fame pool [n]` | list the first n tracks eligible here |
 | `/fame play <fileDataID>` | play one track now |
 | `/fame scan <id> [id …]` | report which fileDataIDs this client actually has |
+| `/fame ban` | never play the current track again |
+| `/fame banlist` | list banned tracks with the zone each was banned in |
+| `/fame unban <id>` \| `all` | allow one banned track again, or all of them |
 | `/fame chance <0-100>` | percent of tracks kept as the game's own (default 40) |
 | `/fame first` | toggle whether the first track in a new place may be extended |
 | `/fame verify` | also probe built-in tracks for presence |

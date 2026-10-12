@@ -223,7 +223,11 @@ def main():
     for iid, i in intro_rows.items():
         L.append("    [%d] = { name = %s, delay = %d, tracks = %s }," % (iid, lua_str(i["name"]), i["delay"], tracklist(i["files"])))
     L += ["}", "",
-          "-- uiMapID -> the zone's own area.  `sub` lists only the subzones whose",
+          "-- uiMapID -> the zone's own area.  `name` is the area's English name,",
+          "-- used only when the client cannot name the area itself: FAME checks",
+          "-- GetZoneText() against it, and steps aside when the game says you are",
+          "-- somewhere else -- out at sea on a ship, for instance.",
+          "-- `sub` lists only the subzones whose",
           "-- music differs from the zone's, that open with an intro, or that are a",
           "-- town in Zones.lua: { areaID,",
           "-- English name, set (0 = same as the zone), intro (0 = none) }.  The",
@@ -232,7 +236,7 @@ def main():
           "ns.zoneMusic = {"]
     for map_id in sorted(zones):
         z = zones[map_id]
-        L.append("    [%d] = { area = %d, set = %d, intro = %d, -- %s" % (map_id, z["area"], z["set"], z["intro"], z["name"]))
+        L.append("    [%d] = { area = %d, name = %s, set = %d, intro = %d," % (map_id, z["area"], lua_str(z["name"]), z["set"], z["intro"]))
         if z["sub"]:
             L.append("        sub = {")
             for aid, nm, s, i in sorted(z["sub"], key=lambda x: x[1]):

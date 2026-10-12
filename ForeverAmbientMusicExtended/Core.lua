@@ -49,6 +49,9 @@ local defaults = {
     -- against this client's own file list when Tracks.lua was generated.
     verifyBuiltin = false,
     debug = false,
+    -- Tracks the player has banned with /fame ban, keyed by fileDataID (or
+    -- file path, for a local track): { zone = "...", kind = "...", at = time }.
+    banned = {},
 }
 
 local db = {}
@@ -196,6 +199,29 @@ local function innSetFor(prof)
     return ns.tavernSets[key]
 end
 
+-- Is the game's own idea of the current zone the one FAME mapped?  Out at
+-- sea on a ship, the map can still place you in the nearest coastal zone
+-- while the game has you in The Great Sea -- an area of its own, with music
+-- of its own.  GetZoneText() is the game's answer, so FAME compares against
+-- that, using the client's own name for the mapped area (C_Map.GetAreaInfo)
+-- and the English one only on an English client.  If neither is available
+-- the check is skipped rather than guessed.
+local zoneNames = {}
+
+local function gameAgreesOnZone(zm)
+    local expected = zoneNames[zm.area]
+    if expected == nil then
+        expected = (C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(zm.area))
+            or (GetLocale and GetLocale():sub(1, 2) == "en" and zm.name)
+            or false
+        zoneNames[zm.area] = expected
+    end
+    if not expected then return true end
+    local actual = GetZoneText()
+    if not actual or actual == "" then return true end
+    return actual == expected
+end
+
 -- The music context for where the player stands, or nil plus the reason
 -- FAME should stay out of it.  `key` identifies the music the game would be
 -- playing: two places with the same key sound the same, so moving between
@@ -203,12 +229,16 @@ end
 local function resolveContext()
     if not db.enabled then return nil, "off" end
     if not soundAvailable() then return nil, "muted" end
+    -- Dead, or walking back as a spirit: the game has music rules of its own
+    -- for that, and FAME stays out of them entirely.
+    if UnitIsDeadOrGhost and UnitIsDeadOrGhost("player") then return nil, "dead" end
     if IsInInstance() then return nil, "instance" end
 
     local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
     local zm = mapID and ns.zoneMusic[mapID]
     local prof = mapID and ns.zones[mapID]
     if not (zm and prof) then return nil, "unmapped" end
+    if not gameAgreesOnZone(zm) then return nil, "elsewhere" end
 
     local ctx = { mapID = mapID, prof = prof, setID = zm.set, area = zm.area, introID = zm.intro }
     local sub = subzoneEntry(mapID, GetSubZoneText())
@@ -325,28 +355,57 @@ function FAME:Playable(track)
     return ok
 end
 
--- An extended track for this profile, never the one just played.
-function FAME:Pick(prof)
-    local pool = self:Pool(prof)
-    if #pool == 0 then return nil end
+-- Bans apply to everything FAME chooses -- the game's own tracks, extended
+-- ones, intros -- and they apply before the choice, not after: each list is
+-- filtered first, so a decision only ever lands on something playable.
+local function trackKey(track) return track.id or track.file end
+
+local function isBanned(track)
+    return db.banned[trackKey(track)] ~= nil
+end
+
+local function unbanned(list)
+    local out = {}
+    for _, track in ipairs(list or {}) do
+        if not isBanned(track) then out[#out + 1] = track end
+    end
+    return out
+end
+
+-- A random entry, avoiding the track just played when there is a choice.
+-- `ok` filters further (the presence probe for local files).
+local function pickFrom(list, previous, ok)
+    if #list == 0 then return nil end
+    local prevKey = previous and trackKey(previous)
     for _ = 1, 15 do
-        local track = pool[math.random(#pool)]
-        if track ~= self.previous and self:Playable(track) then return track end
+        local track = list[math.random(#list)]
+        if (#list == 1 or trackKey(track) ~= prevKey) and (not ok or ok(track)) then
+            return track
+        end
     end
     return nil
 end
 
--- One of the game's own tracks for this music set, the way the game picks:
--- the night list after dark when the set has one.
-function FAME:PickOriginal(musicSet)
+-- Extended tracks for this profile that are not banned.
+function FAME:ExtendedChoices(prof)
+    return unbanned(self:Pool(prof))
+end
+
+-- The game's own tracks for this set that are not banned, the way the game
+-- picks: the night list after dark when the set has one.
+function FAME:OriginalChoices(musicSet)
     local list = isNight() and musicSet.night or musicSet.day
     if not list or #list == 0 then list = musicSet.day or musicSet.night end
-    if not list or #list == 0 then return nil end
-    for _ = 1, 10 do
-        local track = list[math.random(#list)]
-        if track.id ~= (self.previous and self.previous.id) or #list == 1 then return track end
-    end
-    return list[math.random(#list)]
+    return unbanned(list)
+end
+
+function FAME:Pick(prof)
+    return pickFrom(self:ExtendedChoices(prof), self.previous,
+        function(track) return FAME:Playable(track) end)
+end
+
+function FAME:PickOriginal(musicSet)
+    return pickFrom(self:OriginalChoices(musicSet), self.previous)
 end
 
 local function silenceFor(musicSet)
@@ -495,6 +554,8 @@ local STATE = {
     muted    = "music is off in the sound options",
     instance = "in an instance -- the game plays its own music",
     unmapped = "no data for this place -- the game plays its own music",
+    dead     = "dead or a spirit -- the game plays its own music",
+    elsewhere = "the game has you outside this zone (at sea?) -- it plays its own music",
     original = "playing the game's own track",
     extended = "playing an extended track",
     intro    = "playing the game's intro for this place",
@@ -566,23 +627,42 @@ function FAME:NextTrack()
         ctx.first = false
         return self:HoldSilence(silenceFor(ctx.set))
     end
-    local original
+
+    local originals = self:OriginalChoices(ctx.set)
+    local extended = self:ExtendedChoices(ctx.prof)
+    if #originals == 0 and #extended == 0 then
+        -- Everything this place could play has been banned.  Play nothing,
+        -- say why, and check again after the game's usual silence -- at
+        -- least a minute, so Loop Music cannot turn this into a busy loop.
+        say("All music for the zone was banned, playing nothing. Unban songs with /fame unban command")
+        ctx.first, ctx.allBanned = false, true
+        return self:HoldSilence(math.max(60, silenceFor(ctx.set)))
+    end
+    ctx.allBanned = false
+
+    local wantOriginal
     if ctx.first and not db.displaceFirst then
-        original = true
+        wantOriginal = true
     else
-        original = math.random() < db.originalChance
+        wantOriginal = math.random() < db.originalChance
     end
     ctx.first = false
 
-    local track, kind
-    if not original then
-        track, kind = self:Pick(ctx.prof), "extended"
+    -- Whichever kind the roll asked for, unless bans have emptied it; then
+    -- the other kind.  Either way the pick comes from unbanned tracks.
+    local order = wantOriginal and { "original", "extended" } or { "extended", "original" }
+    for _, kind in ipairs(order) do
+        local track
+        if kind == "original" then
+            track = pickFrom(originals, self.previous)
+        else
+            track = pickFrom(extended, self.previous, function(t) return FAME:Playable(t) end)
+        end
+        if track then return self:PlayTrack(track, kind) end
     end
-    if not track then
-        track, kind = self:PickOriginal(ctx.set), "original"
-    end
-    if not track then return self:HoldSilence(silenceFor(ctx.set)) end
-    self:PlayTrack(track, kind)
+    -- Only reachable when every unbanned extended track is a local file that
+    -- turned out to be missing and there are no originals left.
+    self:HoldSilence(silenceFor(ctx.set))
 end
 
 -- Intros play on arriving in their area, at most once per cooldown -- the
@@ -591,7 +671,7 @@ local introPlayedAt = {}
 
 function FAME:DueIntro(ctx)
     local intro = ctx.introID ~= 0 and ns.intros[ctx.introID]
-    if not intro or #intro.tracks == 0 then return nil end
+    if not intro or #unbanned(intro.tracks) == 0 then return nil end
     local last = introPlayedAt[ctx.introID]
     if last and GetTime() - last < intro.delay then return nil end
     return intro, ctx.introID
@@ -600,7 +680,8 @@ end
 function FAME:PlayIntro(intro, introID)
     introPlayedAt[introID] = GetTime()
     if self.ctx then self.ctx.first = false end   -- the intro is the game's own
-    self:PlayTrack(intro.tracks[math.random(#intro.tracks)], "intro")
+    local tracks = unbanned(intro.tracks)
+    self:PlayTrack(tracks[math.random(#tracks)], "intro")
 end
 
 -- Arriving somewhere whose music differs from where we were: the game starts
@@ -660,7 +741,7 @@ function FAME:Evaluate()
 
     -- Loop Music switched on in the middle of a silence: the game would be
     -- playing by now.
-    if self.state == "silence" and loopMusic() then self:NextTrack() end
+    if self.state == "silence" and loopMusic() and not self.ctx.allBanned then self:NextTrack() end
 end
 
 -- --------------------------------------------------------------------------
@@ -673,6 +754,9 @@ FAME:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 FAME:RegisterEvent("ZONE_CHANGED")
 FAME:RegisterEvent("ZONE_CHANGED_INDOORS")
 FAME:RegisterEvent("PLAYER_UPDATE_RESTING")
+FAME:RegisterEvent("PLAYER_DEAD")
+FAME:RegisterEvent("PLAYER_ALIVE")
+FAME:RegisterEvent("PLAYER_UNGHOST")
 -- A fade in progress has the player's music volume turned part way down.
 -- These two make sure it always gets put back.
 FAME:RegisterEvent("PLAYER_LEAVING_WORLD")
@@ -745,6 +829,9 @@ commands.help = function()
         { "pool [n]", "list extended tracks eligible here" },
         { "play <fileDataID>", "play one track now, for testing" },
         { "scan <id> [id ...]", "report which fileDataIDs this client has" },
+        { "ban", "never play the current track again" },
+        { "banlist", "list banned tracks, with where they were banned" },
+        { "unban <id> | all", "allow a banned track again, or all of them" },
         { "chance <0-100>", "percent of tracks kept as the game's own" },
         { "first", "toggle: may the first track in a new place be extended" },
         { "verify", "also probe built-in tracks for presence" },
@@ -901,6 +988,70 @@ commands.scan = function(rest)
         end
     end
     say("%d present, %d absent", hits, misses)
+end
+
+local function persistBans()
+    ForeverAmbientMusicExtendedDB = ForeverAmbientMusicExtendedDB or {}
+    ForeverAmbientMusicExtendedDB.banned = db.banned
+end
+
+-- Ban whatever is playing -- the game's own track or an extended one -- and
+-- end it the way it would have ended anyway.
+commands.ban = function()
+    local track = FAME.playing
+    if not FAME.ctx then
+        -- Dead, in an instance, at sea...: whatever is playing is the game's,
+        -- and FAME does not choose it, so it cannot ban it.
+        return say("the game is choosing the music here (%s) -- FAME can only ban what it plays", FAME:StateText())
+    end
+    if not track then return say("nothing is playing to ban") end
+    local key = trackKey(track)
+    local zone, sub = GetZoneText() or "?", GetSubZoneText() or ""
+    local where = (sub ~= "" and sub ~= zone) and (zone .. " / " .. sub) or zone
+    local kind = FAME.kind == "test" and "by request" or (FAME.kind or "?")
+    db.banned[key] = { zone = where, kind = kind, at = time and time() or 0 }
+    persistBans()
+    say("banned %s (%s, %s) -- it will not play again. /fame unban %s to undo.",
+        tostring(key), kind, where, tostring(key))
+    FAME:CancelTimer()
+    FAME:AfterTrack(FADE_CUT)
+end
+
+commands.banlist = function()
+    local keys = {}
+    for key in pairs(db.banned) do keys[#keys + 1] = key end
+    if #keys == 0 then return say("nothing is banned") end
+    table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
+    say("%d banned:", #keys)
+    for _, key in ipairs(keys) do
+        local b = db.banned[key]
+        print(("  %-10s %s (%s)"):format(tostring(key), b.zone or "?", b.kind or "?"))
+    end
+end
+
+commands.unban = function(rest)
+    if not rest or rest == "" then
+        return say("usage: /fame unban <id>  or  /fame unban all  -- /fame banlist shows the ids")
+    end
+    if rest:lower() == "all" then
+        local n = 0
+        for _ in pairs(db.banned) do n = n + 1 end
+        for k in pairs(db.banned) do db.banned[k] = nil end
+        persistBans()
+        say("unbanned all %d", n)
+    else
+        local key = tonumber(rest) or rest
+        if not db.banned[key] then
+            return say("%s is not banned -- /fame banlist shows what is", tostring(key))
+        end
+        db.banned[key] = nil
+        persistBans()
+        say("unbanned %s", tostring(key))
+    end
+    -- If everything here had been banned, there is something to play again.
+    if FAME.ctx and FAME.ctx.allBanned and FAME.state == "silence" then
+        FAME:NextTrack()
+    end
 end
 
 commands.chance = function(rest)

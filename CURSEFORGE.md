@@ -48,8 +48,17 @@ into Orgrimmar. Zones with nothing suitable stay quiet rather than reaching.
   Booty Bay, every inn in its own culture's tavern music.
 - Never the same track twice in a row, and tracks fade out rather than
   cutting off.
-- Dungeons, raids and battlegrounds are left completely alone, and so is
-  anywhere with music turned off.
+- Dungeons, raids and battlegrounds are left completely alone, and so are
+  death, the spirit walk back, ship crossings on the open sea, and anywhere
+  with music turned off. There the game's own music rules apply, untouched.
+
+## Ban what you don't like
+
+Hear something you never want again? `/fame ban` stops it and bans it,
+whether it's the game's own track or an extended one. Banned tracks are left
+out before every decision, so the next pick is always something you allow.
+`/fame banlist` shows what you've banned and where; `/fame unban <id>` or
+`/fame unban all` brings tracks back.
 
 ## Install
 
@@ -72,6 +81,9 @@ Check it loaded with `/fame status`. Every command is under `/fame`.
 | `/fame where` | uiMapID, subzone, resting/indoors, server hour |
 | `/fame pool [n]` | list the tracks eligible where you are standing |
 | `/fame play <fileDataID>` | play one track now |
+| `/fame ban` | ban the current track |
+| `/fame banlist` | list banned tracks and where |
+| `/fame unban <id>` \| `all` | allow banned tracks again |
 | `/fame chance <0-100>` | percent of tracks kept as the game's own |
 | `/fame first` | let the first track in a new place be extended too |
 | `/fame debug` | narrate every decision |

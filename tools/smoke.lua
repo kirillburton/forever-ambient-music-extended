@@ -57,7 +57,8 @@ local function advance(seconds)
     pending = keep
 end
 
-local state = { map = 1431, sub = "", resting = false, hour = 12, instance = false, faction = "Alliance" }
+local state = { map = 1431, sub = "", resting = false, hour = 12, instance = false, faction = "Alliance",
+                dead = false, zoneText = nil, locale = "enUS", areaNames = true }
 
 local START_VOLUME = "0.4"
 local cvars = {
@@ -66,9 +67,20 @@ local cvars = {
 }
 local volumeWrites = 0
 
+-- The client's own names for areas: English, from Originals.lua, unless a
+-- test switches them off to stand in for a client that cannot name them.
+local ns
+local function areaName(areaID)
+    if not state.areaNames then return nil end
+    for _, zm in pairs(ns.zoneMusic) do
+        if zm.area == areaID then return zm.name end
+        for _, row in ipairs(zm.sub) do if row[1] == areaID then return row[2] end end
+    end
+    return nil
+end
 C_Map = {
     GetBestMapForUnit = function() return state.map end,
-    GetAreaInfo = function() return nil end,
+    GetAreaInfo = function(areaID) return areaName(areaID) end,
 }
 GetCVar = function(name) return cvars[name] end
 SetCVar = function(name, value)
@@ -85,7 +97,16 @@ GetGameTime = function() return state.hour, 0 end
 IsInInstance = function() return state.instance, state.instance and "party" or "none" end
 GetInstanceInfo = function() return "Test", "party", 1, "", 5, 0, false, 999 end
 GetSubZoneText = function() return state.sub end
-GetZoneText = function() return "Somewhere" end
+-- The game's own zone name: the mapped zone's, unless a test puts the
+-- player somewhere else (out at sea).
+GetZoneText = function()
+    if state.zoneText then return state.zoneText end
+    local zm = ns.zoneMusic[state.map]
+    return zm and zm.name or "Nowhere"
+end
+GetLocale = function() return state.locale end
+UnitIsDeadOrGhost = function() return state.dead end
+time = os.time
 IsResting = function() return state.resting end
 UnitFactionGroup = function() return state.faction end
 PlayMusic = function(src) log[#log + 1] = { t = now, play = src, vol = cvars.Sound_MusicVolume } end
@@ -95,9 +116,13 @@ PlaySoundFile = function() if probeWorks then return true, 7 end return true, 0 
 StopSound = function() end
 SlashCmdList = {}
 local realPrint, quiet = print, false
-print = function(...) if not quiet then realPrint(...) end end
+local chat = {}
+print = function(...)
+    chat[#chat + 1] = table.concat({ ... }, " ")
+    if not quiet then realPrint(...) end
+end
 
-local ns = {}
+ns = {}
 for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     assert(loadfile(ROOT .. "/" .. file))(ADDON, ns)
 end
@@ -465,11 +490,135 @@ check(log[#log].stop and #log > before, "without it, silences fall back to StopM
 FAME.silenceWorks = true
 
 ------------------------------------------------------------------------------
+realPrint("\ndeath follows the game's rules")
+state.map = 1431; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+while not FAME.playing do go(10) end
+state.dead = true; fire("PLAYER_DEAD"); go(5)
+local n0 = #log
+check(FAME.state == "dead", "dying hands the music to the game")
+check(log[#log].stop, "with a StopMusic, so the game's own death music runs")
+go(1800)                                  -- a long corpse run, still a spirit
+check(#log == n0, "nothing of FAME's plays during a half-hour corpse run")
+local chatBefore = #chat
+run("ban")
+check(chat[#chat]:find("the game is choosing", 1, true), "/fame ban as a spirit explains it cannot ban the game's music")
+state.dead = false; fire("PLAYER_UNGHOST"); go(3)
+check(FAME.playing ~= nil and FAME.kind == "original", "resurrecting starts over like arriving: the game's own track first")
+
+------------------------------------------------------------------------------
+realPrint("\nships follow the game's rules")
+state.map = 1437; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+check(FAME.ctx ~= nil, "on the Menethil docks, FAME runs Wetlands music")
+state.zoneText = "The Great Sea"; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+n0 = #log
+check(FAME.state == "elsewhere", "out on The Great Sea -- still on the Wetlands map -- the game takes over")
+go(1200)
+check(#log == n0, "and plays its own sea music for the whole crossing")
+state.zoneText = nil; state.map = 1445; fire("ZONE_CHANGED_NEW_AREA"); go(3)
+check(FAME.ctx ~= nil and FAME.kind == "original", "docking at Theramore starts Dustwallow with the game's own track")
+
+-- A client that cannot name areas, in another language: skip the check
+-- rather than mistake every zone for open sea.  FAME caches a zone's name
+-- the first time it reads it, and a real client never changes language mid-
+-- session, so this uses a zone no earlier test has visited.
+state.areaNames, state.locale, state.zoneText = false, "deDE", "Shen'dralas (deDE)"
+state.map = 2652
+fire("PLAYER_ENTERING_WORLD"); go(3)
+check(FAME.ctx ~= nil, "a German client without area names still runs normally")
+state.areaNames, state.locale, state.zoneText = true, "enUS", nil
+fire("PLAYER_ENTERING_WORLD"); go(3)
+
+------------------------------------------------------------------------------
+realPrint("\nbans")
+local banned = ns.db.banned
+for k in pairs(banned) do banned[k] = nil end
+state.map = 1412; fire("ZONE_CHANGED_NEW_AREA"); go(3)    -- Mulgore: the smallest pool
+while not FAME.playing do go(10) end
+local victim, victimKind = FAME.playing, FAME.kind
+run("ban"); go(4)
+check(banned[victim.id] ~= nil, ("/fame ban records the current %s track"):format(victimKind))
+check(banned[victim.id].zone == "Mulgore", "with the zone it was banned in")
+check(FAME.playing == nil, "and stops it")
+local t2 = now
+go(6 * 3600)
+local replays = 0
+for _, e in ipairs(log) do if e.t > t2 and e.play == victim.id then replays = replays + 1 end end
+check(replays == 0, "a banned track never plays again (six hours)")
+
+-- An original and an extended one both count.
+while not FAME.playing or FAME.kind == victimKind do go(10) end
+local other = FAME.playing
+run("ban"); go(4)
+check(banned[other.id] ~= nil, ("banning an %s track works too"):format(victimKind == "original" and "extended" or "original"))
+
+chatBefore = #chat
+run("banlist")
+local listed = table.concat(chat, "\n", chatBefore + 1)
+check(listed:find(tostring(victim.id), 1, true) and listed:find("Mulgore", 1, true), "/fame banlist shows ids and zones")
+
+run("unban " .. victim.id)
+check(banned[victim.id] == nil and banned[other.id] ~= nil, "/fame unban <id> removes just that one")
+run("unban 123456789")
+check(chat[#chat]:find("is not banned", 1, true), "unbanning something not banned says so")
+
+-- Ban everything Mulgore could play.
+local function banAllHere()
+    local ctx = FAME.ctx
+    for _, list in ipairs({ ctx.set.day, ctx.set.night, FAME:Pool(ctx.prof, false), FAME:Pool(ctx.prof, true) }) do
+        for _, tr in ipairs(list) do banned[tr.id or tr.file] = { zone = "Mulgore", kind = "test" } end
+    end
+end
+while not FAME.playing do go(10) end
+banAllHere()
+local t3 = now
+run("skip"); go(4)                              -- end the current track; the next decision finds nothing
+chatBefore = #chat
+go(400)
+local msgs = 0
+for i = chatBefore + 1, #chat do
+    if chat[i]:find("All music for the zone was banned, playing nothing. Unban songs with /fame unban command", 1, true) then
+        msgs = msgs + 1
+    end
+end
+local played = 0
+for _, e in ipairs(log) do if e.t > t3 + 5 and e.play and e.play ~= SILENCE then played = played + 1 end end
+check(msgs >= 1, "with everything banned, the decision says so in chat")
+check(played == 0, "and plays nothing")
+cvars.Sound_ZoneMusicNoDelay = "1"
+chatBefore = #chat
+go(300)
+msgs = 0
+for i = chatBefore + 1, #chat do if chat[i]:find("All music for the zone was banned", 1, true) then msgs = msgs + 1 end end
+check(msgs <= 5, ("with Loop Music on it does not spam: %d messages in five minutes"):format(msgs))
+cvars.Sound_ZoneMusicNoDelay = "0"
+run("unban all")
+go(2)
+check(next(banned) == nil, "/fame unban all clears the list")
+check(FAME.playing ~= nil, "and music resumes straight away")
+
+-- With every original banned, the first track on arrival is extended
+-- rather than nothing.
+local ctx = FAME.ctx
+for _, list in ipairs({ ctx.set.day, ctx.set.night }) do for _, tr in ipairs(list) do banned[tr.id] = { zone = "Mulgore", kind = "original" } end end
+state.map = 1413; fire("ZONE_CHANGED_NEW_AREA"); go(3)
+state.map = 1412; fire("ZONE_CHANGED_NEW_AREA"); go(3)
+check(FAME.kind == "extended", "originals all banned: the first track falls back to an extended one")
+run("unban all")
+
+-- A banned intro is skipped, not played.
+for _, tr in ipairs(ns.intros[ns.zoneMusic[1454].intro].tracks) do banned[tr.id] = { zone = "Orgrimmar", kind = "intro" } end
+state.map = 1416; fire("ZONE_CHANGED_NEW_AREA"); go(3)
+state.map = 1454; fire("ZONE_CHANGED_NEW_AREA"); go(3)
+check(FAME.kind ~= "intro", "a banned intro does not play on arrival")
+run("unban all")
+
+------------------------------------------------------------------------------
 realPrint("\nslash commands")
 for _, input in ipairs({ "", "help", "status", "where", "pool 3", "skip", "next", "chance 25",
                           "chance", "first", "first", "debug", "status", "where", "debug",
                           "verify", "verify", "scan 53492 53493 1", "play 53519", "status",
-                          "off", "status", "where", "on", "toggle", "toggle", "bogus" }) do
+                          "off", "status", "where", "on", "toggle", "toggle", "bogus",
+                          "ban", "banlist", "unban", "unban all", "banlist" }) do
     local ok, err = run(input)
     check(ok, ("/fame %s"):format(input == "" and "(no args)" or input))
     if not ok then realPrint("        " .. tostring(err)) end
