@@ -4,7 +4,7 @@ Widens the ambient zone music rotation in World of Warcraft: Forever with
 tracks from every WoW era, picked to fit where you are standing. It behaves like the default ambient music:
 automatic, no UI, no setup. There is just more of it.
 
-408 tracks ship enabled, all of them files the Forever beta client already
+425 tracks ship enabled, all of them files the Forever beta client already
 has. You can add your own on top (see **Local files**).
 
 ---
@@ -47,8 +47,8 @@ play in it.
 - **Intros still play.** Orgrimmar's fanfare, the Ironforge King theme and
   the rest open their areas on arrival, with the game's own cooldowns.
 - **Subzones and inns change the music where the game would.** Walking into
-  the Crossroads switches to the Crossroads set; walking into an inn switches
-  to that zone's tavern set. Moving between two places that share music, like
+  the Crossroads switches to the Crossroads set; walking into a known inn
+  switches to tavern music of that inn's own race. Moving between two places that share music, like
   the Barrens and Orgrimmar, keeps the current track going.
 - **Instances, battlegrounds, and anywhere without data are left alone.**
   FAME hands the music channel back and the game plays its own music as
@@ -126,20 +126,48 @@ full volume for a split second whenever one track handed over to the next. A
 fade that cuts into another one starts from wherever the volume actually is,
 so it never jumps up first. The slider's own value is
 saved before the first step and restored on every way out: ramp finished,
-zone change, release, logout. An interrupted fade can't leave your music
-volume turned down.
+zone change, release, logout.
+
+The slider is shared, though: the Settings panel, other addons and you can
+all read it mid-fade and write that value back later. Opening Settings during
+a fade and closing it is enough. That used to leave the volume stuck between
+your level and zero. So every value FAME writes mid-fade carries a mark: it's
+rounded to the thousandth and nudged by half of one (0.2 becomes 0.2005), a
+value the slider never produces. On every poll, every volume-change event
+and at login, `CheckVolume` looks at the slider. If it holds a marked value
+while no fade is running, something replayed a stale one, and FAME puts your
+level back. An unmarked value is your choice, even mid-fade, and becomes the
+level fades return to. Your level is also kept in saved variables, so a
+quit mid-fade is healed at the next login. On beta builds that don't load
+saved variables, FAME says so once and asks you to set the slider.
 
 ### Inns
 
-The game ties inn music to the building, and no API exposes the building you
-are in. FAME uses `IsResting()` to detect an inn, and each zone's `inn` key in
-`Zones.lua` picks which of the game's tavern sets plays there: human, dwarf,
-orc, undead, pirate, or the generic Alliance and Horde sets. Zones without one
-use your faction's.
+Inside an inn FAME plays that tavern's own race and nothing else: the game's
+tavern set for that race as the original share, and only tavern tracks of
+that race from the extended pool.
 
-Capital cities are the exception. `IsResting()` is true across an entire
-capital, so cities have no inn music, or every street of Stormwind would be a
-tavern.
+Which inn you're in comes from the building's name, as the minimap shows it
+inside (`GetMinimapZoneText()`). The race has to be written down by hand in
+`ns.inns` at the bottom of `Zones.lua`: the game's own data barely records
+it. Nearly every inn it knows plays the generic Alliance or Horde tavern set,
+and most Horde and Kalimdor inns have no named building at all. So the list
+holds only inns whose race is certain:
+
+| Inn | Race |
+|---|---|
+| Lion's Pride Inn, Scarlet Raven Tavern, Lakeshire Inn | human |
+| Stoutlager Inn, Thunderbrew Distillery, Deepwater Tavern, The Stonefire Tavern | dwarf |
+| Gallows' End Tavern | undead |
+| The Salty Sailor Tavern | pirate |
+
+Any other inn is left to the game, which plays its own music there: FAME
+treats it as an inn when you're resting, indoors and outside a capital, but
+the building isn't on the list. The names are English, so on other client
+languages every inn falls back to the game.
+
+Capitals are exempt: `IsResting()` is true across an entire capital, so it
+says nothing about being in an inn there.
 
 ### Commands
 
@@ -204,9 +232,13 @@ missing *biome* is different. It once meant goblin bazaar music passed the
 biome check everywhere and played across the open Barrens. So a track with no
 biome now plays nowhere, and `check_zones.lua` flags it.
 
-**Towns.** Some music belongs to a settlement rather than the land around it.
-The goblin pieces carry the `town` biome, which only town profiles allow:
-Ratchet, Booty Bay, Gadgetzan, Steamwheedle Port and Everlook. Towns are
+**Towns and coves.** Some music belongs to a settlement rather than the land
+around it. The goblin pieces carry the `town` biome, which only town profiles
+allow: Ratchet, Booty Bay, Gadgetzan, Steamwheedle Port and Everlook. Pirate
+music, such as the WoD ocean piece "Ts Have It", carries the `pirate` culture,
+which only pirate places admit: the towns above plus the coves Wild Shore,
+Janeiro's Point, the Bloodsail Compound, The Merchant Coast and Lost Rigger
+Cove. Towns are
 attached to their zone at the bottom of `Zones.lua`, keyed by the game's area
 ID, which works in every client language. Walking into Ratchet switches the
 extended pool to the Ratchet profile and walking out switches it back. The
@@ -362,9 +394,16 @@ What gets filtered out along the way, in `tools/wagolib.py`:
 - story and boss cues that carry no biome or culture tag, so could never be
   placed safely
 
-That leaves 408 tracks: 73 Classic pieces Forever does not use in these zones,
-220 from `sound/music/forever` (including the new zone music), and 115 from
+That leaves 425 tracks: 89 Classic pieces Forever does not use in these zones,
+220 from `sound/music/forever` (including the new zone music), and 116 from
 Cataclysm through Midnight.
+
+The Classic count includes the Caverns of Time exterior music: Old Hillsbrad,
+Tarren Mill and Durnholde Keep as they were, and the Black Morass. Each was
+written for a real place, so they're let through even though the rest of
+that folder is instance music. Each was checked by comparing its audio
+against every other track in the client (the same composition correlates at
+0.8–1.0 even across a remaster), and all of them are distinct.
 
 ---
 

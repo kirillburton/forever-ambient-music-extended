@@ -323,7 +323,11 @@ ALREADY_IN_ROTATION = [
 # Interior/encounter music for a specific raid or dungeon.  Dropping these into
 # an open-world rotation is exactly the "sounds out of place" failure.
 INSTANCE_ONLY = [
-    r"zonemusic/(cavernsoftime|naxxramas|ahnqiraj)/",
+    r"zonemusic/(naxxramas|ahnqiraj)/",
+    # Caverns of Time is mostly instance music, but its exterior "walk" pieces
+    # are zone music written for real places -- Old Hillsbrad, Tarren Mill,
+    # Durnholde Keep, the Black Morass.  Those are let through; the rest is not.
+    r"zonemusic/cavernsoftime/(?!ct_(hillsbradext|tarrenmillext|durnholdekeepext|morasswalk))",
     r"forever/mus_c_(naxxramas|ahnqiraj)",
     r"forever/mus_c60_dungeons_",
     r"zonemusic/os\d\.mp3",

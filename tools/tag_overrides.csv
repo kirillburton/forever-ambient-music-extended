@@ -220,3 +220,31 @@
 642577,forest pandaren melancholy
 1068308,sky draenei sacred melancholy
 6065812,plains arathi sacred grand
+
+# --- 0.3.0 ---------------------------------------------------------------
+# "Ts Have It" (WoD) -- ocean music.  Requested for pirate places; it had
+# been tagged with moods only and fell out when every track needed a biome.
+# `pirate` keeps it out of open coastline: only the pirate coves and port
+# towns in Zones.lua admit that culture.
+1061177,coast sea pirate playful
+# Caverns of Time exterior music -- written for real places, checked by audio
+# comparison to be distinct from every other track in the client.
+# Old Hillsbrad and Tarren Mill before the plague: human countryside.
+53402,plains forest human calm
+53403,plains forest human calm
+53422,forest human calm
+53423,forest human calm
+53424,forest human calm
+# Durnholde Keep: a human fortress in the foothills.
+53392,mountain human tense
+53393,mountain human tense
+53394,mountain human tense
+53395,mountain human tense
+53396,mountain human tense
+53397,mountain human tense
+# The Black Morass.
+53417,swamp ominous
+53418,swamp ominous
+53419,swamp ominous
+53420,swamp ominous
+53421,swamp ominous

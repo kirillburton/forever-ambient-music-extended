@@ -430,9 +430,12 @@ ns.zoneMusic = {
     [1434] = { area = 33, name = "Stranglethorn Vale", set = 3, intro = 0,
         sub = {
             { 2177, "Battle Ring", 0, 325 },
+            { 1739, "Bloodsail Compound", 0, 0 },
             { 35, "Booty Bay", 3, 0 },
             { 117, "Grom'gol Base Camp", 228, 0 },
+            { 312, "Janeiro's Point", 0, 0 },
             { 2338, "South Seas", 0, 122 },
+            { 43, "Wild Shore", 3, 0 },
             { 3357, "Yojamba Isle", 245, 0 },
         } },
     [1435] = { area = 8, name = "Swamp of Sorrows", set = 223, intro = 0,
@@ -548,6 +551,7 @@ ns.zoneMusic = {
     [1446] = { area = 440, name = "Tanaris", set = 176, intro = 0,
         sub = {
             { 976, "Gadgetzan", 0, 0 },
+            { 1336, "Lost Rigger Cove", 0, 0 },
             { 977, "Steamwheedle Port", 3, 0 },
         } },
     [1447] = { area = 16, name = "Azshara", set = 205, intro = 0,

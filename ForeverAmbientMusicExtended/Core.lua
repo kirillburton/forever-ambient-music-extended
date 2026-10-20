@@ -191,12 +191,21 @@ local function subzoneEntry(mapID, subName)
     return index[subName]
 end
 
-local function innSetFor(prof)
-    local key = prof.inn
-    if not key then
-        key = (UnitFactionGroup and UnitFactionGroup("player") == "Horde") and "horde" or "alliance"
-    end
-    return ns.tavernSets[key]
+-- Which inn, if any, the player is standing in.  Inside an inn the minimap
+-- shows the building's own name ("Lion's Pride Inn"); ns.inns in Zones.lua
+-- says which of those FAME knows the race of.
+--   returns race, name   -- a known inn
+--   returns false        -- some other inn: leave it to the game
+--   returns nil          -- not in an inn
+local function currentInn(prof)
+    local name = GetMinimapZoneText and GetMinimapZoneText()
+    local race = name and ns.inns[name]
+    if race then return race, name end
+    -- Resting indoors outside a capital, but not a building on the list: an
+    -- inn whose race FAME does not know.  (In a capital IsResting() is true
+    -- on every street, so it means nothing there.)
+    if IsResting() and IsIndoors and IsIndoors() and not prof.capital then return false end
+    return nil
 end
 
 -- Is the game's own idea of the current zone the one FAME mapped?  Out at
@@ -250,12 +259,17 @@ local function resolveContext()
         if prof.towns and prof.towns[sub.area] then ctx.prof = prof.towns[sub.area] end
     end
 
-    if IsResting() and prof.resting then
-        ctx.setID = innSetFor(prof) or ctx.setID
-        ctx.prof = prof.resting
-        ctx.area = "inn:" .. tostring(ctx.area)
+    local race, innName = currentInn(prof)
+    if race == false then return nil, "inn" end
+    if race then
+        -- The tavern's own race only: the game's tavern set for that race,
+        -- and that race's tavern tracks from the extended pool.
+        ctx.setID = ns.tavernSets[race]
+        ctx.prof = ns.innProfiles[race]
+        ctx.area = "inn:" .. innName
         ctx.introID = 0
-        ctx.key = "inn:" .. ctx.setID
+        ctx.inn = innName
+        ctx.key = "inn:" .. innName
     else
         ctx.key = "set:" .. ctx.setID
     end
@@ -457,6 +471,57 @@ local QUIET_AFTER = 2.5
 local SWAP_HOLD = 1.0
 local FADE_IN = 1.0
 
+-- The slider is shared with the player, the Settings panel and every other
+-- addon, and any of them can read it mid-fade and write that value back
+-- later -- opening Settings during a fade and closing it is enough.  That is
+-- how a volume ends up stuck somewhere between the player's level and zero.
+-- So FAME never trusts that the slider is still what it left there:
+--
+--   * Every value it writes mid-fade carries a mark: rounded to the
+--     thousandth and nudged by half of one (0.2 becomes 0.2005).  The slider
+--     never produces such a value, so "is this one of FAME's?" can be
+--     answered from the number alone -- later in the session, or in the next.
+--   * The player's own level is remembered (and saved, for the case of
+--     quitting mid-fade).  Whenever no fade is running and the slider holds a
+--     marked value, something replayed a stale one, and FAME puts the
+--     player's level back.  CheckVolume does that, on every poll, every
+--     volume change event, and at login.
+--   * A value that is *not* marked is the player's choice, even mid-fade:
+--     it becomes the level every fade returns to.
+local MUSIC_VOLUME = "Sound_MusicVolume"
+
+local function marked(v)
+    v = math.max(0, math.min(0.998, v))
+    return math.floor(v * 1000) / 1000 + 0.0005
+end
+
+local function isMarked(v)
+    if not v then return false end
+    return math.abs((v * 1000) % 1 - 0.5) < 0.02
+end
+
+local function readVolume()
+    return tonumber(cvarGet(MUSIC_VOLUME))
+end
+
+function FAME:SetUserVolume(v)
+    self.userVolume = v
+    ForeverAmbientMusicExtendedDB = ForeverAmbientMusicExtendedDB or {}
+    ForeverAmbientMusicExtendedDB.userVolume = v
+end
+
+-- One step of a fade.  Before writing, see whether someone else moved the
+-- slider since the last step; if they did, that is the new level to return to.
+function FAME:WriteStep(v)
+    local now = readVolume()
+    if now and self.savedVolume and not isMarked(now) and math.abs(now - self.savedVolume) > 0.001 then
+        debugf("music volume changed to %.2f mid-fade -- fading back to that", now)
+        self.savedVolume = now
+        self:SetUserVolume(now)
+    end
+    cvarSet(MUSIC_VOLUME, marked(v))
+end
+
 function FAME:StopRamps()
     if self.rampTicker then self.rampTicker:Cancel(); self.rampTicker = nil end
     if self.restoreTimer then self.restoreTimer:Cancel(); self.restoreTimer = nil end
@@ -465,8 +530,28 @@ end
 function FAME:RestoreVolume()
     self:StopRamps()
     if self.savedVolume then
-        cvarSet("Sound_MusicVolume", self.savedVolume)
+        local v = self.savedVolume
         self.savedVolume = nil
+        self:SetUserVolume(v)
+        cvarSet(MUSIC_VOLUME, v)
+    end
+end
+
+-- Outside a fade: heal a stale mid-fade value, or learn the player's level.
+function FAME:CheckVolume()
+    if self.savedVolume then return end          -- a fade owns the slider right now
+    local now = readVolume()
+    if not now then return end
+    if isMarked(now) then
+        if self.userVolume and not isMarked(self.userVolume) then
+            debugf("music volume was left at %.3f, a value from an old fade -- putting back %.2f", now, self.userVolume)
+            cvarSet(MUSIC_VOLUME, self.userVolume)
+        elseif not self.warnedVolume then
+            self.warnedVolume = true
+            say("your music volume (%d%%) looks like it was left part-way through a fade, and FAME doesn't know your usual level. Set it once in the Sound options and FAME will keep it there.", math.floor(now * 100 + 0.5))
+        end
+    elseif now ~= self.userVolume then
+        self:SetUserVolume(now)
     end
 end
 
@@ -474,18 +559,19 @@ end
 -- up gently to the player's own level.
 function FAME:FadeBackIn()
     self:StopRamps()
-    local target = self.savedVolume
-    if not target then return end
+    if not self.savedVolume then return end
     self.restoreTimer = C_Timer.NewTimer(SWAP_HOLD, function()
         FAME.restoreTimer = nil
         local step = 0
         FAME.rampTicker = C_Timer.NewTicker(FADE_IN / FADE_STEPS, function()
             step = step + 1
-            if step >= FADE_STEPS then
+            if step >= FADE_STEPS or not FAME.savedVolume then
                 FAME.rampTicker = nil
                 FAME:RestoreVolume()
             else
-                cvarSet("Sound_MusicVolume", target * step / FADE_STEPS)
+                -- Read the target each step: the player may have moved the
+                -- slider during the fade, and WriteStep picks that up.
+                FAME:WriteStep(FAME.savedVolume * step / FADE_STEPS)
             end
         end, FADE_STEPS)
     end)
@@ -505,8 +591,13 @@ end
 -- the saved level would jump the volume up first.
 function FAME:RampDown(seconds, andThen, quietAfter)
     self:StopRamps()
-    local current = tonumber(cvarGet("Sound_MusicVolume"))
-    self.savedVolume = self.savedVolume or current
+    self:CheckVolume()
+    local current = readVolume()
+    if not self.savedVolume then
+        -- Starting fresh.  The level to come back to is the player's: the
+        -- slider as it stands, unless it holds a stale mark from an old fade.
+        self.savedVolume = (current and not isMarked(current)) and current or self.userVolume
+    end
     if not current or not self.savedVolume or self.savedVolume <= 0 or seconds <= 0 then
         andThen()
         self:RestoreVolume()
@@ -515,7 +606,7 @@ function FAME:RampDown(seconds, andThen, quietAfter)
     local step = 0
     self.rampTicker = C_Timer.NewTicker(seconds / FADE_STEPS, function()
         step = step + 1
-        cvarSet("Sound_MusicVolume", current * math.max(0, 1 - step / FADE_STEPS))
+        FAME:WriteStep(current * math.max(0, 1 - step / FADE_STEPS))
         if step < FADE_STEPS then return end
         FAME.rampTicker = nil
         andThen()
@@ -530,15 +621,35 @@ function FAME:RampDown(seconds, andThen, quietAfter)
     end, FADE_STEPS)
 end
 
--- Fade out whatever of ours is audible, then run `andThen`.  Silence we are
--- holding has nothing to fade, so that case runs straight through.
+-- Fade out whatever of ours is audible, then run `andThen`.
+--
+-- `self.audible` is true from the moment one of our tracks starts until it
+-- has been replaced (by the silent file, or StopMusic).  That includes the
+-- second or so while it fades out, when `self.playing` is already cleared --
+-- so a second fade that cuts into the first picks up from wherever the
+-- volume has got to, rather than snapping it back up or losing the track.
 function FAME:FadeOut(seconds, andThen, quietAfter)
     if self.playing then
         self.previous = self.playing
         self.playing, self.kind = nil, nil
+    end
+    if self.audible then
         self:RampDown(seconds, andThen, quietAfter)
+    elseif self.savedVolume then
+        -- Already quiet -- the silence just after a fade -- so there is
+        -- nothing to ramp, but the volume is still down and comes back the
+        -- usual way once whatever follows has started.
+        self:StopRamps()
+        andThen()
+        if quietAfter then
+            self.restoreTimer = C_Timer.NewTimer(QUIET_AFTER, function()
+                FAME.restoreTimer = nil
+                FAME:RestoreVolume()
+            end)
+        else
+            self:FadeBackIn()
+        end
     else
-        self:RestoreVolume()
         andThen()
     end
 end
@@ -556,6 +667,7 @@ local STATE = {
     unmapped = "no data for this place -- the game plays its own music",
     dead     = "dead or a spirit -- the game plays its own music",
     elsewhere = "the game has you outside this zone (at sea?) -- it plays its own music",
+    inn      = "in an inn FAME doesn't know the race of -- the game plays its own music",
     original = "playing the game's own track",
     extended = "playing an extended track",
     intro    = "playing the game's intro for this place",
@@ -577,7 +689,7 @@ function FAME:PlayTrack(track, kind)
     -- No volume handling here: when a fade hands over to this track the volume
     -- is down on purpose, and the fade brings it back once the swap is done.
     PlayMusic(track.id or track.file)
-    self.holding = false
+    self.holding, self.audible = false, true
     self.playing, self.kind = track, kind
     self.startedAt = GetTime()
     self:SetState(kind)
@@ -612,7 +724,7 @@ function FAME:HoldSilence(seconds)
         -- game may start a track of its own during the gap.
         StopMusic()
     end
-    self.holding = true
+    self.holding, self.audible = true, false
     self:SetState("silence")
     debugf("silence for %ds", seconds)
     self:In(seconds, function() FAME:NextTrack() end)
@@ -696,16 +808,18 @@ function FAME:Enter(ctx)
     end, false)
 end
 
--- Hand the music channel back to the game.
+-- Hand the music channel back to the game.  Anything of ours still in the
+-- channel -- a track, one mid-fade, or the silent file -- gets stopped:
+-- PlayMusic loops forever, so a track left there would never end.
 function FAME:Release(state)
     self:CancelTimer()
     self.ctx, self.area = nil, nil
-    local wasOurs = self.playing or self.holding
-    self.holding = false
-    if wasOurs then
-        self:FadeOut(FADE_CUT, function() StopMusic() end, false)
-    else
-        self:RestoreVolume()
+    if self.audible or self.holding or self.savedVolume then
+        self.holding = false
+        self:FadeOut(FADE_CUT, function()
+            StopMusic()
+            FAME.audible = false
+        end, false)
     end
     self:SetState(state)
 end
@@ -761,9 +875,17 @@ FAME:RegisterEvent("PLAYER_UNGHOST")
 -- These two make sure it always gets put back.
 FAME:RegisterEvent("PLAYER_LEAVING_WORLD")
 FAME:RegisterEvent("PLAYER_LOGOUT")
+-- Any change to the music slider -- the player's, the Settings panel's,
+-- another addon's -- gets checked straight away.  Guarded: an unknown event
+-- name is an error, and this one is not documented for this client.
+pcall(FAME.RegisterEvent, FAME, "CVAR_UPDATE")
 
 FAME:SetScript("OnEvent", function(self, event, arg1)
-    if event == "ADDON_LOADED" then
+    if event == "CVAR_UPDATE" then
+        if type(arg1) == "string" and arg1:lower() == MUSIC_VOLUME:lower() then
+            self:CheckVolume()
+        end
+    elseif event == "ADDON_LOADED" then
         if arg1 ~= ADDON then return end
         ForeverAmbientMusicExtendedDB = ForeverAmbientMusicExtendedDB or {}
         for k, v in pairs(ForeverAmbientMusicExtendedDB) do
@@ -779,13 +901,25 @@ FAME:SetScript("OnEvent", function(self, event, arg1)
                 say("could not load Media/silence.mp3 -- silences will not be held, so the game may start its own music during them. Restart the client if the addon was just installed.")
             end
         end
+        if self.userVolume == nil then
+            -- The player's level from last session, if saved variables loaded
+            -- back.  CheckVolume uses it to heal a slider left mid-fade by a
+            -- quit or a crash; without it, FAME learns the level from the
+            -- slider itself.
+            local saved = ForeverAmbientMusicExtendedDB and tonumber(ForeverAmbientMusicExtendedDB.userVolume)
+            if saved and not isMarked(saved) then self.userVolume = saved end
+        end
+        self:CheckVolume()
         -- Arriving is always a fresh start.
         self.ctx = nil
         self:Evaluate()
         if not self.poll then
             -- Catches what has no event: the sound options, Loop Music, a
-            -- missed subzone change.
-            self.poll = C_Timer.NewTicker(10, function() FAME:Evaluate() end)
+            -- missed subzone change, a music volume left stuck by something.
+            self.poll = C_Timer.NewTicker(10, function()
+                FAME:CheckVolume()
+                FAME:Evaluate()
+            end)
         end
     elseif event == "PLAYER_LEAVING_WORLD" or event == "PLAYER_LOGOUT" then
         self:CancelTimer()
@@ -927,7 +1061,12 @@ commands.where = function()
     say("location")
     print(("  uiMapID: %s%s"):format(tostring(mapID),
         (mapID and ns.zones[mapID]) and "" or "  |cffff8080(no Zones.lua entry)|r"))
-    print(("  zone: %s / subzone: %s"):format(tostring(GetZoneText()), tostring(GetSubZoneText())))
+    print(("  zone: %s / subzone: %s / minimap: %s"):format(tostring(GetZoneText()),
+        tostring(GetSubZoneText()), tostring(GetMinimapZoneText and GetMinimapZoneText())))
+    local innName = GetMinimapZoneText and GetMinimapZoneText()
+    if innName and ns.inns[innName] then
+        print(("  inn: %s -- %s tavern music only"):format(innName, ns.inns[innName]))
+    end
     local inInstance, instanceType = IsInInstance()
     if inInstance then
         local name, _, _, _, _, _, _, instanceID = GetInstanceInfo()
@@ -952,7 +1091,9 @@ commands.where = function()
     else
         print(("  loop music: %s (%s)"):format(tostring(looping), loopCVar))
     end
-    print(("  music volume: %s"):format(tostring(cvarGet("Sound_MusicVolume"))))
+    local vol = readVolume()
+    print(("  music volume: %s, your level %s%s"):format(tostring(vol), tostring(FAME.userVolume),
+        FAME:Fading() and " (mid-fade)" or (isMarked(vol) and " |cffff8080(left over from a fade)|r" or "")))
     print(("  state: %s"):format(FAME:StateText()))
 end
 

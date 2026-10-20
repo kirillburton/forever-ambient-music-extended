@@ -7,14 +7,30 @@
 -- PlayMusic() loops forever and fires no end event -- the addon stops the
 -- track on a timer, so a wrong length either truncates it or loops it.
 --
--- 408 tracks.
+-- 425 tracks.
 
 local ADDON, ns = ...
 
 ns.builtinTracks = {
 
-    -- ===== Classic (zones Forever does not put these in rotation for) (73) =====
+    -- ===== Classic (zones Forever does not put these in rotation for) (89) =====
     { id = 53282,    len =   83, tags = { "city", "arcane", "draenei", "grand" } },                            -- zonemusic/azuremyst/ai_exodarintro01.mp3
+    { id = 53392,    len =   82, tags = { "mountain", "human", "tense" } },                                    -- zonemusic/cavernsoftime/ct_durnholdekeepextwalk1uni.mp3
+    { id = 53393,    len =   66, tags = { "mountain", "human", "tense" } },                                    -- zonemusic/cavernsoftime/ct_durnholdekeepextwalk2uni.mp3
+    { id = 53394,    len =   70, tags = { "mountain", "human", "tense" } },                                    -- zonemusic/cavernsoftime/ct_durnholdekeepextwalk3uni.mp3
+    { id = 53395,    len =   59, tags = { "mountain", "human", "tense" } },                                    -- zonemusic/cavernsoftime/ct_durnholdekeepextwalk4uni.mp3
+    { id = 53396,    len =   93, tags = { "mountain", "human", "tense" } },                                    -- zonemusic/cavernsoftime/ct_durnholdekeepextwalk5uni.mp3
+    { id = 53397,    len =   60, tags = { "mountain", "human", "tense" } },                                    -- zonemusic/cavernsoftime/ct_durnholdekeepextwalk6uni.mp3
+    { id = 53402,    len =   62, tags = { "plains", "forest", "human", "calm" } },                             -- zonemusic/cavernsoftime/ct_hillsbradextwalk1uni.mp3
+    { id = 53403,    len =   56, tags = { "plains", "forest", "human", "calm" } },                             -- zonemusic/cavernsoftime/ct_hillsbradextwalk2uni.mp3
+    { id = 53417,    len =  108, tags = { "swamp", "ominous" } },                                              -- zonemusic/cavernsoftime/ct_morasswalkuni01.mp3
+    { id = 53418,    len =   80, tags = { "swamp", "ominous" } },                                              -- zonemusic/cavernsoftime/ct_morasswalkuni02.mp3
+    { id = 53419,    len =  115, tags = { "swamp", "ominous" } },                                              -- zonemusic/cavernsoftime/ct_morasswalkuni03.mp3
+    { id = 53420,    len =  123, tags = { "swamp", "ominous" } },                                              -- zonemusic/cavernsoftime/ct_morasswalkuni04.mp3
+    { id = 53421,    len =   74, tags = { "swamp", "ominous" } },                                              -- zonemusic/cavernsoftime/ct_morasswalkuni05.mp3
+    { id = 53422,    len =   79, tags = { "forest", "human", "calm" } },                                       -- zonemusic/cavernsoftime/ct_tarrenmillextwalk1uni.mp3
+    { id = 53423,    len =   66, tags = { "forest", "human", "calm" } },                                       -- zonemusic/cavernsoftime/ct_tarrenmillextwalk2uni.mp3
+    { id = 53424,    len =   62, tags = { "forest", "human", "calm" } },                                       -- zonemusic/cavernsoftime/ct_tarrenmillextwalk3uni.mp3
     { id = 53426,    len =   55, tags = { "blighted", "ominous", "undead" } },                                 -- zonemusic/cursedland/cursedland01.mp3
     { id = 53427,    len =   59, tags = { "blighted", "ominous", "undead" } },                                 -- zonemusic/cursedland/cursedland02.mp3
     { id = 53428,    len =   64, tags = { "blighted", "ominous", "undead" } },                                 -- zonemusic/cursedland/cursedland03.mp3
@@ -332,7 +348,7 @@ ns.builtinTracks = {
     { id = 642875,   len =  147, tags = { "plains", "pandaren", "calm" } },                                    -- pandaria/mus_50_theheartland_hero_04.mp3
     { id = 629426,   len =  114, tags = { "calm", "forest", "pandaren" } },                                    -- pandaria/mus_50_veb_b_hero_01.mp3
 
-    -- ===== Warlords of Draenor (14) =====
+    -- ===== Warlords of Draenor (15) =====
     { id = 1068308,  len =  155, tags = { "sky", "draenei", "sacred", "melancholy" } },                        -- draenor/mus_60_alightinthedarkness_v1.mp3
     { id = 1064156,  len =  112, tags = { "cave", "underground", "mysterious" } },                             -- draenor/mus_60_cavernsoflife_h.mp3
     { id = 1067039,  len =   96, tags = { "plains", "orc", "heroic" } },                                       -- draenor/mus_60_chieftansgather_h.mp3
@@ -345,6 +361,7 @@ ns.builtinTracks = {
     { id = 1067572,  len =  139, tags = { "sky", "nightelf", "sacred" } },                                     -- draenor/mus_60_shadowmoonpt1_h.mp3
     { id = 1067069,  len =   70, tags = { "nightelf", "sacred", "sky" } },                                     -- draenor/mus_60_shadowmoonsunsetintro_h.mp3
     { id = 1067577,  len =  127, tags = { "mountain", "sky", "grand" } },                                      -- draenor/mus_60_traversingthespires_h2.mp3
+    { id = 1061177,  len =  164, tags = { "coast", "sea", "pirate", "playful" } },                             -- draenor/mus_60_tshaveit_h.mp3
     { id = 1064165,  len =  150, tags = { "orc", "plains", "calm" } },                                         -- draenor/mus_60_village_h.mp3
     { id = 1064173,  len =  169, tags = { "town", "goblin", "playful", "festive" } },                          -- draenor/mus_60_worldexpo_h.mp3
 

@@ -8,7 +8,7 @@ hundred hours you know every bar of Elwynn Forest.
 This addon widens the rotation without changing the rhythm. The game's own
 music schedule stays exactly as it is — the same silences between tracks, the
 same intros on arrival, its own tracks still in the mix — but some of those
-tracks now come from a pool of **408 more**, each chosen to fit where you are
+tracks now come from a pool of **425 more**, each chosen to fit where you are
 standing: Classic pieces Forever doesn't use in those zones, the new Forever
 zone music, and selections from Cataclysm through Midnight.
 
@@ -24,8 +24,14 @@ with more variety.
 - **Mulgore** gets Highmountain, Ohn'ahran Plains and the Gustberry Lowlands.
 - **Stranglethorn Vale** gets Zuldazar, Sholazar Basin and Zul'Aman.
 - **The Plaguelands** get Lordaeron, Mourning's Rest and the Maw.
-- **Inns and taverns** play the right culture's rest-area music for wherever
-  you happen to be sitting.
+- **Inns** play their own race's tavern music: dwarven drinking songs in
+  Thunderbrew Distillery, human ones in the Lion's Pride, sea shanties in
+  Booty Bay's Salty Sailor.
+- **Pirate coves** get the ocean music they deserve: "Ts Have It" from
+  Warlords of Draenor plays in Booty Bay, Wild Shore, The Merchant Coast and
+  Lost Rigger Cove, and nowhere else.
+- **Hillsbrad** gets its own past: the Caverns of Time music for Old
+  Hillsbrad, Tarren Mill and Durnholde Keep.
 - Sholazar Basin's day and night variants only play at the right hour.
 
 Nothing turns up out of place. Every track is tagged by biome, culture and
@@ -45,7 +51,8 @@ into Orgrimmar. Zones with nothing suitable stay quiet rather than reaching.
 - **Intros still play** — Orgrimmar's fanfare, the Ironforge King theme — on
   the game's own cooldowns.
 - **Subzones and inns switch music where the game would:** the Crossroads,
-  Booty Bay, every inn in its own culture's tavern music.
+  Booty Bay, and inns in their own race's tavern music. An inn whose race
+  isn't known is left to the game.
 - Never the same track twice in a row, and tracks fade out rather than
   cutting off.
 - Dungeons, raids and battlegrounds are left completely alone, and so are
@@ -94,8 +101,8 @@ All 46 Classic zones and cities, plus every new Forever zone: Mount Hyjal,
 Riverglades, Shen'dralas, Darkspear Islands and Zephras Isle. Most zones have
 20–60 eligible tracks; none has fewer than twelve.
 
-By era: 73 Classic pieces Forever doesn't use in these zones, 220 from the
-Forever soundtrack itself, and 115 across Cataclysm, Mists, Warlords, Legion,
+By era: 89 Classic pieces Forever doesn't use in these zones, 220 from the
+Forever soundtrack itself, and 116 across Cataclysm, Mists, Warlords, Legion,
 Battle for Azeroth, Shadowlands, Dragonflight, The War Within and Midnight.
 
 **No Blizzard audio is bundled with or distributed by this addon.** Every

@@ -33,27 +33,19 @@
 -- give a zone all three.  `lua tools/check_zones.lua` flags a zone whose pool
 -- came out thin, which is what that mistake looks like.
 --
--- `resting` replaces the whole set while IsResting() is true -- in an inn.
--- Capital cities deliberately have none: IsResting() is true across an
--- entire capital, so a `resting` entry there would turn every street of
--- Stormwind into a tavern.
+-- Inns are handled per building, not per zone: see ns.inns at the bottom.
+-- `capital = true` marks the six capitals, where IsResting() is true on every
+-- street and so says nothing about being in an inn.
 --
--- `inn` picks which of the game's own tavern music sets plays as the
--- "original" share inside that zone's inns (keys of ns.tavernSets in
--- Originals.lua).  The game ties inn music to the building, which no API
--- exposes, so this is set by hand per zone; a zone without one uses the
--- player's faction tavern set.  Everything else the game would play -- the
--- zone's tracks, its subzones', its intros, its silences -- comes from the
--- client's own data in Originals.lua, not from here.
+-- Everything else the game would play -- the zone's tracks, its subzones',
+-- its intros, its silences -- comes from the client's own data in
+-- Originals.lua, not from here.
 
 local ADDON, ns = ...
 
 -- Shared presets, so the zone list below stays readable. -------------------
 
 local REST_MOODS = { "festive", "calm", "playful", "eerie", "sacred", "melancholy" }
-
-local ALLIANCE = { "human", "dwarf", "gnome", "nightelf", "earthen" }
-local HORDE = { "orc", "tauren", "troll", "undead", "goblin" }
 
 local function joined(...)
     local out = {}
@@ -74,16 +66,6 @@ local function restPool(cultures)
     }
 end
 
-local REST_ALLIANCE = restPool(ALLIANCE)
-local REST_HORDE = restPool(HORDE)
-local REST_ANY = restPool(joined(ALLIANCE, HORDE))
-
--- The pirate rest-area set is sea-shanty drinking music.  It only belongs
--- where there is a dock: Booty Bay, Menethil Harbor, Theramore, Gadgetzan.
--- Anywhere else it is the wrong room entirely.
-local REST_PORT_ALLIANCE = restPool(joined(ALLIANCE, { "pirate" }))
-local REST_PORT_ANY = restPool(joined(ALLIANCE, HORDE, { "pirate" }))
-
 -- Goblin towns.  Their bazaar music is the sound of the town itself, not of
 -- the land around it, so it plays only inside them: those tracks carry the
 -- `town` biome, and only these profiles allow it.  A town keeps everything
@@ -102,6 +84,17 @@ local function town(zone)
     }
 end
 
+-- Pirate coves: the sea and its pirates, but no goblin bazaar.  This is
+-- where "Ts Have It" (the WoD ocean music) and its kind belong -- they carry
+-- the `pirate` culture, which open coastline does not admit.
+local function cove(zone)
+    return {
+        biomes = joined(zone.biomes, { "coast", "sea" }),
+        cultures = joined(zone.cultures, { "pirate" }),
+        moods = joined(zone.moods, { "playful", "festive", "tense" }),
+    }
+end
+
 ns.zones = {
 
     -- ===================== Eastern Kingdoms =====================
@@ -110,20 +103,16 @@ ns.zones = {
         biomes = { "mountain", "snow", "plains", "forest" },
         cultures = { "human", "dwarf", "undead", "orc", "wild" },
         moods = { "calm", "melancholy", "mysterious", "somber", "grand", "heroic", "tense" },
-        resting = REST_ANY,
     },
     [1417] = { -- Arathi Highlands
         biomes = { "plains", "mountain", "coast" },
         cultures = { "human", "dwarf", "orc", "troll", "arathi", "wild" },
         moods = { "calm", "mysterious", "heroic", "grand", "melancholy" },
-        resting = REST_ANY,
-        inn = "dwarf",
     },
     [1418] = { -- Badlands
         biomes = { "desert", "mountain", "cave", "underground", "ruins" },
         cultures = { "dwarf", "orc", "dragon", "wild" },
         moods = { "mysterious", "ominous", "somber", "tense", "grand" },
-        resting = REST_ANY,
     },
     [1419] = { -- Blasted Lands
         biomes = { "blighted", "desert", "ruins", "void" },
@@ -134,15 +123,11 @@ ns.zones = {
         biomes = { "blighted", "darkforest", "plains" },
         cultures = { "undead", "human", "drust" },
         moods = { "ominous", "eerie", "somber", "melancholy", "mysterious" },
-        resting = REST_HORDE,
-        inn = "undead",
     },
     [1421] = { -- Silverpine Forest
         biomes = { "darkforest", "blighted", "coast" },
         cultures = { "undead", "human", "drust", "wild" },
         moods = { "eerie", "ominous", "melancholy", "somber", "mysterious" },
-        resting = REST_HORDE,
-        inn = "undead",
     },
     [1422] = { -- Western Plaguelands
         biomes = { "blighted", "plains", "forest" },
@@ -155,43 +140,34 @@ ns.zones = {
         moods = { "ominous", "eerie", "somber", "grand", "mysterious" },
     },
     [1424] = { -- Hillsbrad Foothills
-        biomes = { "plains", "forest", "coast" },
+        biomes = { "plains", "forest", "coast", "mountain" },
         cultures = { "human", "dwarf", "undead", "orc", "wild" },
         moods = { "calm", "melancholy", "mysterious", "festive", "tense" },
-        resting = REST_ANY,
-        inn = "human",
     },
     [1425] = { -- The Hinterlands
         biomes = { "forest", "jungle", "mountain", "coast" },
         cultures = { "troll", "dwarf", "human", "wild" },
         moods = { "mysterious", "calm", "ominous", "tense", "grand" },
-        resting = REST_ANY,
     },
     [1426] = { -- Dun Morogh
         biomes = { "snow", "mountain", "forest", "plains", "cave", "underground" },
         cultures = { "dwarf", "gnome", "earthen", "wild" },
         moods = { "calm", "grand", "mysterious", "melancholy", "heroic", "festive" },
-        resting = REST_ALLIANCE,
-        inn = "dwarf",
     },
     [1427] = { -- Searing Gorge
         biomes = { "volcanic", "mountain", "underground", "cave", "elemental", "ruins" },
         cultures = { "dwarf", "dragon", "goblin" },
         moods = { "ominous", "tense", "grand", "mysterious" },
-        resting = REST_ANY,
     },
     [1428] = { -- Burning Steppes
         biomes = { "volcanic", "mountain", "elemental", "ruins" },
         cultures = { "dwarf", "dragon", "orc", "demon" },
         moods = { "ominous", "tense", "grand", "mysterious", "somber" },
-        resting = REST_ANY,
     },
     [1429] = { -- Elwynn Forest
         biomes = { "forest", "plains" },
         cultures = { "human", "dwarf", "gnome", "wild" },
         moods = { "calm", "festive", "playful", "mysterious", "heroic", "grand" },
-        resting = REST_ALLIANCE,
-        inn = "human",
     },
     [1430] = { -- Deadwind Pass
         biomes = { "darkforest", "ruins", "blighted", "arcane" },
@@ -202,63 +178,52 @@ ns.zones = {
         biomes = { "darkforest", "blighted" },
         cultures = { "human", "undead", "drust", "wild" },
         moods = { "eerie", "ominous", "melancholy", "mysterious", "somber" },
-        resting = REST_ALLIANCE,
-        inn = "human",
     },
     [1432] = { -- Loch Modan
         biomes = { "mountain", "forest", "plains", "cave", "underground" },
         cultures = { "dwarf", "gnome", "troll", "earthen", "wild" },
         moods = { "calm", "mysterious", "melancholy", "grand", "festive" },
-        resting = REST_ALLIANCE,
-        inn = "dwarf",
     },
     [1433] = { -- Redridge Mountains
         biomes = { "mountain", "forest", "plains" },
         cultures = { "human", "orc", "dwarf", "wild" },
         moods = { "calm", "tense", "mysterious", "heroic", "grand" },
-        resting = REST_ALLIANCE,
-        inn = "human",
     },
     [1434] = { -- Stranglethorn Vale
         biomes = { "jungle", "coast", "sea", "ruins" },
         cultures = { "troll", "human", "goblin", "naga", "wild" },
         moods = { "mysterious", "ominous", "tense", "calm", "grand", "festive", "playful" },
-        resting = REST_PORT_ANY,   -- port town
-        inn = "pirate",
     },
     [1435] = { -- Swamp of Sorrows
         biomes = { "swamp", "blighted", "ruins" },
         cultures = { "troll", "orc", "naga", "undead", "wild" },
         moods = { "eerie", "ominous", "mysterious", "somber", "tense" },
-        resting = REST_HORDE,
-        inn = "horde",
     },
     [1436] = { -- Westfall
         biomes = { "plains", "coast", "sea", "ruins" },
         cultures = { "human", "kultiran", "goblin", "wild" },
         moods = { "calm", "melancholy", "somber", "mysterious", "eerie", "tense" },
-        resting = REST_ALLIANCE,
-        inn = "human",
     },
     [1437] = { -- Wetlands
         biomes = { "swamp", "coast", "forest", "sea" },
         cultures = { "dwarf", "dragon", "troll", "naga", "kultiran", "wild" },
         moods = { "calm", "mysterious", "eerie", "melancholy", "grand" },
-        resting = REST_PORT_ALLIANCE,   -- Menethil Harbor
-        inn = "dwarf",
     },
     [1453] = { -- Stormwind City
+        capital = true,
         biomes = { "city", "arcane", "coast" },
         cultures = { "human", "dwarf", "gnome", "arathi", "earthen" },
         moods = { "grand", "calm", "heroic", "festive", "playful", "mysterious",
                   "melancholy" },
     },
     [1455] = { -- Ironforge
+        capital = true,
         biomes = { "city", "underground", "cave", "arcane" },
         cultures = { "dwarf", "gnome", "earthen" },
         moods = { "grand", "calm", "festive", "heroic", "mysterious", "playful" },
     },
     [1458] = { -- Undercity
+        capital = true,
         biomes = { "city", "underground", "blighted" },
         cultures = { "undead", "nerubian" },
         moods = { "ominous", "eerie", "somber", "grand", "mysterious" },
@@ -267,8 +232,6 @@ ns.zones = {
         biomes = { "forest", "plains", "swamp", "coast" },
         cultures = { "human", "dwarf", "drust", "wild" },
         moods = { "calm", "mysterious", "melancholy", "festive", "eerie", "playful" },
-        resting = REST_ALLIANCE,
-        inn = "human",
     },
 
     -- Alterac Valley (1459), Warsong Gulch (1460) and Arathi Basin (1461) are
@@ -281,89 +244,66 @@ ns.zones = {
         biomes = { "barrens", "plains", "desert", "coast", "mountain" },
         cultures = { "orc", "troll", "goblin", "wild" },
         moods = { "heroic", "tense", "calm", "grand", "mysterious", "playful" },
-        resting = REST_HORDE,
-        inn = "orc",
     },
     [1412] = { -- Mulgore
         biomes = { "plains", "barrens", "mountain" },
         cultures = { "tauren", "centaur", "wild" },
         moods = { "calm", "grand", "melancholy", "mysterious", "heroic" },
-        resting = REST_HORDE,
-        inn = "horde",
     },
     [1413] = { -- The Barrens
         biomes = { "barrens", "plains", "desert", "coast", "mountain" },
         cultures = { "orc", "tauren", "troll", "centaur", "goblin", "wild" },
         moods = { "calm", "tense", "mysterious", "grand", "heroic", "playful" },
-        resting = REST_HORDE,
-        inn = "orc",
     },
     [1438] = { -- Teldrassil
         biomes = { "forest", "enchanted" },
         cultures = { "nightelf", "wild" },
         moods = { "calm", "mysterious", "sacred", "melancholy", "grand" },
-        resting = REST_ALLIANCE,
-        inn = "alliance",
     },
     [1439] = { -- Darkshore
         biomes = { "coast", "darkforest", "forest", "sea", "ruins" },
         cultures = { "nightelf", "naga", "drust", "wild" },
         moods = { "melancholy", "eerie", "mysterious", "somber", "calm" },
-        resting = REST_ALLIANCE,
-        inn = "alliance",
     },
     [1440] = { -- Ashenvale
         biomes = { "forest", "darkforest", "enchanted" },
         cultures = { "nightelf", "orc", "demon", "wild" },
         moods = { "calm", "mysterious", "sacred", "melancholy", "tense", "eerie" },
-        resting = REST_ANY,
-        inn = "alliance",
     },
     [1441] = { -- Thousand Needles
         biomes = { "desert", "mountain", "plains", "barrens" },
         cultures = { "tauren", "centaur", "goblin", "naga", "wild" },
         moods = { "mysterious", "calm", "grand", "tense", "playful" },
-        resting = REST_HORDE,
-        inn = "horde",
     },
     [1442] = { -- Stonetalon Mountains
         biomes = { "mountain", "forest", "plains" },
         cultures = { "nightelf", "orc", "tauren", "goblin", "wild" },
         moods = { "calm", "mysterious", "tense", "melancholy", "grand" },
-        resting = REST_ANY,
-        inn = "orc",
     },
     [1443] = { -- Desolace
         biomes = { "desert", "blighted", "barrens", "coast", "ruins" },
         cultures = { "centaur", "naga", "undead", "demon", "wild" },
         moods = { "somber", "ominous", "eerie", "mysterious", "melancholy" },
-        resting = REST_ANY,
     },
     [1444] = { -- Feralas
         biomes = { "forest", "jungle", "enchanted", "coast", "ruins" },
         cultures = { "nightelf", "highelf", "troll", "naga", "wild" },
         moods = { "calm", "mysterious", "sacred", "melancholy", "grand" },
-        resting = REST_ANY,
-        inn = "alliance",
     },
     [1445] = { -- Dustwallow Marsh
         biomes = { "swamp", "coast", "plains" },
         cultures = { "human", "orc", "dragon", "naga", "kultiran", "wild" },
         moods = { "eerie", "mysterious", "somber", "tense", "calm" },
-        resting = REST_PORT_ANY,   -- port town
     },
     [1446] = { -- Tanaris
         biomes = { "desert", "coast", "sea", "ruins" },
         cultures = { "goblin", "dragon", "naga", "wild" },
         moods = { "mysterious", "calm", "tense", "grand", "playful" },
-        resting = REST_PORT_ANY,   -- port town
-        inn = "pirate",
     },
     [1447] = { -- Azshara
         biomes = { "forest", "coast", "sea", "ruins", "arcane" },
         cultures = { "nightelf", "highelf", "naga", "demon", "wild" },
         moods = { "mysterious", "melancholy", "eerie", "grand", "calm" },
-        resting = REST_ANY,
     },
     [1448] = { -- Felwood
         biomes = { "darkforest", "blighted" },
@@ -379,8 +319,6 @@ ns.zones = {
         biomes = { "forest", "enchanted" },
         cultures = { "nightelf", "wild" },
         moods = { "sacred", "calm", "mysterious", "melancholy", "grand" },
-        resting = REST_ANY,
-        inn = "alliance",
     },
     [1451] = { -- Silithus
         biomes = { "desert", "barrens", "ruins" },
@@ -391,19 +329,21 @@ ns.zones = {
         biomes = { "snow", "mountain", "forest", "cave" },
         cultures = { "nightelf", "dwarf", "tuskarr", "earthen", "wild" },
         moods = { "calm", "mysterious", "melancholy", "grand", "sacred" },
-        resting = REST_ANY,
     },
     [1454] = { -- Orgrimmar
+        capital = true,
         biomes = { "city", "plains", "desert", "mountain", "arcane" },
         cultures = { "orc", "troll", "tauren", "goblin", "undead" },
         moods = { "grand", "heroic", "tense", "festive", "calm", "playful" },
     },
     [1456] = { -- Thunder Bluff
+        capital = true,
         biomes = { "city", "plains", "mountain" },
         cultures = { "tauren", "centaur", "wild" },
         moods = { "calm", "grand", "sacred", "melancholy", "mysterious", "festive" },
     },
     [1457] = { -- Darnassus
+        capital = true,
         biomes = { "city", "forest", "enchanted" },
         cultures = { "nightelf", "highelf" },
         moods = { "sacred", "calm", "grand", "mysterious", "melancholy" },
@@ -412,20 +352,16 @@ ns.zones = {
         biomes = { "forest", "mountain", "enchanted", "snow" },
         cultures = { "nightelf", "demon", "wild" },
         moods = { "sacred", "calm", "grand", "mysterious", "melancholy", "heroic" },
-        resting = REST_ANY,
     },
     [2652] = { -- Shen'dralas (new in Forever)
         biomes = { "forest", "enchanted", "ruins" },
         cultures = { "nightelf", "highelf", "wild" },
         moods = { "mysterious", "sacred", "calm", "melancholy", "grand", "eerie" },
-        resting = REST_ANY,
     },
     [2524] = { -- Darkspear Islands (new in Forever)
         biomes = { "jungle", "coast", "sea" },
         cultures = { "troll", "naga", "wild" },
         moods = { "tense", "mysterious", "ominous", "calm", "grand" },
-        resting = REST_HORDE,
-        inn = "horde",
     },
 
     -- Zephras Isle (new in Forever).  2521 is the zone under Azeroth, 2665 the
@@ -436,13 +372,11 @@ ns.zones = {
         biomes = { "coast", "sea", "plains", "sky", "ruins" },
         cultures = { "naga", "kultiran", "tuskarr", "wild" },
         moods = { "calm", "mysterious", "grand", "tense", "melancholy" },
-        resting = REST_ANY,
     },
     [2665] = {
         biomes = { "coast", "sea", "plains", "sky", "ruins" },
         cultures = { "naga", "kultiran", "tuskarr", "wild" },
         moods = { "calm", "mysterious", "grand", "tense", "melancholy" },
-        resting = REST_ANY,
     },
 }
 
@@ -460,3 +394,45 @@ ns.zones[1446].towns = ns.zones[1446].towns or {}
 ns.zones[1446].towns[977] = town(ns.zones[1446])   -- Steamwheedle Port
 ns.zones[1452].towns = ns.zones[1452].towns or {}
 ns.zones[1452].towns[2255] = town(ns.zones[1452])   -- Everlook
+ns.zones[1434].towns[43] = cove(ns.zones[1434])     -- Wild Shore
+ns.zones[1434].towns[312] = cove(ns.zones[1434])    -- Janeiro's Point
+ns.zones[1434].towns[1739] = cove(ns.zones[1434])   -- Bloodsail Compound
+ns.zones[1413].towns[391] = cove(ns.zones[1413])    -- The Merchant Coast
+ns.zones[1446].towns[1336] = cove(ns.zones[1446])   -- Lost Rigger Cove
+
+-- --------------------------------------------------------------------------
+-- Inns
+-- --------------------------------------------------------------------------
+--
+-- Inside an inn FAME plays that tavern's own race, and nothing else: the
+-- game's tavern music set for that race as the "original" share, and only
+-- tavern tracks of that race from the extended pool.
+--
+-- Which inn you are in comes from the building's name, as GetMinimapZoneText()
+-- shows it inside.  The race has to be written down here by hand: the game's
+-- own data names almost no inn's race -- nearly every inn it knows plays the
+-- generic Alliance or Horde tavern set, and most Horde and Kalimdor inns have
+-- no named building at all.  So this lists only inns whose race is certain.
+--
+-- Any other inn -- resting, indoors, outside a capital, and not on this list
+-- -- is left to the game, which plays its own music there.
+--
+-- Names are English, as the client shows them on an English client.  On
+-- another language they will not match, and every inn falls back to the game.
+ns.inns = {
+    ["Lion's Pride Inn"] = "human",          -- Goldshire, Elwynn Forest
+    ["Scarlet Raven Tavern"] = "human",      -- Darkshire, Duskwood
+    ["Lakeshire Inn"] = "human",             -- Lakeshire, Redridge Mountains
+    ["Stoutlager Inn"] = "dwarf",            -- Thelsamar, Loch Modan
+    ["Thunderbrew Distillery"] = "dwarf",    -- Kharanos, Dun Morogh
+    ["Deepwater Tavern"] = "dwarf",          -- Menethil Harbor, Wetlands
+    ["The Stonefire Tavern"] = "dwarf",      -- Ironforge
+    ["Gallows' End Tavern"] = "undead",      -- Brill, Tirisfal Glades
+    ["The Salty Sailor Tavern"] = "pirate",  -- Booty Bay, Stranglethorn Vale
+}
+
+-- One extended-pool profile per race: tavern music of that race only.
+ns.innProfiles = {}
+for _, race in pairs(ns.inns) do
+    ns.innProfiles[race] = ns.innProfiles[race] or restPool({ race })
+end

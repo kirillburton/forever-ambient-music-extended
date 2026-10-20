@@ -177,9 +177,9 @@ if only then
                 table.concat(t.tags, " ")))
         end
     end
-    if prof.resting then
-        local pool = poolFor(prof.resting, false)
-        io.write(("\n=== uiMapID %d, resting: %d eligible\n"):format(only, #pool))
+    for areaID, townProf in pairs(prof.towns or {}) do
+        local pool = poolFor(townProf, false)
+        io.write(("\n=== uiMapID %d, area %d (town or cove): %d eligible\n"):format(only, areaID, #pool))
         for _, t in ipairs(pool) do
             io.write(("  %-9s %4ds  %s\n"):format(tostring(t.id or t.file), t.len,
                 table.concat(t.tags, " ")))
@@ -194,19 +194,30 @@ table.sort(ids)
 
 io.write(("%d tracks loaded (%d built-in, %d local), %d zones\n\n")
     :format(#ns.allTracks, #ns.builtinTracks, #(ns.localTracks or {}), #ids))
-io.write("uiMapID   day  night  resting\n")
+io.write("uiMapID   day  night\n")
 local thin = {}
 for _, zoneID in ipairs(ids) do
     local prof = ns.zones[zoneID]
     local d = #poolFor(prof, false)
     local n = #poolFor(prof, true)
-    local r = prof.resting and #poolFor(prof.resting, false) or 0
-    io.write(("%-9d %4d  %5d  %7s\n"):format(zoneID, d, n,
-        prof.resting and tostring(r) or "-"))
+    io.write(("%-9d %4d  %5d\n"):format(zoneID, d, n))
     if d < 8 or n < 8 then thin[#thin + 1] = { zoneID, d, n } end
-    if prof.resting and r < 4 then
-        complain("zone %d resting pool is only %d tracks", zoneID, r)
-    end
+end
+
+-- Inns: each named inn must have its race's tavern set, and something to play.
+io.write("\ninn                            race     game's set        extended\n")
+local innNames = {}
+for name in pairs(ns.inns) do innNames[#innNames + 1] = name end
+table.sort(innNames)
+for _, name in ipairs(innNames) do
+    local race = ns.inns[name]
+    local setID = ns.tavernSets[race]
+    local musicSet = setID and ns.musicSets[setID]
+    local pool = ns.innProfiles[race] and poolFor(ns.innProfiles[race], false) or {}
+    io.write(("%-30s %-8s %-17s %8d\n"):format(name, race,
+        musicSet and (musicSet.name .. " (" .. #musicSet.day .. ")") or "MISSING", #pool))
+    if not musicSet then complain("inn %q: no tavern music set for race %q", name, race) end
+    if #pool == 0 then complain("inn %q: no %s tavern tracks in the extended pool", name, race) end
 end
 
 if #thin > 0 then
