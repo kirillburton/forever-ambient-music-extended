@@ -128,18 +128,38 @@ so it never jumps up first. The slider's own value is
 saved before the first step and restored on every way out: ramp finished,
 zone change, release, logout.
 
-The slider is shared, though: the Settings panel, other addons and you can
-all read it mid-fade and write that value back later. Opening Settings during
-a fade and closing it is enough. That used to leave the volume stuck between
-your level and zero. So every value FAME writes mid-fade carries a mark: it's
-rounded to the thousandth and nudged by half of one (0.2 becomes 0.2005), a
-value the slider never produces. On every poll, every volume-change event
-and at login, `CheckVolume` looks at the slider. If it holds a marked value
-while no fade is running, something replayed a stale one, and FAME puts your
-level back. An unmarked value is your choice, even mid-fade, and becomes the
-level fades return to. Your level is also kept in saved variables, so a
-quit mid-fade is healed at the next login. On beta builds that don't load
-saved variables, FAME says so once and asks you to set the slider.
+The slider is shared, though. You move it; the Settings panel can read it
+mid-fade and write that value back on close; and some addons fade it
+themselves. [Spoken Quests](https://github.com/rusty-key/spoken-wow) turns
+music down to 30% while a line is spoken. It guards the slider the same way
+FAME does: if it finds a value it didn't set, it decides you moved it and
+gives the channel up for good, never putting it back. Before 0.3.1 the two
+took each other for you, and a line overlapping a FAME fade left the music
+stuck at a fraction of your level. So FAME now gives way:
+
+- **It knows exactly what it wrote.** After every write it notes the value
+  the client reports back. Its mid-fade values also carry an odd offset (0.2
+  becomes 0.200537), so no other addon's arithmetic lands on them.
+- **Mid-fade, any other value means someone else is working the slider.**
+  FAME yields: it stops fading, finishes whatever the fade was for, and puts
+  nothing back. For a few seconds after any outside change it swaps tracks
+  with a hard cut rather than a fade.
+- **While Spoken is ducking or fading, FAME doesn't touch the slider at
+  all.** It takes the level Spoken noted before ducking as yours. Spoken has
+  no public API for this, so FAME reads its internal state defensively. If a
+  Spoken update changes that state, FAME falls back to the general rule
+  above.
+- **A FAME mid-fade value turning up later is a stale replay.** Once nothing
+  else has moved the slider for a few seconds, FAME puts your level back.
+- **Any other outside change is your choice** and becomes the level fades
+  return to. It's saved, with a note of any fade in progress, so a quit
+  mid-fade is healed at the next login. On beta builds that don't load saved
+  variables, FAME says so once and asks you to set the slider.
+
+The smoke test runs a line-for-line copy of Spoken's ducking logic against
+FAME: lines over idle tracks, a track change mid-line, a line starting
+mid-fade, and 40 lines at random moments. The 0.3.0 code fails it, stuck at
+9.5% and never recovering. 0.3.1 passes across ten random seeds.
 
 ### Inns
 

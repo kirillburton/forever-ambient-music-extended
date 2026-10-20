@@ -110,6 +110,13 @@ built-in track is a file your Forever client already has — the list was
 generated from the client's own file manifest, so there is nothing to
 download and nothing to go missing.
 
+## Plays well with Spoken Quests
+
+FAME fades tracks by moving the music slider, and so does Spoken Quests when
+it turns music down for a line. FAME gives way: while Spoken is ducking it
+doesn't touch the slider, and if anything else moves it mid-fade, FAME stops
+and leaves it alone. Your music volume always ends up where you set it.
+
 ## Notes
 
 - Forever beta writes SavedVariables but does not always load them back, so a

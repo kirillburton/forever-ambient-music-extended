@@ -471,37 +471,65 @@ local QUIET_AFTER = 2.5
 local SWAP_HOLD = 1.0
 local FADE_IN = 1.0
 
--- The slider is shared with the player, the Settings panel and every other
--- addon, and any of them can read it mid-fade and write that value back
--- later -- opening Settings during a fade and closing it is enough.  That is
--- how a volume ends up stuck somewhere between the player's level and zero.
--- So FAME never trusts that the slider is still what it left there:
+-- The slider is shared.  The player moves it; the Settings panel can read it
+-- mid-fade and write that value back on close; and some addons fade it
+-- themselves -- Spoken Quests turns music down to 30% while a line is spoken.
+-- Spoken guards the slider the same way FAME does: if it finds a value it
+-- didn't set, it decides the player moved it and gives the channel up for
+-- good, never putting it back.  Two addons each taking the other for the
+-- player is how a volume ends up stuck quiet.  So FAME's rule is to give way:
 --
---   * Every value it writes mid-fade carries a mark: rounded to the
---     thousandth and nudged by half of one (0.2 becomes 0.2005).  The slider
---     never produces such a value, so "is this one of FAME's?" can be
---     answered from the number alone -- later in the session, or in the next.
---   * The player's own level is remembered (and saved, for the case of
---     quitting mid-fade).  Whenever no fade is running and the slider holds a
---     marked value, something replayed a stale one, and FAME puts the
---     player's level back.  CheckVolume does that, on every poll, every
---     volume change event, and at login.
---   * A value that is *not* marked is the player's choice, even mid-fade:
---     it becomes the level every fade returns to.
+--   * FAME knows exactly what it wrote: after every write it notes the value
+--     the client reports back.  Its mid-fade values also carry an odd offset
+--     (0.2 becomes 0.200537), so no other addon's arithmetic lands on them.
+--   * Mid-fade, the moment the slider holds anything else, someone else is
+--     working it.  FAME yields: it stops fading, finishes whatever the fade
+--     was for, and puts nothing back.  For a few seconds after any outside
+--     change it swaps tracks with a hard cut rather than a fade.
+--   * While Spoken is ducking or fading, FAME doesn't touch the slider at
+--     all, and takes the level Spoken noted before ducking as the player's.
+--   * A FAME mid-fade value turning up later, with nothing else moving the
+--     slider, is a stale replay: FAME puts the player's level back.
+--   * Any other outside change is the player's choice and becomes the level
+--     fades return to.  It is saved, along with a note of any fade in
+--     progress, so a quit mid-fade is healed at the next login.
 local MUSIC_VOLUME = "Sound_MusicVolume"
+local YIELD_SECONDS = 5
+local MARK = 0.000537
 
 local function marked(v)
     v = math.max(0, math.min(0.998, v))
-    return math.floor(v * 1000) / 1000 + 0.0005
+    return math.floor(v * 1000) / 1000 + MARK
 end
 
-local function isMarked(v)
+local function key(v) return v and string.format("%.6f", v) end
+
+-- Values FAME has written mid-fade this session, as the client reported them.
+local ours = {}
+
+local function isOurs(v) return v ~= nil and ours[key(v)] == true end
+
+-- Across sessions there is no record, only the offset: six decimals ending 537.
+local function looksLikeOurs(v)
     if not v then return false end
-    return math.abs((v * 1000) % 1 - 0.5) < 0.02
+    local s = key(v)
+    return s:sub(-3) == "537"
 end
 
-local function readVolume()
-    return tonumber(cvarGet(MUSIC_VOLUME))
+local function readRaw() return cvarGet(MUSIC_VOLUME) end
+local function readVolume() return tonumber(readRaw()) end
+
+-- Spoken publishes no API for its ducking, so this reads its state directly,
+-- defensively: a missing field means "not ducking", and the general rule
+-- above still keeps the two from fighting.  Returns busy, and the music level
+-- Spoken noted before it ducked.
+local function spokenDucking()
+    local env = rawget(_G, "SpokenEnv")
+    local sounds = type(env) == "table" and rawget(env, "OtherSounds")
+    if type(sounds) ~= "table" then return false end
+    if not (sounds.lowered or sounds.fadeTimer) then return false end
+    local original = type(sounds.original) == "table" and tonumber(sounds.original.Music)
+    return true, original
 end
 
 function FAME:SetUserVolume(v)
@@ -510,16 +538,37 @@ function FAME:SetUserVolume(v)
     ForeverAmbientMusicExtendedDB.userVolume = v
 end
 
--- One step of a fade.  Before writing, see whether someone else moved the
--- slider since the last step; if they did, that is the new level to return to.
-function FAME:WriteStep(v)
-    local now = readVolume()
-    if now and self.savedVolume and not isMarked(now) and math.abs(now - self.savedVolume) > 0.001 then
-        debugf("music volume changed to %.2f mid-fade -- fading back to that", now)
-        self.savedVolume = now
-        self:SetUserVolume(now)
+local function saveGuard(user, last)
+    ForeverAmbientMusicExtendedDB = ForeverAmbientMusicExtendedDB or {}
+    ForeverAmbientMusicExtendedDB.fadeGuard = { user = user, last = last }
+end
+
+local function clearGuard()
+    if ForeverAmbientMusicExtendedDB then ForeverAmbientMusicExtendedDB.fadeGuard = nil end
+end
+
+-- Every write FAME makes goes through here.  `mid` marks a mid-fade value.
+function FAME:Write(v, mid)
+    self.writing = true
+    cvarSet(MUSIC_VOLUME, mid and marked(v) or v)
+    self.writing = false
+    local back = readRaw()
+    self.lastWritten = back
+    if mid and back then
+        ours[key(tonumber(back))] = true
+        if self.savedVolume then saveGuard(self.savedVolume, back) end
     end
-    cvarSet(MUSIC_VOLUME, marked(v))
+end
+
+-- Has someone else moved the slider since FAME last wrote it?
+function FAME:Foreign()
+    return self.lastWritten ~= nil and readRaw() ~= self.lastWritten
+end
+
+-- Is someone else working the slider right now?
+function FAME:Yielding()
+    if spokenDucking() then return true end
+    return self.foreignAt ~= nil and GetTime() - self.foreignAt < YIELD_SECONDS
 end
 
 function FAME:StopRamps()
@@ -527,31 +576,97 @@ function FAME:StopRamps()
     if self.restoreTimer then self.restoreTimer:Cancel(); self.restoreTimer = nil end
 end
 
-function FAME:RestoreVolume()
+-- Give the slider up mid-fade: stop, write nothing more, put nothing back,
+-- and do now whatever the fade was leading up to.
+function FAME:Yield(why)
+    debugf("music volume is being moved by something else (%s) -- leaving it alone", why)
+    self.foreignAt = GetTime()
     self:StopRamps()
-    if self.savedVolume then
-        local v = self.savedVolume
-        self.savedVolume = nil
-        self:SetUserVolume(v)
-        cvarSet(MUSIC_VOLUME, v)
-    end
+    self.savedVolume, self.lastWritten = nil, nil
+    clearGuard()
+    local pending = self.pendingAction
+    self.pendingAction = nil
+    if pending then pending() end
 end
 
--- Outside a fade: heal a stale mid-fade value, or learn the player's level.
+-- One step of a fade.  False when FAME has had to yield instead.
+function FAME:WriteStep(v)
+    if spokenDucking() then self:Yield("Spoken is ducking"); return false end
+    if self:Foreign() then self:Yield("mid-fade"); return false end
+    self:Write(v, true)
+    return true
+end
+
+-- End of a fade: the player's level back -- unless someone else has moved
+-- the slider meanwhile, in which case it is theirs and stays as they left it.
+function FAME:RestoreVolume()
+    self:StopRamps()
+    self.pendingAction = nil
+    if not self.savedVolume then return end
+    if self:Foreign() or spokenDucking() then return self:Yield("at the end of a fade") end
+    local v = self.savedVolume
+    self:SetUserVolume(v)
+    self.savedVolume = nil
+    self:Write(v, false)
+    self.lastWritten = nil
+    clearGuard()
+end
+
+-- Outside a fade: track the player's level, and heal a stale FAME value.
 function FAME:CheckVolume()
-    if self.savedVolume then return end          -- a fade owns the slider right now
+    if self.writing then return end
+    if self.savedVolume then
+        -- Mid-fade: catch an outside change straight away, not at the next step.
+        if self:Foreign() then self:Yield("mid-fade") end
+        return
+    end
     local now = readVolume()
     if not now then return end
-    if isMarked(now) then
-        if self.userVolume and not isMarked(self.userVolume) then
-            debugf("music volume was left at %.3f, a value from an old fade -- putting back %.2f", now, self.userVolume)
-            cvarSet(MUSIC_VOLUME, self.userVolume)
+
+    local busy, spokenLevel = spokenDucking()
+    if busy then
+        -- Spoken's noted level is the player's -- unless it noted one of FAME's
+        -- own mid-fade values, having started in the middle of a FAME fade.
+        if spokenLevel and not isOurs(spokenLevel) and not looksLikeOurs(spokenLevel) then
+            if spokenLevel ~= self.userVolume then self:SetUserVolume(spokenLevel) end
+        end
+        self.foreignAt = GetTime()
+        return
+    end
+
+    if isOurs(now) or looksLikeOurs(now) then
+        -- One of FAME's mid-fade values, replayed.  Wait until nothing else
+        -- has moved the slider for a few seconds -- Spoken restoring a level it
+        -- noted mid-fade lands here too -- then put the player's level back.
+        if self:Yielding() then return end
+        if self.userVolume and not looksLikeOurs(self.userVolume) then
+            debugf("music volume was left at %s, a value from an old fade -- putting back %.2f",
+                key(now), self.userVolume)
+            self:Write(self.userVolume, false)
+            self.lastWritten = nil
         elseif not self.warnedVolume then
             self.warnedVolume = true
             say("your music volume (%d%%) looks like it was left part-way through a fade, and FAME doesn't know your usual level. Set it once in the Sound options and FAME will keep it there.", math.floor(now * 100 + 0.5))
         end
     elseif now ~= self.userVolume then
+        -- The player, or another addon: either way, theirs.
+        self.foreignAt = GetTime()
         self:SetUserVolume(now)
+    end
+end
+
+-- At login: a fade the last session never finished leaves the slider on a
+-- value FAME noted; put back the level FAME noted with it.
+function FAME:RecoverGuard()
+    local guard = ForeverAmbientMusicExtendedDB and ForeverAmbientMusicExtendedDB.fadeGuard
+    clearGuard()
+    if type(guard) ~= "table" then return end
+    local user = tonumber(guard.user)
+    if user and guard.last and readRaw() == guard.last then
+        debugf("music volume left mid-fade last session -- putting back %.2f", user)
+        self:SetUserVolume(user)
+        self:Write(user, false)
+        self.lastWritten = nil
     end
 end
 
@@ -565,12 +680,11 @@ function FAME:FadeBackIn()
         local step = 0
         FAME.rampTicker = C_Timer.NewTicker(FADE_IN / FADE_STEPS, function()
             step = step + 1
-            if step >= FADE_STEPS or not FAME.savedVolume then
+            if not FAME.savedVolume then FAME:StopRamps(); return end
+            if step >= FADE_STEPS then
                 FAME.rampTicker = nil
                 FAME:RestoreVolume()
             else
-                -- Read the target each step: the player may have moved the
-                -- slider during the fade, and WriteStep picks that up.
                 FAME:WriteStep(FAME.savedVolume * step / FADE_STEPS)
             end
         end, FADE_STEPS)
@@ -587,28 +701,37 @@ end
 --
 -- If a fade is already under way -- say a fade-in, cut short by walking into
 -- the next zone -- this ramps down from wherever the volume is now, and keeps
--- the player's original level as the one to return to.  Starting over from
--- the saved level would jump the volume up first.
+-- the player's original level as the one to return to.
 function FAME:RampDown(seconds, andThen, quietAfter)
     self:StopRamps()
     self:CheckVolume()
+    if self:Yielding() then
+        -- Someone else is working the slider: no fade, just do it.
+        self.savedVolume, self.lastWritten = nil, nil
+        return andThen()
+    end
     local current = readVolume()
     if not self.savedVolume then
-        -- Starting fresh.  The level to come back to is the player's: the
-        -- slider as it stands, unless it holds a stale mark from an old fade.
-        self.savedVolume = (current and not isMarked(current)) and current or self.userVolume
+        -- Starting fresh: come back to the slider as found, unless it holds a
+        -- stale FAME value.  And note it, to tell later whether anyone else
+        -- has touched it.
+        self.savedVolume = (current and not isOurs(current) and not looksLikeOurs(current))
+            and current or self.userVolume
+        self.lastWritten = readRaw()
+        saveGuard(self.savedVolume, self.lastWritten)
     end
     if not current or not self.savedVolume or self.savedVolume <= 0 or seconds <= 0 then
         andThen()
         self:RestoreVolume()
         return
     end
+    self.pendingAction = andThen
     local step = 0
     self.rampTicker = C_Timer.NewTicker(seconds / FADE_STEPS, function()
         step = step + 1
-        FAME:WriteStep(current * math.max(0, 1 - step / FADE_STEPS))
+        if not FAME:WriteStep(current * math.max(0, 1 - step / FADE_STEPS)) then return end
         if step < FADE_STEPS then return end
-        FAME.rampTicker = nil
+        FAME.rampTicker, FAME.pendingAction = nil, nil
         andThen()
         if quietAfter then
             FAME.restoreTimer = C_Timer.NewTimer(QUIET_AFTER, function()
@@ -907,7 +1030,8 @@ FAME:SetScript("OnEvent", function(self, event, arg1)
             -- quit or a crash; without it, FAME learns the level from the
             -- slider itself.
             local saved = ForeverAmbientMusicExtendedDB and tonumber(ForeverAmbientMusicExtendedDB.userVolume)
-            if saved and not isMarked(saved) then self.userVolume = saved end
+            if saved and not looksLikeOurs(saved) then self.userVolume = saved end
+            self:RecoverGuard()
         end
         self:CheckVolume()
         -- Arriving is always a fresh start.
@@ -1093,7 +1217,11 @@ commands.where = function()
     end
     local vol = readVolume()
     print(("  music volume: %s, your level %s%s"):format(tostring(vol), tostring(FAME.userVolume),
-        FAME:Fading() and " (mid-fade)" or (isMarked(vol) and " |cffff8080(left over from a fade)|r" or "")))
+        FAME:Fading() and " (mid-fade)"
+            or ((isOurs(vol) or looksLikeOurs(vol)) and " |cffff8080(left over from a fade)|r")
+            or (FAME:Yielding() and " (another addon is working the slider -- FAME is leaving it alone)")
+            or ""))
+    print(("  music volume as the client stores it: %s"):format(tostring(readRaw())))
     print(("  state: %s"):format(FAME:StateText()))
 end
 

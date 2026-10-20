@@ -84,15 +84,19 @@ C_Map = {
 }
 GetCVar = function(name) return cvars[name] end
 local volumeLog = {}
+local fameRef          -- set once Core.lua is loaded; the client tells it about every write
 SetCVar = function(name, value)
     if name == "Sound_MusicVolume" then
         volumeWrites = volumeWrites + 1
         volumeLog[#volumeLog + 1] = tonumber(value)
     end
     cvars[name] = tostring(value)
+    if name == "Sound_MusicVolume" and fameRef and fameRef.onEvent then
+        fameRef.onEvent(fameRef, "CVAR_UPDATE", name)
+    end
 end
--- FAME marks every mid-fade value (see Core.lua); the player's never are.
-local function isMarked(v) return v and math.abs((v * 1000) % 1 - 0.5) < 0.02 end
+-- FAME's mid-fade values carry an odd offset: six decimals ending 537.
+local function isMarked(v) return v ~= nil and string.format("%.6f", v):sub(-3) == "537" end
 GetCVarBool = function(name)
     if cvars[name] == nil then return nil end
     return cvars[name] ~= "0"
@@ -136,6 +140,7 @@ for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "Originals.lua", "Zones
     assert(loadfile(ROOT .. "/" .. file))(ADDON, ns)
 end
 local FAME = ns.core
+fameRef = FAME
 -- Sample the volume slider at a moment in time (for the swap checks).
 local function volumeAt(seconds)
     quiet = true; advance(seconds); quiet = false
@@ -693,6 +698,7 @@ local function midFadeValue()
     return cvars.Sound_MusicVolume
 end
 local stale = midFadeValue()
+
 check(isMarked(tonumber(stale)), ("a mid-fade value is marked: %s"):format(stale))
 go(10)
 check(cvars.Sound_MusicVolume == START_VOLUME, "the fade itself puts the level back")
@@ -738,6 +744,144 @@ check(cvars.Sound_MusicVolume == START_VOLUME, "with the level back where it was
 state.instance = false; fire("ZONE_CHANGED_NEW_AREA"); go(3)
 
 ------------------------------------------------------------------------------
+realPrint("\nsharing the slider with Spoken Quests")
+-- A line-for-line stand-in for Spoken's OtherSounds (addons/Spoken/OtherSounds.lua,
+-- github.com/rusty-key/spoken-wow): on a line it notes the music level, fades to
+-- 30% of it in 0.05s steps over 0.8s, and fades back 1.2s after the line.  On
+-- every step it checks the slider still holds what it last set; if not, it takes
+-- the player to have moved it and gives the channel up -- never restoring it.
+local Spoken = { original = {}, applied = {}, gaveUp = 0 }
+SpokenEnv = setmetatable({ OtherSounds = Spoken }, { __index = _G })
+local function sRead() return tonumber(cvars.Sound_MusicVolume) or 1 end
+local function sRelease()
+    if Spoken.applied.Music and math.abs(sRead() - Spoken.applied.Music) > 0.005 then
+        Spoken.original.Music, Spoken.applied.Music = nil, nil
+        Spoken.gaveUp = Spoken.gaveUp + 1
+    end
+end
+function Spoken:FadeTo(target, done)
+    if self.fadeTimer then self.fadeTimer:Cancel(); self.fadeTimer = nil end
+    sRelease()
+    local start, progress = sRead(), 0
+    local function step()
+        progress = math.min(1, progress + 0.05 / 0.8)
+        sRelease()
+        if self.original.Music then
+            SetCVar("Sound_MusicVolume", start + (target - start) * progress)
+            self.applied.Music = sRead()
+        end
+        if progress >= 1 then
+            if self.fadeTimer then self.fadeTimer:Cancel(); self.fadeTimer = nil end
+            if done then done() end
+        end
+    end
+    self.fadeTimer = C_Timer.NewTicker(0.05, step)
+    step()
+end
+function Spoken:Lower()
+    if not self.lowered then
+        self.lowered = true
+        self.original, self.applied = { Music = sRead() }, {}
+    end
+    self.restoring = false
+    self:FadeTo(self.original.Music * 0.3)
+end
+function Spoken:Restore()
+    if not self.lowered then return end
+    self.restoring = true
+    local function finished()
+        self.lowered, self.restoring = false, false
+        self.original, self.applied = {}, {}
+    end
+    if not self.original.Music then return finished() end
+    self:FadeTo(self.original.Music, finished)
+end
+local function speak(seconds)
+    Spoken:Lower()
+    C_Timer.NewTimer(seconds + 1.2, function() Spoken:Restore() end)
+end
+local function range(seconds)
+    local lo, hi = 9, -9
+    for _ = 1, math.floor(seconds / 0.1) do
+        local v = volumeAt(0.1)
+        lo, hi = math.min(lo, v), math.max(hi, v)
+    end
+    return lo, hi
+end
+
+cvars.Sound_MusicVolume = START_VOLUME
+fire("CVAR_UPDATE", "Sound_MusicVolume")
+state.map = 1431; state.instance = false; fire("ZONE_CHANGED_NEW_AREA")
+while not FAME.playing or FAME:Fading() do go(5) end
+go(FAME.startedAt + 10 - now)
+-- 1. A line while FAME is just playing: the common case.
+Spoken.gaveUp = 0
+speak(6)
+go(1.0)
+local ducked = tonumber(cvars.Sound_MusicVolume)
+check(math.abs(ducked - 0.12) < 0.002, ("a line ducks the music to 30%% of 40%%: %.3f"):format(ducked))
+local lo, hi = range(5)
+check(lo > 0.115 and hi < 0.125, ("FAME leaves it there for the whole line (%.3f-%.3f)"):format(lo, hi))
+go(4)
+check(cvars.Sound_MusicVolume == START_VOLUME, ("and after the line it is back at 40%% (%s)"):format(cvars.Sound_MusicVolume))
+check(Spoken.gaveUp == 0, "Spoken never mistook FAME for the player")
+
+-- 2. A track ends in the middle of a line: FAME changes tracks without fading.
+while not FAME.playing do go(5) end
+go(FAME.startedAt + FAME.playing.len - 4 - now)          -- the end-of-track fade starts in ~1.5s
+local before = FAME.playing
+Spoken.gaveUp = 0
+speak(12)
+go(1.0)
+lo, hi = range(10)
+check(FAME.playing ~= before or FAME.state == "silence", "the track still ends on time, mid-line")
+check(lo > 0.115 and hi < 0.125, ("with the music held at Spoken's level throughout (%.3f-%.3f)"):format(lo, hi))
+go(10)
+check(cvars.Sound_MusicVolume == START_VOLUME, ("then back at 40%% (%s)"):format(cvars.Sound_MusicVolume))
+check(Spoken.gaveUp == 0, "and Spoken never gave the channel up")
+
+-- 3. A line starts in the middle of a FAME fade.
+while not FAME.playing do go(5) end
+go(FAME.startedAt + FAME.playing.len - 1.2 - now)        -- mid end-of-track fade
+local midValue = tonumber(cvars.Sound_MusicVolume)
+Spoken.gaveUp = 0
+speak(6)
+go(1.0)
+check(tonumber(cvars.Sound_MusicVolume) < midValue,
+    ("Spoken ducks from FAME's half-faded level (%.3f -> %s)"):format(midValue, cvars.Sound_MusicVolume))
+go(25)
+check(cvars.Sound_MusicVolume == START_VOLUME,
+    ("once both are done the level is 40%% again, not FAME's half-faded one (%s)"):format(cvars.Sound_MusicVolume))
+check(Spoken.gaveUp == 0, "Spoken never gave the channel up")
+
+-- 4. Many lines over a long session, at random moments.
+Spoken.gaveUp = 0
+local stuck = 0
+for _ = 1, 40 do
+    go(math.random(20, 200))
+    speak(math.random(3, 15))
+    go(30)
+    -- An ordinary FAME fade may be running at this instant; let it finish.
+    for _ = 1, 20 do if not FAME:Fading() then break end go(1) end
+    if cvars.Sound_MusicVolume ~= START_VOLUME then stuck = stuck + 1 end
+end
+go(30)
+check(stuck == 0, ("40 lines at random moments: the level is 40%% after every one (%d not)"):format(stuck))
+check(Spoken.gaveUp == 0, ("Spoken never gave the channel up (%d times)"):format(Spoken.gaveUp))
+
+-- 5. An addon that ducks the same way but exposes nothing: FAME still gives way.
+SpokenEnv = nil
+while not FAME.playing do go(5) end
+go(FAME.startedAt + FAME.playing.len - 1.2 - now)        -- mid FAME fade
+SetCVar("Sound_MusicVolume", 0.12)                       -- someone ducks, abruptly
+go(3)
+check(cvars.Sound_MusicVolume == "0.12", ("FAME stops fading and leaves another addon's level alone (%s)"):format(cvars.Sound_MusicVolume))
+go(20)
+SetCVar("Sound_MusicVolume", 0.4)                        -- and puts it back
+go(30)
+check(cvars.Sound_MusicVolume == START_VOLUME, "and when that addon puts it back, it stays back")
+
+------------------------------------------------------------------------------
 realPrint("\nslash commands")
 for _, input in ipairs({ "", "help", "status", "where", "pool 3", "skip", "next", "chance 25",
                           "chance", "first", "first", "debug", "status", "where", "debug",
@@ -768,21 +912,29 @@ local function freshSession()
         assert(loadfile(ROOT .. "/" .. file))(ADDON, ns2)
     end
     FAME = ns2.core
+    fameRef = FAME
     fire("ADDON_LOADED", ADDON)
     fire("PLAYER_ENTERING_WORLD")
 end
 ForeverAmbientMusicExtendedDB.userVolume = 0.4
-cvars.Sound_MusicVolume = "0.2005"
+cvars.Sound_MusicVolume = "0.200537"
 freshSession()
 check(cvars.Sound_MusicVolume == "0.4", ("with the level saved, it is restored at login (%s)"):format(cvars.Sound_MusicVolume))
 
 ForeverAmbientMusicExtendedDB.userVolume = nil
-cvars.Sound_MusicVolume = "0.2005"
+ForeverAmbientMusicExtendedDB.fadeGuard = { user = 0.4, last = "0.300537" }
+cvars.Sound_MusicVolume = "0.300537"
+freshSession()
+check(cvars.Sound_MusicVolume == "0.4", ("the note of a fade in progress also restores it (%s)"):format(cvars.Sound_MusicVolume))
+
+ForeverAmbientMusicExtendedDB.userVolume = nil
+ForeverAmbientMusicExtendedDB.fadeGuard = nil
+cvars.Sound_MusicVolume = "0.200537"
 local chatMark = #chat
 freshSession()
 local warned = false
 for i = chatMark + 1, #chat do if chat[i]:find("left part-way through a fade", 1, true) then warned = true end end
-check(cvars.Sound_MusicVolume == "0.2005" and warned,
+check(cvars.Sound_MusicVolume == "0.200537" and warned,
     "without a saved level (beta saved variables), it is left alone and the player is told once")
 cvars.Sound_MusicVolume = "0.35"
 fire("CVAR_UPDATE", "Sound_MusicVolume")
