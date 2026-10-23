@@ -4,6 +4,8 @@
 
 First full release, for the live World of Warcraft: Forever client.
 
+New logo - shown in the in-game addon list.
+
 Changes:
 - tidier command output - every command answers with a short headline and aligned details
 - tracks are shown by name, e.g. mus_80_drustvar_h (1780914), instead of a bare file ID - in /fame status, /fame pool, /fame ban and /fame banlist

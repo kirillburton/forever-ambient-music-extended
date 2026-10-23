@@ -1,3 +1,5 @@
+<img src="art/fame-logo-512.png" alt="FAME logo" width="160" align="right">
+
 # Forever Ambient Music Extended (FAME)
 
 Widens the ambient zone music rotation in World of Warcraft: Forever with

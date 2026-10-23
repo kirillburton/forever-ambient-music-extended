@@ -4,7 +4,7 @@
 ## Version: 1.0.0
 ## Author: kirillburton8
 ## SavedVariables: ForeverAmbientMusicExtendedDB
-## IconTexture: Interface\Icons\INV_Misc_Drum_02
+## IconTexture: Interface\AddOns\ForeverAmbientMusicExtended\Media\logo
 
 Tracks.lua
 LocalTracks.lua
