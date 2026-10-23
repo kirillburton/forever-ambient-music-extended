@@ -191,22 +191,29 @@ says nothing about being in an inn there.
 
 ### Commands
 
-| | |
+`/fame help` lists these with each setting's current value. Every command
+answers with a one-line headline, then aligned details. Tracks are named by
+their file name with the file ID beside it, and lengths read as minutes and
+seconds.
+
+| Everyday | |
 |---|---|
-| `/fame on` \| `off` \| `toggle` | run the schedule, or hand music back to the game |
-| `/fame status` | what is playing, what comes next, the music set here |
-| `/fame skip` | end this track the way it would end anyway: into the silence, or the next track with Loop Music on |
-| `/fame next` | end this track and play an extended one now |
-| `/fame where` | uiMapID, subzone, music set and its silences, Loop Music |
-| `/fame pool [n]` | list the first n tracks eligible here |
-| `/fame play <fileDataID>` | play one track now |
-| `/fame scan <id> [id …]` | report which fileDataIDs this client actually has |
-| `/fame ban` | never play the current track again |
-| `/fame banlist` | list banned tracks with the zone each was banned in |
+| `/fame status` | what's playing, how far in, what comes next, the mix |
+| `/fame skip` | end this track as it would end anyway: into the game's silence, or the next track with Loop Music on |
+| `/fame next` | play an extended track now |
+| `/fame ban` | never play this track again |
+| `/fame banlist` | banned tracks, with the zone each was banned in |
 | `/fame unban <id>` \| `all` | allow one banned track again, or all of them |
-| `/fame chance <0-100>` | percent of tracks kept as the game's own (default 40) |
-| `/fame first` | toggle whether the first track in a new place may be extended |
-| `/fame verify` | also probe built-in tracks for presence |
+| `/fame chance <0-100>` | share of tracks kept as the game's own (default 40%) |
+| `/fame first` | let a new place open with an extended track (default off) |
+| `/fame on` \| `off` \| `toggle` | run FAME, or leave the music to the game |
+
+| Troubleshooting | |
+|---|---|
+| `/fame where` | map, subzone, inn, instance, music set, silences, Loop Music, volume |
+| `/fame pool [n]` | the extended tracks that fit here |
+| `/fame play <id>` | play a track by its file ID |
+| `/fame scan <id> …` | check which file IDs this client has |
 | `/fame debug` | narrate every decision |
 
 Beta note: some Forever builds write SavedVariables but never load them back.
@@ -438,9 +445,9 @@ Established in game before this was written:
   only reliable existence check, and the addon uses it for **local files**
   (see `FAME:Playable`): the first time such a track comes up it starts it on
   the Music channel and stops it in the same frame, caching the answer for the
-  session. Built-in fileDataIDs skip the probe, since they were already
-  checked against this client's own file list when `Tracks.lua` was generated
-  — `/fame verify` probes them too, which is worth doing after a patch.
+  session. Built-in tracks skip the probe: before every release,
+  `tools/casc_scan.py --check-addon` checks each one against the installed
+  client's own file manifest.
 - `StopMusic()` does not stop the built-in zone music, only music started
   with `PlayMusic()`.
 - Game audio plays by fileDataID; file paths work only for files inside an

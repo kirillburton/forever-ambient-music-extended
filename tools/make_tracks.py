@@ -140,8 +140,9 @@ def main():
         lines.append("    -- ===== %s (%d) =====" % (ERA_LABEL[era], len(entries)))
         for fdid, path, seconds, tags in sorted(entries, key=lambda e: e[1]):
             taglist = ", ".join('"%s"' % t for t in tags)
-            lines.append('    { id = %-9s len = %4d, tags = { %s } },%s-- %s'
-                         % ("%d," % fdid, seconds, taglist,
+            name = os.path.splitext(os.path.basename(path))[0]
+            lines.append('    { id = %-9s len = %4d, name = %-40s tags = { %s } },%s-- %s'
+                         % ("%d," % fdid, seconds, '"%s",' % name, taglist,
                             " " * max(1, 64 - len(taglist)), path.split("/", 2)[2]))
     lines += ["}", ""]
 

@@ -44,10 +44,6 @@ local defaults = {
     -- way you would hear it arriving without the addon.  true: the extended
     -- pool can take that first slot too.
     displaceFirst = false,
-    -- Probe built-in fileDataIDs at runtime as well as local files (see
-    -- FAME:Playable).  Off by default: the built-in list was already checked
-    -- against this client's own file list when Tracks.lua was generated.
-    verifyBuiltin = false,
     debug = false,
     -- Tracks the player has banned with /fame ban, keyed by fileDataID (or
     -- file path, for a local track): { zone = "...", kind = "...", at = time }.
@@ -343,9 +339,7 @@ end
 -- stop it in the same frame -- long enough to read the handle, short enough
 -- not to hear.  The answer is cached for the session.
 --
--- Local files always get this check, because nothing verified them offline.
--- Built-in fileDataIDs skip it unless asked: Tracks.lua was generated from
--- this client's own file list, so they are already known to be present.
+-- Local files get this check, because nothing verified them offline.
 local playableCache = {}
 
 local function probe(key)
@@ -360,7 +354,10 @@ end
 function FAME:Playable(track)
     local key = track.id or track.file
     if not key then return false end
-    if track.id and not db.verifyBuiltin then return true end
+    -- Only local files get the probe.  Built-in tracks are checked before
+    -- every release instead, against the client's own file manifest
+    -- (tools/casc_scan.py --check-addon).
+    if track.id then return true end
     local cached = playableCache[key]
     if cached ~= nil then return cached end
     local ok = probe(key)
@@ -816,7 +813,7 @@ function FAME:PlayTrack(track, kind)
     self.playing, self.kind = track, kind
     self.startedAt = GetTime()
     self:SetState(kind)
-    debugf("%s %s, %ds%s", kind, tostring(track.id or track.file), track.len,
+    debugf("%s %s, %ds%s", kind, track.name or tostring(track.id or track.file), track.len,
         track.tags and (" [" .. table.concat(track.tags, " ") .. "]") or "")
     -- Start the fade early enough that it lands on the track's own ending.
     -- PlayMusic loops, so overrunning means hearing it restart from the top.
@@ -1063,46 +1060,74 @@ local function save(key, value)
     ForeverAmbientMusicExtendedDB[key] = value
 end
 
-local function trackName(track)
-    return tostring(track.id or track.file)
+-- Output.  Every command prints a one-line headline with the FAME prefix,
+-- then detail rows with an aligned grey label.  Tracks are named by their
+-- file name with the ID beside it, and lengths read as minutes:seconds.
+local GREY, RED = "|cff9d9d9d", "|cffff8080"
+
+local function row(label, text)
+    print(("  %s%-9s|r %s"):format(GREY, label, text))
 end
 
+local function clock(seconds)
+    seconds = math.max(0, math.floor(seconds + 0.5))
+    return ("%d:%02d"):format(math.floor(seconds / 60), seconds % 60)
+end
+
+local function trackName(track)
+    return track.name or tostring(track.id or track.file)
+end
+
+-- "mus_80_drustvar_h (1780914)", or just the name for a local file.
 local function describe(track)
-    if track.tags then
-        return ("%s [%s], %ds"):format(trackName(track), table.concat(track.tags, " "), track.len)
+    if track.id and track.name then return ("%s (%d)"):format(track.name, track.id) end
+    return trackName(track)
+end
+
+local function pct(v) return ("%d%%"):format(math.floor(v * 100 + 0.5)) end
+
+local function onOff(v) return v and "on" or "off" end
+
+local function silenceText(musicSet)
+    local s = musicSet.silence
+    local function span(lo, hi)
+        if lo == hi then return clock(lo) end
+        return clock(lo) .. "-" .. clock(hi)
     end
-    return ("%s, %ds"):format(trackName(track), track.len)
+    if s[1] == s[3] and s[2] == s[4] then return span(s[1], s[2]) end
+    return span(s[1], s[2]) .. " by day, " .. span(s[3], s[4]) .. " by night"
+end
+
+-- How a new place opens, as a phrase: "new places open with ...".
+local function firstText()
+    return db.displaceFirst and "may open with an extended track" or "open with the game's own track"
 end
 
 local commands = {}
 
 commands.help = function()
-    say("commands:")
-    local rows = {
-        { "on | off | toggle", "run the music schedule, or leave it to the game" },
-        { "status", "what is playing, and what comes next" },
-        { "skip", "end this track the way it would end anyway" },
-        { "next", "end this track and play an extended one now" },
-        { "where", "uiMapID, subzone, music set, silences, loop music" },
-        { "pool [n]", "list extended tracks eligible here" },
-        { "play <fileDataID>", "play one track now, for testing" },
-        { "scan <id> [id ...]", "report which fileDataIDs this client has" },
-        { "ban", "never play the current track again" },
-        { "banlist", "list banned tracks, with where they were banned" },
-        { "unban <id> | all", "allow a banned track again, or all of them" },
-        { "chance <0-100>", "percent of tracks kept as the game's own" },
-        { "first", "toggle: may the first track in a new place be extended" },
-        { "verify", "also probe built-in tracks for presence" },
-        { "debug", "toggle verbose output" },
-    }
-    for _, row in ipairs(rows) do
-        print(("  %-25s %s"):format("/fame " .. row[1], row[2]))
-    end
+    say("commands")
+    local function cmd(c, what) print(("  %-25s %s"):format("/fame " .. c, what)) end
+    cmd("status", "what's playing, and what comes next")
+    cmd("skip", "end this track as it would end anyway")
+    cmd("next", "play an extended track now")
+    cmd("ban", "never play this track again")
+    cmd("banlist", "banned tracks, and where")
+    cmd("unban <id> | all", "allow banned tracks again")
+    cmd("chance <0-100>", ("share of the game's own tracks (now %s)"):format(pct(db.originalChance)))
+    cmd("first", ("let a new place open with an extended track (now %s)"):format(onOff(db.displaceFirst)))
+    cmd("on | off | toggle", ("run FAME, or leave music to the game (now %s)"):format(onOff(db.enabled)))
+    print("  " .. GREY .. "troubleshooting|r")
+    cmd("where", "location, music set and volume details")
+    cmd("pool [n]", "extended tracks that fit here")
+    cmd("play <id>", "play a track by its file ID")
+    cmd("scan <id> ...", "check file IDs exist in this client")
+    cmd("debug", ("narrate every decision (now %s)"):format(onOff(db.debug)))
 end
 
 commands.on = function()
     save("enabled", true)
-    say("on")
+    say("on -- running the music")
     FAME:Evaluate()
 end
 
@@ -1116,147 +1141,151 @@ commands.toggle = function()
     if db.enabled then commands.off() else commands.on() end
 end
 
+-- What you are hearing, and what comes next.
 commands.status = function()
     local ctx = FAME.ctx
     say("%s", FAME:StateText())
     if FAME.playing then
-        local left = FAME.playing.len - (GetTime() - FAME.startedAt)
-        print(("  track: %s -- %ds left"):format(describe(FAME.playing), math.max(0, math.floor(left))))
+        local track = FAME.playing
+        row("track", describe(track))
+        if track.tags then row("tags", table.concat(track.tags, " ")) end
+        row("time", ("%s of %s"):format(clock(GetTime() - FAME.startedAt), clock(track.len)))
+        if ctx then
+            row("next", loopMusic() and "the next track straight after (Loop Music is on)"
+                or ("the game's silence, %s"):format(silenceText(ctx.set)))
+        end
     elseif FAME.state == "silence" and FAME.nextAt then
-        print(("  next track in %ds"):format(math.max(0, math.floor(FAME.nextAt - GetTime()))))
+        row("next", ("a track in %s"):format(clock(FAME.nextAt - GetTime())))
     end
-    if FAME:Fading() then print("  (fading)") end
     if ctx then
-        local s = ctx.set.silence
-        local looping = loopMusic()
-        print(("  music here: %s -- silences %d-%ds by day, %d-%ds by night%s"):format(
-            ctx.set.name, s[1], s[2], s[3], s[4], looping and " (skipped: Loop Music is on)" or ""))
-        print(("  extended pool here: %d (%s)"):format(#FAME:Pool(ctx.prof), isNight() and "night" or "day"))
-        print(("  mix: %d%% the game's own, first track in a new place %s"):format(
-            math.floor(db.originalChance * 100 + 0.5),
-            db.displaceFirst and "may be extended" or "always the game's own"))
+        row("here", ctx.inn and ("%s (%s)"):format(ctx.inn, ctx.set.name) or ctx.set.name)
+        row("pool", ("%d of the game's own, %d extended (%s)"):format(#FAME:OriginalChoices(ctx.set),
+            #FAME:ExtendedChoices(ctx.prof), isNight() and "night" or "day"))
+        row("mix", ("%s the game's own; new places %s"):format(pct(db.originalChance), firstText()))
     end
     if FAME.silenceWorks == false then
-        print("  |cffff8080silent file did not load: silences are not held|r")
+        row("warning", RED .. "the silent file did not load, so silences are not held|r")
+    end
+end
+
+-- Where you are, and what FAME makes of it: for reporting a problem.
+commands.where = function()
+    local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+    local minimap = GetMinimapZoneText and GetMinimapZoneText()
+    say("where you are")
+    row("map", ("%s %s%s"):format(tostring(mapID), tostring(GetZoneText()),
+        (mapID and ns.zones[mapID]) and "" or (" " .. RED .. "(not in Zones.lua)|r")))
+    local subzone = GetSubZoneText()
+    if not subzone or subzone == "" then subzone = "none" end
+    if minimap and minimap ~= "" and minimap ~= subzone and minimap ~= GetZoneText() then
+        subzone = ("%s (minimap: %s)"):format(subzone, minimap)
+    end
+    row("subzone", subzone)
+    if minimap and ns.inns[minimap] then
+        row("inn", ("%s: %s tavern music only"):format(minimap, ns.inns[minimap]))
+    end
+    local inInstance, instanceType = IsInInstance()
+    if inInstance then
+        local name, _, _, _, _, _, _, instanceID = GetInstanceInfo()
+        row("instance", ("%s (%s, id %s)"):format(tostring(name), tostring(instanceType), tostring(instanceID)))
+    end
+    local ctx, why = resolveContext()
+    if ctx then
+        local intro = ctx.introID ~= 0 and ns.intros[ctx.introID]
+        row("music", ("set %d %s, area %s%s"):format(ctx.setID, ctx.set.name, tostring(ctx.area),
+            intro and (", intro " .. intro.name) or ""))
+        row("silence", silenceText(ctx.set))
+    else
+        row("music", STATE[why] or why)
+    end
+    local hour, minute = GetGameTime()
+    row("time", ("%02d:%02d server, %s; resting %s"):format(hour or 0, minute or 0,
+        isNight() and "night" or "day", IsResting() and "yes" or "no"))
+    local looping, loopCVar = loopMusic()
+    row("loop", looping == nil and "Loop Music unreadable here, assuming off"
+        or ("Loop Music %s (%s)"):format(onOff(looping), loopCVar))
+    local vol, raw = readVolume(), readRaw()
+    local note = FAME:Fading() and "mid-fade"
+        or ((isOurs(vol) or looksLikeOurs(vol)) and (RED .. "left over from a fade|r"))
+        or (FAME:Yielding() and "another addon is moving it; FAME is leaving it alone")
+    row("volume", ("%s, your level %s%s%s"):format(tostring(raw), tostring(FAME.userVolume),
+        note and ", " or "", note or ""))
+    row("state", FAME:StateText())
+end
+
+commands.pool = function(rest)
+    local limit = tonumber(rest) or 15
+    local ctx = FAME.ctx
+    if not ctx then return say("%s", FAME:StateText()) end
+    local pool = FAME:ExtendedChoices(ctx.prof)
+    say("%d extended tracks fit here (%s)%s", #pool, isNight() and "night" or "day",
+        #pool > limit and (", first %d -- /fame pool %d for all"):format(limit, #pool) or "")
+    for i = 1, math.min(limit, #pool) do
+        local t = pool[i]
+        print(("  %s%-8s %5s|r  %s  %s%s|r"):format(GREY, tostring(t.id or ""), clock(t.len),
+            trackName(t), GREY, table.concat(t.tags, " ")))
     end
 end
 
 -- `skip` ends the track the way it would have ended anyway: into the
 -- game's silence, or straight into the next one with Loop Music on.
 commands.skip = function()
-    if not FAME.playing then
-        return say("nothing is playing to skip")
-    end
-    say("skipping %s", trackName(FAME.playing))
+    if not FAME.playing then return say("nothing is playing to skip") end
+    say("skipping %s", describe(FAME.playing))
     FAME:CancelTimer()
     FAME:AfterTrack(FADE_CUT)
 end
 
 commands.next = function()
     local ctx = FAME.ctx
-    if not ctx then return say("not running here: %s", FAME:StateText()) end
+    if not ctx then return say("%s", FAME:StateText()) end
     local track = FAME:Pick(ctx.prof)
     if not track then return say("no extended track fits here") end
     FAME:CancelTimer()
-    say("%s", describe(track))
+    say("playing %s, %s", describe(track), clock(track.len))
     FAME:FadeOut(0.8, function() FAME:PlayTrack(track, "extended") end, false)
 end
 
 commands.play = function(rest)
     local id = tonumber(rest)
-    if not id then return say("usage: /fame play <fileDataID>") end
+    if not id then return say("usage: /fame play <file ID>") end
     local found
     for _, track in ipairs(ns.allTracks) do
         if track.id == id then found = track break end
     end
+    if not found then
+        for _, musicSet in pairs(ns.musicSets) do
+            for _, list in ipairs({ musicSet.day, musicSet.night }) do
+                for _, track in ipairs(list) do
+                    if track.id == id then found = track end
+                end
+            end
+        end
+    end
     if found then
-        say("%s", describe(found))
+        say("playing %s, %s", describe(found), clock(found.len))
     else
         found = { id = id, len = 60 }
-        say("%d is not in Tracks.lua; playing it raw for 60s", id)
+        say("playing %d for a minute -- it isn't one of FAME's tracks, so its length is unknown", id)
     end
     FAME:CancelTimer()
     FAME:FadeOut(0.4, function() FAME:PlayTrack(found, "test") end, false)
 end
 
-commands.where = function()
-    local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
-    local hour, minute = GetGameTime()
-    say("location")
-    print(("  uiMapID: %s%s"):format(tostring(mapID),
-        (mapID and ns.zones[mapID]) and "" or "  |cffff8080(no Zones.lua entry)|r"))
-    print(("  zone: %s / subzone: %s / minimap: %s"):format(tostring(GetZoneText()),
-        tostring(GetSubZoneText()), tostring(GetMinimapZoneText and GetMinimapZoneText())))
-    local innName = GetMinimapZoneText and GetMinimapZoneText()
-    if innName and ns.inns[innName] then
-        print(("  inn: %s -- %s tavern music only"):format(innName, ns.inns[innName]))
-    end
-    local inInstance, instanceType = IsInInstance()
-    if inInstance then
-        local name, _, _, _, _, _, _, instanceID = GetInstanceInfo()
-        print(("  instance: %s (type %s, instanceID %s)"):format(
-            tostring(name), tostring(instanceType), tostring(instanceID)))
-    end
-    print(("  resting: %s / server time %02d:%02d -> %s"):format(
-        tostring(IsResting()), hour or 0, minute or 0, isNight() and "night" or "day"))
-    local ctx, why = resolveContext()
-    if ctx then
-        local s = ctx.set.silence
-        print(("  music set: %d %s -- silences %d-%ds day, %d-%ds night"):format(
-            ctx.setID, ctx.set.name, s[1], s[2], s[3], s[4]))
-        print(("  area: %s%s"):format(tostring(ctx.area),
-            ctx.introID ~= 0 and (", intro " .. tostring(ns.intros[ctx.introID] and ns.intros[ctx.introID].name)) or ""))
-    else
-        print(("  music set: none -- %s"):format(STATE[why] or why))
-    end
-    local looping, loopCVar = loopMusic()
-    if looping == nil then
-        print("  loop music: could not read it -- assuming off (the CVar name differs on this client)")
-    else
-        print(("  loop music: %s (%s)"):format(tostring(looping), loopCVar))
-    end
-    local vol = readVolume()
-    print(("  music volume: %s, your level %s%s"):format(tostring(vol), tostring(FAME.userVolume),
-        FAME:Fading() and " (mid-fade)"
-            or ((isOurs(vol) or looksLikeOurs(vol)) and " |cffff8080(left over from a fade)|r")
-            or (FAME:Yielding() and " (another addon is working the slider -- FAME is leaving it alone)")
-            or ""))
-    print(("  music volume as the client stores it: %s"):format(tostring(readRaw())))
-    print(("  state: %s"):format(FAME:StateText()))
-end
-
-commands.pool = function(rest)
-    local limit = tonumber(rest) or 15
-    local ctx = FAME.ctx
-    if not ctx then return say("not running here: %s", FAME:StateText()) end
-    local pool = FAME:Pool(ctx.prof)
-    say("%d extended tracks eligible (%s); showing up to %d",
-        #pool, isNight() and "night" or "day", limit)
-    for i = 1, math.min(limit, #pool) do
-        print(("  %s  %4ds  %s"):format(trackName(pool[i]), pool[i].len,
-            table.concat(pool[i].tags, " ")))
-    end
-end
-
 commands.scan = function(rest)
-    if not rest or rest == "" then
-        return say("usage: /fame scan 53492 53493 ...")
-    end
-    local hits, misses = 0, 0
-    for word in rest:gmatch("[%d]+") do
+    if not rest or rest == "" then return say("usage: /fame scan <id> [id ...]") end
+    local results, present = {}, 0
+    for word in rest:gmatch("%d+") do
         local id = tonumber(word)
-        local willPlay, handle = PlaySoundFile(id, "Music")
-        if handle and handle > 0 then
-            StopSound(handle, 0)
-            hits = hits + 1
-            print(("  |cff80ff80HIT |r %d"):format(id))
-        else
-            misses = misses + 1
-            print(("  |cffff8080MISS|r %d (willPlay=%s handle=%s)"):format(
-                id, tostring(willPlay), tostring(handle)))
-        end
+        local _, handle = PlaySoundFile(id, "Music")
+        local found = handle and handle > 0
+        if found then StopSound(handle, 0); present = present + 1 end
+        results[#results + 1] = { id, found }
     end
-    say("%d present, %d absent", hits, misses)
+    say("%d of %d in this client", present, #results)
+    for _, r in ipairs(results) do
+        print(("  %s%-8s|r %d"):format(r[2] and "|cff80ff80" or RED, r[2] and "present" or "absent", r[1]))
+    end
 end
 
 local function persistBans()
@@ -1271,17 +1300,16 @@ commands.ban = function()
     if not FAME.ctx then
         -- Dead, in an instance, at sea...: whatever is playing is the game's,
         -- and FAME does not choose it, so it cannot ban it.
-        return say("the game is choosing the music here (%s) -- FAME can only ban what it plays", FAME:StateText())
+        return say("the game chooses the music here, so there's nothing for FAME to ban")
     end
     if not track then return say("nothing is playing to ban") end
     local key = trackKey(track)
     local zone, sub = GetZoneText() or "?", GetSubZoneText() or ""
-    local where = (sub ~= "" and sub ~= zone) and (zone .. " / " .. sub) or zone
+    local where = (sub ~= "" and sub ~= zone) and (zone .. ", " .. sub) or zone
     local kind = FAME.kind == "test" and "by request" or (FAME.kind or "?")
-    db.banned[key] = { zone = where, kind = kind, at = time and time() or 0 }
+    db.banned[key] = { zone = where, kind = kind, name = track.name, at = time and time() or 0 }
     persistBans()
-    say("banned %s (%s, %s) -- it will not play again. /fame unban %s to undo.",
-        tostring(key), kind, where, tostring(key))
+    say("banned %s -- /fame unban %s to undo", describe(track), tostring(key))
     FAME:CancelTimer()
     FAME:AfterTrack(FADE_CUT)
 end
@@ -1291,31 +1319,30 @@ commands.banlist = function()
     for key in pairs(db.banned) do keys[#keys + 1] = key end
     if #keys == 0 then return say("nothing is banned") end
     table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
-    say("%d banned:", #keys)
+    say("%d banned -- /fame unban <id> or /fame unban all", #keys)
     for _, key in ipairs(keys) do
         local b = db.banned[key]
-        print(("  %-10s %s (%s)"):format(tostring(key), b.zone or "?", b.kind or "?"))
+        print(("  %s%-8s|r %s  %s%s, %s|r"):format(GREY, tostring(key), b.name or "?",
+            GREY, b.zone or "?", b.kind or "?"))
     end
 end
 
 commands.unban = function(rest)
     if not rest or rest == "" then
-        return say("usage: /fame unban <id>  or  /fame unban all  -- /fame banlist shows the ids")
+        return say("usage: /fame unban <id> or /fame unban all -- /fame banlist shows the ids")
     end
     if rest:lower() == "all" then
         local n = 0
-        for _ in pairs(db.banned) do n = n + 1 end
-        for k in pairs(db.banned) do db.banned[k] = nil end
+        for k in pairs(db.banned) do db.banned[k] = nil; n = n + 1 end
         persistBans()
         say("unbanned all %d", n)
     else
         local key = tonumber(rest) or rest
-        if not db.banned[key] then
-            return say("%s is not banned -- /fame banlist shows what is", tostring(key))
-        end
+        local b = db.banned[key]
+        if not b then return say("%s is not banned -- /fame banlist shows what is", tostring(key)) end
         db.banned[key] = nil
         persistBans()
-        say("unbanned %s", tostring(key))
+        say("unbanned %s", b.name and ("%s (%s)"):format(b.name, tostring(key)) or tostring(key))
     end
     -- If everything here had been banned, there is something to play again.
     if FAME.ctx and FAME.ctx.allBanned and FAME.state == "silence" then
@@ -1324,38 +1351,34 @@ commands.unban = function(rest)
 end
 
 commands.chance = function(rest)
-    local pct = tonumber(rest)
-    if not pct or pct < 0 or pct > 100 then
-        return say("usage: /fame chance <0-100>  (currently %d%% of tracks are the game's own)",
-            math.floor(db.originalChance * 100 + 0.5))
+    local value = tonumber(rest)
+    if not value or value < 0 or value > 100 then
+        return say("%s of tracks are the game's own -- /fame chance <0-100> to change it",
+            pct(db.originalChance))
     end
-    save("originalChance", pct / 100)
-    say("%d%% of tracks will be the game's own", pct)
+    save("originalChance", value / 100)
+    say("%s of tracks will be the game's own", pct(db.originalChance))
 end
 
 commands.first = function()
     save("displaceFirst", not db.displaceFirst)
-    say("first track in a new place: %s",
-        db.displaceFirst and "may be extended" or "always the game's own")
-end
-
-commands.verify = function()
-    save("verifyBuiltin", not db.verifyBuiltin)
-    say("runtime presence probe for built-in tracks %s (local files are always probed)",
-        db.verifyBuiltin and "on" or "off")
+    say("new places now %s", firstText())
 end
 
 commands.debug = function()
     save("debug", not db.debug)
-    say("debug %s", db.debug and "on" or "off")
+    say("debug %s", onOff(db.debug))
 end
 
 SLASH_FOREVERAMBIENTMUSICEXTENDED1 = "/fame"
 SLASH_FOREVERAMBIENTMUSICEXTENDED2 = "/foreverambient"
 SlashCmdList.FOREVERAMBIENTMUSICEXTENDED = function(input)
     local cmd, rest = (input or ""):match("^%s*(%S*)%s*(.-)%s*$")
-    local fn = commands[(cmd or ""):lower()]
-    if fn then fn(rest) else commands.help() end
+    cmd = (cmd or ""):lower()
+    local fn = commands[cmd]
+    if fn then return fn(rest) end
+    if cmd ~= "" then say("no command \"%s\"", cmd) end
+    commands.help()
 end
 
 -- --------------------------------------------------------------------------

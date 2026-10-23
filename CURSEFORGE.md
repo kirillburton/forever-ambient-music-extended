@@ -81,19 +81,18 @@ Check it loaded with `/fame status`. Every command is under `/fame`.
 
 | | |
 |---|---|
-| `/fame on` \| `off` \| `toggle` | turn the extended rotation on or off |
-| `/fame status` | what is playing, how big the pool is here |
+| `/fame status` | what's playing, and what comes next |
 | `/fame skip` | end this track as it would end anyway |
-| `/fame next` | end this track, play an extended one now |
-| `/fame where` | uiMapID, subzone, resting/indoors, server hour |
-| `/fame pool [n]` | list the tracks eligible where you are standing |
-| `/fame play <fileDataID>` | play one track now |
-| `/fame ban` | ban the current track |
-| `/fame banlist` | list banned tracks and where |
+| `/fame next` | play an extended track now |
+| `/fame ban` | never play this track again |
+| `/fame banlist` | banned tracks, and where |
 | `/fame unban <id>` \| `all` | allow banned tracks again |
-| `/fame chance <0-100>` | percent of tracks kept as the game's own |
-| `/fame first` | let the first track in a new place be extended too |
-| `/fame debug` | narrate every decision |
+| `/fame chance <0-100>` | share of tracks kept as the game's own |
+| `/fame first` | let a new place open with an extended track |
+| `/fame on` \| `off` \| `toggle` | run FAME, or leave the music to the game |
+
+`/fame help` lists these with their current settings, plus a few
+troubleshooting commands (`where`, `pool`, `play`, `scan`, `debug`).
 
 ## Coverage
 

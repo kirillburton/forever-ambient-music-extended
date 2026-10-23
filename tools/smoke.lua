@@ -567,7 +567,7 @@ go(1800)                                  -- a long corpse run, still a spirit
 check(#log == n0, "nothing of FAME's plays during a half-hour corpse run")
 local chatBefore = #chat
 run("ban")
-check(chat[#chat]:find("the game is choosing", 1, true), "/fame ban as a spirit explains it cannot ban the game's music")
+check(chat[#chat]:find("nothing for FAME to ban", 1, true), "/fame ban as a spirit explains it cannot ban the game's music")
 state.dead = false; fire("PLAYER_UNGHOST"); go(3)
 check(FAME.playing ~= nil and FAME.kind == "original", "resurrecting starts over like arriving: the game's own track first")
 
@@ -885,9 +885,10 @@ check(cvars.Sound_MusicVolume == START_VOLUME, "and when that addon puts it back
 realPrint("\nslash commands")
 for _, input in ipairs({ "", "help", "status", "where", "pool 3", "skip", "next", "chance 25",
                           "chance", "first", "first", "debug", "status", "where", "debug",
-                          "verify", "verify", "scan 53492 53493 1", "play 53519", "status",
+                          "scan 53492 53493 1", "play 53519", "play 8180778", "play 99999", "status",
                           "off", "status", "where", "on", "toggle", "toggle", "bogus",
-                          "ban", "banlist", "unban", "unban all", "banlist" }) do
+                          "ban", "banlist", "unban", "unban all", "banlist", "verify",
+                          "pool", "pool 3", "chance 40", "first", "first" }) do
     local ok, err = run(input)
     check(ok, ("/fame %s"):format(input == "" and "(no args)" or input))
     if not ok then realPrint("        " .. tostring(err)) end

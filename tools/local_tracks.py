@@ -59,7 +59,7 @@ EMPTY_BODY = '''    -- { file = "Interface\\\\AddOns\\\\ForeverAmbientMusicExten
 '''
 
 ENTRY_RE = re.compile(
-    r'\{\s*file\s*=\s*"(?P<path>[^"]+)"\s*,\s*len\s*=\s*(?P<len>\d+)\s*,'
+    r'\{\s*file\s*=\s*"(?P<path>[^"]+)"\s*,\s*(?:name\s*=\s*"[^"]*"\s*,\s*)?len\s*=\s*(?P<len>\d+)\s*,'
     r'\s*tags\s*=\s*\{(?P<tags>[^}]*)\}', re.S)
 
 
@@ -138,7 +138,8 @@ def main():
     for lua_path, seconds, tags, name, _ in rows:
         taglist = ", ".join('"%s"' % t for t in tags)
         body.append('    { file = "%s",' % lua_path)
-        body.append('      len = %d, tags = { %s } },' % (seconds, taglist))
+        body.append('      name = "%s", len = %d, tags = { %s } },'
+                    % (os.path.splitext(name)[0], seconds, taglist))
     text = (HEADER % len(rows)) + ("\n".join(body) + "\n" if body else EMPTY_BODY) + "}\n"
     with open(OUT, "w") as f:
         f.write(text)
