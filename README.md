@@ -1,245 +1,216 @@
-<img src="art/fame-logo-512.png" alt="FAME logo" width="160" align="right">
+<p align="center">
+  <img src="art/fame-logo-512.png" alt="FAME logo" width="200">
+</p>
 
 # Forever Ambient Music Extended (FAME)
 
-Widens the ambient zone music rotation in World of Warcraft: Forever with
-tracks from every WoW era, picked to fit where you are standing. It behaves like the default ambient music:
-automatic, no UI, no setup. There is just more of it.
+An addon for **World of Warcraft: Forever** that widens the zone music
+rotation. The game's own rhythm is kept exactly: the same silences between
+tracks, the same intros, its own tracks still in the mix. Some of those
+tracks now come from a pool of **425 more**, each chosen to fit where you're
+standing. They're drawn from Classic pieces Forever doesn't use in those
+zones, the new Forever soundtrack, and selections from Cataclysm through
+Midnight.
 
-425 tracks ship enabled, all of them files the Forever beta client already
-has. You can add your own on top (see **Local files**).
+There's no UI and nothing to set up. It sounds like the default ambient
+music, with more variety.
+
+**No Blizzard audio is bundled with or distributed by this addon.** Every
+track it plays is a file your Forever client already has.
+
+- [For players](#for-players): install, what to expect, commands
+- [For developers](#for-developers): how tracks are chosen, the data
+  pipeline, tests, releases
 
 ---
+
+# For players
 
 ## Install
 
-1. Copy the `ForeverAmbientMusicExtended` folder into
+1. Download the latest zip from
+   [Releases](https://github.com/kirillburton/forever-ambient-music-extended/releases)
+   (or from CurseForge).
+2. Extract the `ForeverAmbientMusicExtended` folder into
    `World of Warcraft/_forever_/Interface/AddOns/`.
-2. Restart the client (not just `/reload`) — it indexes addon files at launch.
-3. Log in. Nothing to configure.
+3. **Restart the client.** It indexes addon files at launch, so `/reload`
+   isn't enough.
+4. Log in. There's nothing to configure.
 
-Then verify it loaded:
+To check that it loaded, type `/fame status`.
 
-```
-/fame status
-```
+## What to expect
 
-You should see `on, map 1429` (or whatever zone you are in) and a track count.
-
----
-
-## How it behaves
-
-FAME keeps the game's music schedule exactly and changes only *which* tracks
-play in it.
-
-- **Same silences.** Between tracks it waits the game's own silence interval
-  for that place, read from the client's `ZoneMusic` data: 3–5 minutes in
-  almost every zone, with separate day and night values where the game has
-  them.
-- **Loop Music respected.** With the Audio option **Loop Music** on, there
-  are no silences, so tracks play back to back, exactly as the game would.
-  Switching it on mid-silence starts the next track within ten seconds.
+- **The same silences.** Between tracks FAME waits as long as the game would
+  in that place, taken from the game's own data: three to five minutes in
+  most zones, with separate day and night values where the game has them.
+- **Loop Music is respected.** With **Loop Music** on in the Audio options,
+  tracks play back to back, as the game's would.
 - **The game's own music stays in the mix.** About 40% of tracks are the
-  game's own picks for that place (`/fame chance`); the rest come from the
-  extended pool.
-- **The first track in a new place is the game's own,** the way you'd hear
-  it arriving without the addon. `/fame first` lets the extended pool take
-  that slot too.
+  game's own picks for that place, and the first track when you arrive
+  somewhere is always one of them. You can change both (see
+  [Commands](#commands)).
 - **Intros still play.** Orgrimmar's fanfare, the Ironforge King theme and
-  the rest open their areas on arrival, with the game's own cooldowns.
-- **Subzones and inns change the music where the game would.** Walking into
-  the Crossroads switches to the Crossroads set; walking into a known inn
-  switches to tavern music of that inn's own race. Moving between two places that share music, like
-  the Barrens and Orgrimmar, keeps the current track going.
-- **Instances, battlegrounds, and anywhere without data are left alone.**
-  FAME hands the music channel back and the game plays its own music as
-  normal. The same happens with `/fame off`, or with music turned off in the
-  sound options.
-- **Death is the game's.** From the moment you die until you're alive again,
-  through the whole spirit walk back to your corpse, FAME stays out and the
-  game's own music rules apply. Coming back to life starts over like
-  arriving: the game's own track first.
-- **Ships are the game's.** The open seas (The Great Sea, The Forbidding Sea,
-  The Veiled Sea) are areas of their own in the game, each with its own
-  music. But a ship near the coast can still sit inside a zone's map, so
-  FAME checks the game's own zone name (`GetZoneText()`). If the game has you
-  somewhere other than the zone on the map, FAME steps aside until you land.
-  The name is compared in the client's own language via
-  `C_Map.GetAreaInfo`. If the client can't name the area, the check is
-  skipped rather than guessed.
+  the rest open their areas on the game's own cooldowns.
+- **Subzones switch music where the game would.** Walking into the Crossroads
+  switches to the Crossroads music. Moving between two places that share
+  music keeps the current track going.
+- **Inns play their own race's tavern music:** dwarven songs in Thunderbrew
+  Distillery, human ones in the Lion's Pride, sea shanties in Booty Bay's
+  Salty Sailor. An inn whose race isn't known is left to the game.
+- **Settlements and coves get their own music.** Goblin music plays only in
+  goblin towns (Ratchet, Booty Bay, Gadgetzan, Steamwheedle Port, Everlook),
+  and pirate music only there and in the pirate coves.
+- **Tracks fade** rather than cut off, and the same track never plays twice
+  in a row.
+- **Some places are left entirely to the game:** dungeons, raids,
+  battlegrounds, being dead or walking back to your corpse, ships on the
+  open sea, and anywhere you've turned music off. FAME steps aside there and
+  the game's own music plays as normal.
 
-### Banning tracks
+Nothing should turn up out of place: a track only plays where every one of
+its tags is welcome (see [How a track gets chosen](#how-a-track-gets-chosen)).
+A zone with nothing suitable plays only the game's own music rather than
+reaching for something that doesn't fit.
 
-`/fame ban` bans whatever is playing, whether it's the game's own track, an
-extended one or an intro, and ends it the way it would have ended anyway.
-Bans apply *before* each decision: the game's tracks and the extended pool
-are both filtered first, so a decision only ever lands on an unbanned track.
-If the roll asked for one kind and bans have emptied it, the other kind
-plays.
+### Coverage
 
-If everything a place could play is banned, FAME plays nothing and says so
-in chat at decision time: *"All music for the zone was banned, playing
-nothing. Unban songs with /fame unban command"*. It then waits the game's
-usual silence (at least a minute, even with Loop Music on) before checking
-again. `/fame unban` resumes music immediately.
+All 46 Classic zones and cities, plus the new Forever zones: Mount Hyjal,
+Riverglades, Shen'dralas, Darkspear Islands and Zephras Isle. Most zones
+have 20–60 extended tracks to draw from.
 
-`/fame banlist` lists each banned id with the zone it was banned in;
-`/fame unban <id>` and `/fame unban all` undo bans. Bans are by track, so
-banning a piece bans it everywhere. They don't reach places FAME leaves to
-the game (dungeons, raids, battlegrounds, death, the open sea): there the
-game chooses, so `/fame ban` explains it can't ban that music.
+## Commands
 
-Bans are kept in SavedVariables. On beta builds that write SavedVariables
-but never load them back, bans last until you log out.
-
-### Why it runs the schedule itself
-
-No API reports when the game's zone music starts or stops, so there is no
-moment to slip a track into. What the API does have is `PlayMusic()`, which
-suppresses the game's zone music for as long as it runs. So in a mapped zone
-FAME plays *everything* through it: the game's own tracks for its share, the
-extended ones for theirs, and, during silences, a ten-second silent file
-(`Media/silence.mp3`, generated, not extracted) that holds the channel so the
-game can't start a track of its own halfway through a silence.
-
-The game's rules come from its own data: `tools/make_originals.py` reads
-`AreaTable`, `ZoneMusic`, `ZoneIntroMusicTable` and `SoundKitEntry` for the
-Forever branch and writes `Originals.lua`, covering 52 zones, 75 music sets,
-27 intros and 265 subzones with music of their own. Subzone names are matched
-in the client's own language via `C_Map.GetAreaInfo`.
-
-"Exactly" means the same rules, not the same dice. The game draws each
-silence at random from its interval, and so does FAME. Two sessions of plain
-WoW don't line up either.
-
-### Fades
-
-Tracks fade into their own ending, and over about a second when something
-interrupts one, such as walking into an inn. Nothing in the API fades music
-(`StopMusic()` is instant and takes no arguments), so the fade ramps the
-`Sound_MusicVolume` CVar down and puts it back.
-
-The client crossfades between `PlayMusic` calls, so for a moment after a
-swap the old track is still sounding. The volume therefore stays at zero
-through the swap and about a second past it (`SWAP_HOLD`), then the new track
-fades in (`FADE_IN`). Before that hold existed, the old track blipped back at
-full volume for a split second whenever one track handed over to the next. A
-fade that cuts into another one starts from wherever the volume actually is,
-so it never jumps up first. The slider's own value is
-saved before the first step and restored on every way out: ramp finished,
-zone change, release, logout.
-
-The slider is shared, though. You move it; the Settings panel can read it
-mid-fade and write that value back on close; and some addons fade it
-themselves. [Spoken Quests](https://github.com/rusty-key/spoken-wow) turns
-music down to 30% while a line is spoken. It guards the slider the same way
-FAME does: if it finds a value it didn't set, it decides you moved it and
-gives the channel up for good, never putting it back. Before 0.3.1 the two
-took each other for you, and a line overlapping a FAME fade left the music
-stuck at a fraction of your level. So FAME now gives way:
-
-- **It knows exactly what it wrote.** After every write it notes the value
-  the client reports back. Its mid-fade values also carry an odd offset (0.2
-  becomes 0.200537), so no other addon's arithmetic lands on them.
-- **Mid-fade, any other value means someone else is working the slider.**
-  FAME yields: it stops fading, finishes whatever the fade was for, and puts
-  nothing back. For a few seconds after any outside change it swaps tracks
-  with a hard cut rather than a fade.
-- **While Spoken is ducking or fading, FAME doesn't touch the slider at
-  all.** It takes the level Spoken noted before ducking as yours. Spoken has
-  no public API for this, so FAME reads its internal state defensively. If a
-  Spoken update changes that state, FAME falls back to the general rule
-  above.
-- **A FAME mid-fade value turning up later is a stale replay.** Once nothing
-  else has moved the slider for a few seconds, FAME puts your level back.
-- **Any other outside change is your choice** and becomes the level fades
-  return to. It's saved, with a note of any fade in progress, so a quit
-  mid-fade is healed at the next login. On beta builds that don't load saved
-  variables, FAME says so once and asks you to set the slider.
-
-The smoke test runs a line-for-line copy of Spoken's ducking logic against
-FAME: lines over idle tracks, a track change mid-line, a line starting
-mid-fade, and 40 lines at random moments. The 0.3.0 code fails it, stuck at
-9.5% and never recovering. 0.3.1 passes across ten random seeds.
-
-### Inns
-
-Inside an inn FAME plays that tavern's own race and nothing else: the game's
-tavern set for that race as the original share, and only tavern tracks of
-that race from the extended pool.
-
-Which inn you're in comes from the building's name, as the minimap shows it
-inside (`GetMinimapZoneText()`). The race has to be written down by hand in
-`ns.inns` at the bottom of `Zones.lua`: the game's own data barely records
-it. Nearly every inn it knows plays the generic Alliance or Horde tavern set,
-and most Horde and Kalimdor inns have no named building at all. So the list
-holds only inns whose race is certain:
-
-| Inn | Race |
-|---|---|
-| Lion's Pride Inn, Scarlet Raven Tavern, Lakeshire Inn | human |
-| Stoutlager Inn, Thunderbrew Distillery, Deepwater Tavern, The Stonefire Tavern | dwarf |
-| Gallows' End Tavern | undead |
-| The Salty Sailor Tavern | pirate |
-
-Any other inn is left to the game, which plays its own music there: FAME
-treats it as an inn when you're resting, indoors and outside a capital, but
-the building isn't on the list. The names are English, so on other client
-languages every inn falls back to the game.
-
-Capitals are exempt: `IsResting()` is true across an entire capital, so it
-says nothing about being in an inn there.
-
-### Commands
-
-`/fame help` lists these with each setting's current value. Every command
-answers with a one-line headline, then aligned details. Tracks are named by
-their file name with the file ID beside it, and lengths read as minutes and
-seconds.
+Everything is under `/fame`. `/fame help` lists the commands with each
+setting's current value.
 
 | Everyday | |
 |---|---|
-| `/fame status` | what's playing, how far in, what comes next, the mix |
-| `/fame skip` | end this track as it would end anyway: into the game's silence, or the next track with Loop Music on |
+| `/fame status` | what's playing, how far in, and what comes next |
+| `/fame skip` | end this track the way it would end anyway: into the usual silence, or straight to the next track with Loop Music on |
 | `/fame next` | play an extended track now |
-| `/fame ban` | never play this track again |
-| `/fame banlist` | banned tracks, with the zone each was banned in |
+| `/fame ban` | stop this track and never play it again |
+| `/fame banlist` | your banned tracks, with the zone each was banned in |
 | `/fame unban <id>` \| `all` | allow one banned track again, or all of them |
-| `/fame chance <0-100>` | share of tracks kept as the game's own (default 40%) |
-| `/fame first` | let a new place open with an extended track (default off) |
+| `/fame chance <0-100>` | share of tracks that are the game's own (default 40) |
+| `/fame first` | let a new place open with an extended track (off by default) |
 | `/fame on` \| `off` \| `toggle` | run FAME, or leave the music to the game |
 
 | Troubleshooting | |
 |---|---|
-| `/fame where` | map, subzone, inn, instance, music set, silences, Loop Music, volume |
+| `/fame where` | where FAME thinks you are, which music set applies, silences, Loop Music, volume |
 | `/fame pool [n]` | the extended tracks that fit here |
 | `/fame play <id>` | play a track by its file ID |
-| `/fame scan <id> …` | check which file IDs this client has |
-| `/fame debug` | narrate every decision |
+| `/fame scan <id> …` | check which file IDs your client has |
+| `/fame debug` | print every decision to chat |
 
-Beta note: some Forever builds write SavedVariables but never load them back.
-Settings changed with `/fame chance` and friends may not survive a logout. The
-defaults are what the addon is tuned for, so this mostly does not matter — but
-if you want a permanent change, edit `defaults` at the top of `Core.lua`.
+### Banning tracks
+
+`/fame ban` works on anything that's playing: the game's own track, an
+extended one or an intro. Bans are per track, so a banned track is gone
+everywhere. Banned tracks are filtered out before every pick, so the next
+track is always one you allow.
+
+If you ban everything a place could play, FAME plays nothing there and tells
+you so in chat. `/fame unban` brings music back immediately.
+
+Bans don't apply where FAME leaves the music to the game (dungeons, raids,
+death, the open sea), because there the game picks.
+
+## Other addons
+
+FAME fades tracks by moving the music volume slider, as some other addons
+do. It's written to share the slider. If anything else moves it mid-fade,
+FAME stops fading and leaves it alone. With
+[Spoken Quests](https://github.com/rusty-key/spoken-wow), FAME doesn't touch
+the slider at all while Spoken has the music turned down for a line. Your
+volume always ends up where you set it.
+
+## Known limitations
+
+- **Settings may not survive a logout on some builds.** Some Forever builds
+  write saved variables but don't load them back. If so, settings and bans
+  last until you log out. FAME tells you once if it detects this. The
+  defaults are what the addon is tuned for.
+- **Inns are recognised by their English names.** On other client languages,
+  inns fall back to the game's own music. Everything else works in any
+  language.
+- **Interface version 16001.** If a client patch moves it, the addon may show
+  as out of date until the `.toc` is updated. Check yours with
+  `/run print((select(4, GetBuildInfo())))`.
+
+## Reporting a track that sounds wrong
+
+"Track X felt wrong in zone Y" is the most useful report this addon can get,
+and it's usually a one-line fix.
+[Open an issue](https://github.com/kirillburton/forever-ambient-music-extended/issues)
+with the name and ID `/fame status` shows, and where you were. In the
+meantime, `/fame ban` gets rid of it.
 
 ---
 
+# For developers
+
+## Repository layout
+
+```
+ForeverAmbientMusicExtended/   the addon, exactly as it ships
+  Core.lua                     scheduler, location, volume, commands
+  Zones.lua                    zone profiles, towns, coves, inns   (hand-written)
+  Tracks.lua                   the extended pool                  (generated)
+  Originals.lua                the game's own music rules         (generated)
+  LocalTracks.lua              your own audio files               (generated, ships empty)
+  Media/                       logo, and a generated silent mp3
+tools/                         data pipeline, tests, packaging
+art/                           logo source (SVG) and a 512 px PNG
+```
+
+Requirements for the tools: Python 3, Lua 5.1, and `ffmpeg` (for `ffprobe`)
+if you measure durations or add local files.
+
+## How playback works
+
+No API reports when the game's zone music starts or stops, so there's no
+moment to slip a track into. What the API does have is `PlayMusic()`, which
+suppresses the game's zone music for as long as it plays. So in a place FAME
+covers, it plays everything through `PlayMusic()` and runs the game's
+schedule itself:
+
+- the game's own tracks for their share, and extended ones for the rest;
+- during silences, a short silent file (`Media/silence.mp3`) that holds the
+  channel, so the game can't start a track of its own halfway through;
+- silence lengths, music sets, intros and their cooldowns taken from the
+  game's own tables (`Originals.lua`).
+
+Same rules, not the same dice: the game draws each silence at
+random from its interval, and so does FAME.
+
+`PlayMusic()` loops and fires no end event, so each track is stopped on a
+timer, using durations measured from the actual files. Nothing in the API
+fades music, so fades ramp the `Sound_MusicVolume` CVar and restore it.
+FAME records every value it writes and yields as soon as it sees one it
+didn't. The slider's real value is saved, so a logout mid-fade is repaired
+at the next login.
+
+Wherever FAME isn't confident, it calls `StopMusic()` and hands the channel
+back to the game: instances, death, places with no data, and anywhere the
+game's own zone name disagrees with the map (ships at sea).
+
 ## How a track gets chosen
 
-Each track carries tags on three axes plus an optional time of day:
+Each track carries tags on three axes, plus an optional time of day:
 
-- **biome** — `forest` `darkforest` `enchanted` `jungle` `swamp` `plains`
+- **biome**: `forest` `darkforest` `enchanted` `jungle` `swamp` `plains`
   `barrens` `desert` `mountain` `snow` `volcanic` `coast` `sea` `cave`
   `underground` `ruins` `blighted` `void` `arcane` `elemental` `sky` `city`
-  `town` `tavern`. Every track needs at least one.
-- **culture** — `human` `dwarf` `gnome` `nightelf` `highelf` `orc` `tauren`
+  `town` `tavern`
+- **culture**: `human` `dwarf` `gnome` `nightelf` `highelf` `orc` `tauren`
   `troll` `undead` `goblin` `naga` `draenei` `pandaren` `dragon` `demon`
   `centaur` `tuskarr` `earthen` `arathi` `kultiran` `drust` `vrykul`
   `nerubian` `pirate` `wild`
-- **mood** — `calm` `melancholy` `mysterious` `eerie` `ominous` `heroic`
+- **mood**: `calm` `melancholy` `mysterious` `eerie` `ominous` `heroic`
   `sacred` `festive` `somber` `tense` `grand` `playful`
-- **time** — `day` or `night`, or neither for a track that fits any hour
+- **time**: `day` or `night`, or neither for a track that fits any hour
 
 Each zone in `Zones.lua` is an allow-list on each axis, keyed by uiMapID. A
 track is eligible when **every** tag it carries is allowed:
@@ -253,244 +224,155 @@ track is eligible when **every** tag it carries is allowed:
 },
 ```
 
-Every track must also carry **at least one biome**, a statement of where it
-belongs. Culture and mood tags a track doesn't carry aren't checked, so a
-track tagged only `{ "ruins", "mysterious" }` fits anywhere that allows ruins
-and mysterious: specific tracks go to few places, loose ones travel. A
-missing *biome* is different. It once meant goblin bazaar music passed the
-biome check everywhere and played across the open Barrens. So a track with no
-biome now plays nowhere, and `check_zones.lua` flags it.
+So specific tracks go to few places and loosely tagged ones travel. Every
+track must carry at least one biome, a statement of where it belongs. A
+track with no biome plays nowhere, and `check_zones.lua` flags it.
 
-**Towns and coves.** Some music belongs to a settlement rather than the land
-around it. The goblin pieces carry the `town` biome, which only town profiles
-allow: Ratchet, Booty Bay, Gadgetzan, Steamwheedle Port and Everlook. Pirate
-music, such as the WoD ocean piece "Ts Have It", carries the `pirate` culture,
-which only pirate places admit: the towns above plus the coves Wild Shore,
-Janeiro's Point, the Bloodsail Compound, The Merchant Coast and Lost Rigger
-Cove. Towns are
-attached to their zone at the bottom of `Zones.lua`, keyed by the game's area
-ID, which works in every client language. Walking into Ratchet switches the
-extended pool to the Ratchet profile and walking out switches it back. The
-current track keeps playing, because the game's music doesn't change at the
-town line either.
+A profile can also `require` tags a track must have. Allow-lists can reject
+a tag but can't demand one. The inn profiles use `require = { "tavern" }`, so
+only actual tavern music plays in inns.
 
-A profile may also carry `require`, a list of tags the track **must** have.
-Allow-lists can reject a tag but cannot demand one, and that gap is real: the
-goblin-settlement pieces carry only `{ "goblin", "playful" }` with no biome at
-all, so `biomes = { "tavern" }` happily let them into every inn. The inn
-profiles use `require = { "tavern" }` to say the track has to actually *be*
-tavern music.
+**Towns and coves** are profiles attached to an area inside a zone, keyed by
+the game's area ID so they work in every client language. The `town` biome
+and `pirate` culture are only allowed in those profiles, which keeps goblin
+and pirate music in goblin and pirate places. Walking in or out switches
+the pool without interrupting the current track, as the game's music
+doesn't change at the town line either.
 
-A zone with no entry plays nothing extra, which is the safe default. Dungeons
-and raids are intentionally left alone — `ns.instances` in `Zones.lua` is
-empty, because the built-in encounter music is written for the encounter.
+**Inns** are matched by name (`GetMinimapZoneText()`) against `ns.inns` at
+the bottom of `Zones.lua`, which records each known inn's race by hand. The
+game's data barely records it. `IsResting()` alone can't be used, because
+it's true across entire capitals.
 
-To widen a zone, add a tag to it. To see the effect without logging in:
+Dungeons and raids are intentionally not covered: their music is written for
+the encounters.
+
+**Forever's map IDs** are the Classic block (1411–1464), plus new IDs for
+its new zones: Mount Hyjal 2482, Riverglades 2548, Shen'dralas 2652,
+Darkspear Islands 2524, Zephras Isle 2521 and 2665.
+
+### Fixing a track that's out of place
+
+- A track's tags are wrong: add a line to `tools/tag_overrides.csv` and
+  re-run `python3 tools/make_tracks.py`. Don't edit `Tracks.lua` by hand;
+  it's regenerated.
+- A zone allows too much or too little: edit its profile in `Zones.lua`.
+
+Then check the result without launching the game:
 
 ```
 lua tools/check_zones.lua           # pool size for every zone
 lua tools/check_zones.lua 1431      # everything eligible in Duskwood
+lua tools/smoke.lua                 # drive the addon through simulated play
 ```
 
-`check_zones.lua` loads the real `Core.lua` matcher against the real data on a
-stubbed API, so it also catches Lua syntax errors and tag typos. `lua
-tools/smoke.lua` additionally drives the playback loop and every slash command
-through three hours of simulated game time.
-
-### Zones covered
-
-All 46 Classic zones and cities, plus the five new Forever zones: Mount Hyjal
-(2482), Riverglades (2548), Shen'dralas (2652), Darkspear Islands (2524) and
-Zephras Isle (2521 / 2665).
-
-Forever uses the **Classic** uiMapID block (1411–1464), not retail's. The IDs
-in `Zones.lua` come from the client's own `UiMap` DB2 for this branch, so they
-are the real ones. Zephras Isle's *tags* are a guess from the name — worth
-checking in game.
-
----
-
-## Packaging and releases
-
-Build the zip with the script, not Finder's "Compress" or `zip -r`. On macOS
-both add a `__MACOSX/` folder and `.DS_Store`, and CurseForge rejects the
-upload for either.
-
-```
-python3 tools/package.py                  # -> dist/ForeverAmbientMusicExtended-<version>.zip
-python3 tools/package.py --check some.zip # check any zip against the same rules
-```
-
-The script packages an explicit list of files (the `.toc`, the Lua files,
-`Media/`, and `Music/README.txt`, never your own extracted audio) under a
-single `ForeverAmbientMusicExtended/` folder. It checks the result for
-`__MACOSX`, dotfiles and anything outside that folder before writing it, and
-confirms every file the `.toc` loads is included. The version comes from
-`## Version:` in the `.toc`. The same source always produces the same zip.
-
-On GitHub, `.github/workflows/package.yml` runs the syntax, data and
-behaviour checks on every push and keeps the built zip under the run's
-**Artifacts**. To publish a release:
-
-1. Bump `## Version:` in the `.toc` and commit.
-2. `git tag v0.1.1 && git push origin v0.1.1`
-
-The workflow fails before publishing if the tag doesn't match the `.toc`
-version. Otherwise it attaches the zip to a GitHub release named after the
-tag, which is the file to upload to CurseForge.
-
-## Local files
-
-Audio you extracted from your own retail install can go in the rotation
-alongside the built-in tracks. **No Blizzard audio is bundled with or
-distributed by this addon.** The `Music` folder ships empty and
-`LocalTracks.lua` ships with no entries.
-
-1. Extract the music you want with [wow.export](https://www.kruithne.net/wow.export/)
-   or CascView, pointed at your own retail install.
-   `sound/music/` is where it lives.
-2. Drop the `.mp3` / `.ogg` files into
-   `ForeverAmbientMusicExtended/Music/` (subfolders are fine).
-3. Generate the entries:
-
-   ```
-   python3 tools/local_tracks.py
-   ```
-
-   It reads each file's real duration with `ffprobe` and guesses tags from the
-   file name.
-4. Open `ForeverAmbientMusicExtended/LocalTracks.lua` and fix the tags. Anything left
-   with no tags will never be picked, and the script tells you which those
-   are. Re-running the script keeps edits you made.
-5. **Restart the client.** Files added while logged in will not play until
-   the client re-indexes at launch — a `/reload` is not enough.
-
-Requires `ffmpeg` for `ffprobe` (`brew install ffmpeg`).
-
-Pairings worth extracting, if you want somewhere to start: Cataclysm-era
-versions of the Classic zones they replaced; Drustvar and Gilneas for
-Duskwood; Val'sharah and Draenor's Shadowmoon Valley for the night elf
-forests; Highmountain, Nagrand and Ohn'ahran Plains for Mulgore and the
-Barrens; Zuldazar and Sholazar Basin for Stranglethorn; Dragonblight and
-Icecrown for the Plaguelands; Tiragarde Sound and Stormsong Valley for
-Westfall and the coasts. A fair number of these are already in the Forever
-client and already enabled — `/fame pool` will show you.
-
----
+`check_zones.lua` loads the real `Core.lua` matcher against the real data on
+a stubbed WoW API, so it also catches syntax errors and tag typos.
+`smoke.lua` drives the scheduler and every slash command through hours of
+simulated game time, including zone changes, death, inns, bans, Loop Music,
+and a stand-in for Spoken Quests' volume ducking.
 
 ## Rebuilding the data
 
-`Tracks.lua` (the extended pool) and `Originals.lua` (the game's own rules)
-are both generated. The data comes from [wago.tools](https://wago.tools),
-branch `wowf` (WoW: Forever).
+`Tracks.lua` and `Originals.lua` are generated from the client's own data on
+[wago.tools](https://wago.tools), branch `wowf` (WoW: Forever).
 
 ```
-python3 tools/fetch_music_list.py                                        # 1
+python3 tools/fetch_music_list.py                    # 1. list the client's music
 python3 tools/probe_durations.py --from-csv tools/cache/music_list.csv --pool
-python3 tools/make_tracks.py                                             # 3
-python3 tools/casc_scan.py --ids-out tools/cache/wowf_root.txt   # the installed client's manifest
-python3 tools/make_originals.py            # add --refresh after a client patch
-python3 tools/casc_scan.py --check-addon   # release check: every track is in the client
-lua tools/check_zones.lua && lua tools/smoke.lua                         # 4
+python3 tools/make_tracks.py                         # 3. write Tracks.lua
+python3 tools/casc_scan.py --ids-out tools/cache/wowf_root.txt
+python3 tools/make_originals.py                      # add --refresh after a client patch
+python3 tools/casc_scan.py --check-addon             # every track is in the client
+lua tools/check_zones.lua && lua tools/smoke.lua
 ```
 
-`make_originals.py` reads the zone list from `Zones.lua`, so adding a zone
-there and re-running it is all that's needed for FAME to know the zone's
-music. Ironforge and Undercity are wired by hand in the script
-(`INTERIOR_CITIES`), because both cities keep their music on the building
-rather than the zone.
+1. **`fetch_music_list.py`** lists every `sound/music/*` file on the branch
+   in `tools/cache/music_list.csv`, with a first guess at its tags from the
+   file name.
+2. **`probe_durations.py`** measures each file's real length, since a wrong
+   one either cuts a track short or audibly loops it. Each file is
+   downloaded, measured with `ffprobe` and deleted right away. Results are
+   cached in `tools/cache/durations.json`.
+3. **`make_tracks.py`** writes `Tracks.lua`, applying `tag_overrides.csv` on
+   top of the guesses.
+4. **`casc_scan.py`** reads the installed client's file manifest directly
+   from its local CASC storage. `make_originals.py` uses it to drop files
+   the client doesn't have, and `--check-addon` confirms every track the
+   addon references is present.
+5. **`make_originals.py`** reads `AreaTable`, `ZoneMusic`,
+   `ZoneIntroMusicTable` and `SoundKitEntry` for every zone in `Zones.lua`
+   and writes the game's own sets, silences, intros and subzone music to
+   `Originals.lua`. Adding a zone to `Zones.lua` and re-running it is all
+   it takes for FAME to know that zone's music.
 
-1. **`fetch_music_list.py`** dumps every `sound/music/*` file on the branch to
-   `tools/cache/music_list.csv` with a first-pass tag guess. The branch filter
-   is server-side, so every row is a file this client can actually play.
-2. **`probe_durations.py`** measures real durations. `PlayMusic()` loops and
-   fires no end event, so the addon stops each track on a timer and a wrong
-   length either truncates it or audibly loops it. There is no API to ask the
-   client, so each file is downloaded from wago.tools, measured with
-   `ffprobe`, and deleted immediately. Results cache in
-   `tools/cache/durations.json` (459 entries, already populated) so re-runs
-   cost nothing.
-3. **`make_tracks.py`** writes `Tracks.lua`, applying `tools/tag_overrides.csv`
-   on top of the keyword guesses. Put corrections there, not in `Tracks.lua`.
-4. Check the result.
+Filtered out of the extended pool (`tools/wagolib.py`): cinematic, event,
+title-screen, stinger, jukebox and PvP music; the stock sets the game
+already plays in these zones; raid and dungeon interiors; anything under 30
+seconds; and story or boss cues with no biome or culture to place them by.
+The Caverns of Time *exterior* music (Old Hillsbrad, Tarren Mill, Durnholde
+Keep, the Black Morass) is kept, since it was written for real places.
 
-What gets filtered out along the way, in `tools/wagolib.py`:
+## Adding your own music (experimental)
 
-- cinematic, event, main-title, stinger, jukebox and PvP material
-- the stock Classic biome and city sets, plus their Forever remasters — the
-  game already plays those in those zones, so they add nothing
-- raid and dungeon interiors (Ahn'Qiraj, Naxxramas, Caverns of Time, the
-  Forever dungeon sets)
-- anything under 30 seconds
-- story and boss cues that carry no biome or culture tag, so could never be
-  placed safely
+You can add audio extracted from your own retail install to the rotation.
+None is shipped: the `Music` folder and `LocalTracks.lua` are empty.
 
-That leaves 425 tracks: 89 Classic pieces Forever does not use in these zones,
-220 from `sound/music/forever` (including the new zone music), and 116 from
-Cataclysm through Midnight.
+1. Extract tracks with [wow.export](https://www.kruithne.net/wow.export/)
+   from your own install (`sound/music/`).
+2. Put the `.mp3` / `.ogg` files in `ForeverAmbientMusicExtended/Music/`
+   (subfolders are fine).
+3. Run `python3 tools/local_tracks.py`. It measures each file and guesses
+   tags from the file name.
+4. Fix the tags in `LocalTracks.lua`. Untagged tracks are never picked, and
+   the script lists them. Re-running it keeps your edits.
+5. Restart the client.
 
-The Classic count includes the Caverns of Time exterior music: Old Hillsbrad,
-Tarren Mill and Durnholde Keep as they were, and the Black Morass. Each was
-written for a real place, so they're let through even though the rest of
-that folder is instance music. Each was checked by comparing its audio
-against every other track in the client (the same composition correlates at
-0.8–1.0 even across a remaster), and all of them are distinct.
+Local files are checked once per session before their first play, and any
+the client can't load are skipped.
+
+## Packaging and releases
+
+Build the zip with the script, not Finder's Compress or `zip -r`, which add
+`__MACOSX/` and `.DS_Store` entries that CurseForge rejects:
+
+```
+python3 tools/package.py                    # -> dist/ForeverAmbientMusicExtended-<version>.zip
+python3 tools/package.py --check some.zip   # check any zip against the same rules
+```
+
+It packages an explicit list of files under a single
+`ForeverAmbientMusicExtended/` folder (never your own audio), confirms that
+every file the `.toc` loads is included, and produces the same zip from the
+same source every time.
+
+GitHub Actions (`.github/workflows/package.yml`) runs the syntax, data and
+behaviour checks on every push and keeps the built zip as a run artifact.
+To release:
+
+1. Bump `## Version:` in the `.toc`, add a `CHANGELOG.md` entry, and commit.
+2. `git tag v1.0.1 && git push origin v1.0.1`
+
+The workflow refuses a tag that doesn't match the `.toc` version. Otherwise
+it publishes a GitHub release with the zip attached.
+
+## Contributing
+
+Issues and pull requests are welcome, especially tag and zone corrections.
+Before opening a PR, run `lua tools/check_zones.lua && lua tools/smoke.lua`,
+and regenerate rather than hand-edit `Tracks.lua` and `Originals.lua`.
+
+By submitting a pull request, you agree that your contribution may be
+included in the project and distributed under its license.
 
 ---
 
-## Verified, and not
+## License
 
-Established in game before this was written:
+Copyright © 2026 Kirill Budnikov. All rights reserved. The source is public
+to read, report against and contribute to, but it may not be copied,
+modified or redistributed without permission. See [LICENSE](LICENSE).
 
-- `PlaySoundFile(id, "Master")` works, and a file the client does not have
-  returns a **zero** sound handle while still reporting success. That is the
-  only reliable existence check, and the addon uses it for **local files**
-  (see `FAME:Playable`): the first time such a track comes up it starts it on
-  the Music channel and stops it in the same frame, caching the answer for the
-  session. Built-in tracks skip the probe: before every release,
-  `tools/casc_scan.py --check-addon` checks each one against the installed
-  client's own file manifest.
-- `StopMusic()` does not stop the built-in zone music, only music started
-  with `PlayMusic()`.
-- Game audio plays by fileDataID; file paths work only for files inside an
-  addon's own folder.
-
-Established from the client's own data files on wago.tools:
-
-- The branch file list matches what the client will play. All ten fileDataIDs
-  tested in game agree with it — `625753` and `4872416` present, the other
-  eight absent.
-- Forever's uiMapIDs are the Classic block, and the new zones are Mount Hyjal,
-  Riverglades, Shen'dralas, Darkspear Islands and Zephras Isle.
-
-Established in game since:
-
-- `PlayMusic(fileDataID)` displaces the built-in zone music, and the game's
-  music comes back after `StopMusic()`.
-
-Still assumptions, flagged rather than relied on:
-
-- **`PlayMusic("Interface\\AddOns\\…\\x.mp3")` plays a local addon file.**
-  This now matters a lot: it is how silences are held. If it fails, `status`
-  says so and silences fall back to `StopMusic()`, which lets the game start
-  its own music mid-silence. That's audible, not broken.
-- **The game starts a place's music immediately on arrival** rather than
-  waiting out a silence first. FAME does the same. Compare against
-  `/fame off` if arrivals feel busier than plain WoW.
-- **Silence is measured from the end of one track to the start of the
-  next.** That's the natural reading of `SilenceIntervalMin/Max`.
-- **A PlayMusic change may crossfade.** When a fade leads into silence,
-  FAME keeps the volume down 2.5 seconds longer (`QUIET_AFTER` in
-  `Core.lua`), so an old track's tail can't swell back up.
-- **`StopSound(handle, 0)`** takes a fade-out time. If it does not, the
-  presence probe could leave a short audible blip the first time each local
-  file comes up. Built-in tracks are not probed by default.
-- **`Sound_ZoneMusicNoDelay` is the Loop Music CVar.** This now decides
-  whether silences happen at all. It falls back to `Sound_LoopMusic`, then to
-  assuming off (the game's default); `/fame where` shows which.
-- **`SetCVar("Sound_MusicVolume", …)`** is writable by addons. If it is
-  protected on this client the fade degrades to an instant stop rather than
-  erroring, which is the pre-fade behaviour.
-- **Interface number `16001`.** Confirm with
-  `/run print((select(4, GetBuildInfo())))` and update the `.toc` if it moved.
-- **Zephras Isle's tags**, which are a guess from the zone name.
+World of Warcraft and its music are trademarks and property of Blizzard
+Entertainment. This is an unofficial fan project, not affiliated with or
+endorsed by Blizzard.
