@@ -2,7 +2,7 @@
 -- put corrections in tools/tag_overrides.csv and regenerate.
 --
 -- Every fileDataID here is in the World of Warcraft: Forever beta client
--- (wago.tools branch wow_classic_beta), and every `len` is the file's real
+-- (wago.tools branch wowf), and every `len` is the file's real
 -- duration in seconds, measured with ffprobe.  `len` matters because
 -- PlayMusic() loops forever and fires no end event -- the addon stops the
 -- track on a timer, so a wrong length either truncates it or loops it.

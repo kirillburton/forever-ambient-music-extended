@@ -12,7 +12,7 @@ has. You can add your own on top (see **Local files**).
 ## Install
 
 1. Copy the `ForeverAmbientMusicExtended` folder into
-   `World of Warcraft/_classic_beta_/Interface/AddOns/`.
+   `World of Warcraft/_forever_/Interface/AddOns/`.
 2. Restart the client (not just `/reload`) — it indexes addon files at launch.
 3. Log in. Nothing to configure.
 
@@ -373,13 +373,15 @@ client and already enabled — `/fame pool` will show you.
 
 `Tracks.lua` (the extended pool) and `Originals.lua` (the game's own rules)
 are both generated. The data comes from [wago.tools](https://wago.tools),
-branch `wow_classic_beta`.
+branch `wowf` (WoW: Forever).
 
 ```
 python3 tools/fetch_music_list.py                                        # 1
 python3 tools/probe_durations.py --from-csv tools/cache/music_list.csv --pool
 python3 tools/make_tracks.py                                             # 3
+python3 tools/casc_scan.py --ids-out tools/cache/wowf_root.txt   # the installed client's manifest
 python3 tools/make_originals.py            # add --refresh after a client patch
+python3 tools/casc_scan.py --check-addon   # release check: every track is in the client
 lua tools/check_zones.lua && lua tools/smoke.lua                         # 4
 ```
 

@@ -157,8 +157,25 @@ def main():
             entry["sub"].append((int(sub["ID"]), sub["AreaName_lang"], s, int(sub["IntroSound"])))
         zones[map_id] = entry
 
+    # The game's tables can name files the client does not ship: set 3161
+    # (New Avalon) lists three that are not in the live build.  Playing one is
+    # minutes of silence, so keep only files the client has -- judged by the
+    # installed client's own root manifest (tools/casc_scan.py --ids-out).
+    root_path = os.path.join(wagolib.CACHE_DIR, "wowf_root.txt")
+    in_client = None
+    if os.path.exists(root_path):
+        in_client = {int(l) for l in open(root_path) if l.strip()}
+    else:
+        print("note: no %s -- run tools/casc_scan.py --ids-out %s to drop files the "
+              "client does not have" % (root_path, root_path))
+    dropped = []
+
     def files_of(kit):
-        return [int(f) for f in kit_files.get(kit, [])]
+        ids = [int(f) for f in kit_files.get(kit, [])]
+        if in_client is None:
+            return ids
+        dropped.extend(i for i in ids if i not in in_client)
+        return [i for i in ids if i in in_client]
 
     set_rows = {}
     for sid in sorted(used_sets):
@@ -258,6 +275,9 @@ def main():
           % (len(zones), len(set_rows), len(intro_rows), n_tracks, sum(len(z["sub"]) for z in zones.values())))
     if missing:
         print("no AreaTable match (FAME leaves these to the game):", missing)
+    if dropped:
+        print("dropped %d file(s) the game's tables list but the client lacks: %s"
+              % (len(set(dropped)), " ".join(map(str, sorted(set(dropped))))))
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Dump the music file list for a WoW branch from wago.tools.
 
-    python3 tools/fetch_music_list.py                      # wow_classic_beta
+    python3 tools/fetch_music_list.py                      # wowf (WoW: Forever)
     python3 tools/fetch_music_list.py --branch wow         # retail
     python3 tools/fetch_music_list.py -o out.csv
 

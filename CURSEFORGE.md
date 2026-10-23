@@ -70,7 +70,7 @@ out before every decision, so the next pick is always something you allow.
 ## Install
 
 1. Drop the `ForeverAmbientMusicExtended` folder into
-   `World of Warcraft/_classic_beta_/Interface/AddOns/`
+   `World of Warcraft/_forever_/Interface/AddOns/`
 2. **Restart the client.** The client indexes addon files at launch, so a
    `/reload` is not enough.
 3. Log in. There is nothing to configure.

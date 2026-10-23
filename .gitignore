@@ -15,3 +15,9 @@ __pycache__/
 
 # Built packages (tools/package.py).
 dist/
+
+# Client scans (tools/casc_scan.py) -- large, and reproducible from the install.
+tools/cache/*_root.txt
+tools/cache/all_music_names.json
+tools/cache/wowf_music.json
+tools/cache/unnamed_audio_*.json

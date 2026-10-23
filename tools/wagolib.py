@@ -13,7 +13,9 @@ wago.tools endpoints used (both verified working 2026-10-05):
       -> the raw file bytes.  No Range or Content-Length support, so a
       duration probe has to pull the whole file.
 
-Branch for World of Warcraft: Forever beta is `wow_classic_beta`.
+Branch for World of Warcraft: Forever is `wowf` (the live product).  The beta
+used `wow_classic_beta` until October 2026; that branch now carries Mists of
+Pandaria Classic builds, so it must not be used for Forever.
 """
 
 import json
@@ -22,7 +24,7 @@ import re
 import urllib.parse
 import urllib.request
 
-BRANCH = "wow_classic_beta"
+BRANCH = "wowf"
 FILES_URL = "https://wago.tools/api/files"
 CASC_URL = "https://wago.tools/api/casc/{fdid}?download"
 UA = {"User-Agent": "extended-ambient-music-forever/0.1 (addon build tool)"}

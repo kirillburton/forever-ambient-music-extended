@@ -2,7 +2,7 @@
 --
 -- Keyed by uiMapID, never by zone name: the names are localized, the IDs are
 -- not.  These IDs come from the client's own UiMap DB2 for the Forever beta
--- (wago.tools branch wow_classic_beta), so they are the real thing rather
+-- (wago.tools branch wowf), so they are the real thing rather
 -- than retail IDs -- Forever uses the Classic 1411..1464 block plus a handful
 -- of new ones.  `/fame where` prints the ID for wherever you are standing if
 -- you need to check or add one.
@@ -73,7 +73,7 @@ end
 --
 -- `towns` in a zone entry is keyed by AreaTable ID rather than name, so it
 -- works in every locale.  Find a town's ID by name in AreaTable on
--- wago.tools (branch wow_classic_beta).  After adding one, re-run
+-- wago.tools (branch wowf).  After adding one, re-run
 -- tools/make_originals.py so FAME can recognise the area, then check
 -- `/fame where` inside it shows that area ID.
 local function town(zone)
