@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Forever Ambient Music Extended
-## Notes: Keeps the game's own music schedule and silences, and swaps a share of its tracks for ones from every WoW era, chosen to fit where you are standing.
-## Version: 1.0.0
+## Notes: More zone music from every era of WoW, picked to fit where you are.
+## Version: 2.0.0
 ## Author: kirillburton8
 ## SavedVariables: ForeverAmbientMusicExtendedDB
 ## IconTexture: Interface\AddOns\ForeverAmbientMusicExtended\Media\logo
@@ -11,3 +11,5 @@ LocalTracks.lua
 Originals.lua
 Zones.lua
 Core.lua
+Options.lua
+Window.lua

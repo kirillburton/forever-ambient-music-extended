@@ -31,6 +31,7 @@ DIST = os.path.join(ROOT, "dist")
 SHIP_PATTERNS = [
     r"[^/]+\.toc",
     r"[^/]+\.lua",
+    r"Bindings\.xml",
     r"Media/[^/]+\.(mp3|ogg|tga)",
     r"Music/README\.txt",
 ]
