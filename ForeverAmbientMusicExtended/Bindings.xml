@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="FAME_TOGGLE_WINDOW" header="FAME" category="ADDONS">
+		FAME_ToggleWindow()
+	</Binding>
+</Bindings>
