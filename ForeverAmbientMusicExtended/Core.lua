@@ -48,10 +48,41 @@ local defaults = {
     -- Tracks the player has banned with /fame ban, keyed by fileDataID (or
     -- file path, for a local track): { zone = "...", kind = "...", at = time }.
     banned = {},
+    -- Eras the player has switched off in Settings: { cata = false, ... }.
+    -- An era not listed is on.
+    eras = {},
+    -- Tracks the player has taken out of one zone in the music window, keyed
+    -- by uiMapID, then by track: { [1453] = { [229800] = true } }.
+    zoneOff = {},
+    -- Show a FAME button on the minimap, and where on its edge (degrees).
+    -- nil until the player drags it: it finds a spot clear of other buttons.
+    minimap = false,
+    minimapAngle = false,
 }
 
 local db = {}
 for k, v in pairs(defaults) do db[k] = v end
+ns.db = db
+
+-- The eras a built-in track can come from, in the order Settings lists them.
+-- Local files carry no era and are always on.
+ns.ERAS = {
+    { key = "classic",  label = "Classic" },
+    { key = "forever",  label = "Forever soundtrack" },
+    { key = "cata",     label = "Cataclysm" },
+    { key = "mop",      label = "Mists of Pandaria" },
+    { key = "wod",      label = "Warlords of Draenor" },
+    { key = "legion",   label = "Legion" },
+    { key = "bfa",      label = "Battle for Azeroth" },
+    { key = "sl",       label = "Shadowlands" },
+    { key = "df",       label = "Dragonflight" },
+    { key = "tww",      label = "The War Within" },
+    { key = "midnight", label = "Midnight" },
+}
+ns.ERA_LABEL, ns.ERA_ORDER = {}, {}
+for i, era in ipairs(ns.ERAS) do
+    ns.ERA_LABEL[era.key], ns.ERA_ORDER[era.key] = era.label, i
+end
 
 -- --------------------------------------------------------------------------
 -- Tag vocabulary
@@ -204,27 +235,27 @@ local function currentInn(prof)
     return nil
 end
 
--- Is the game's own idea of the current zone the one FAME mapped?  Out at
--- sea on a ship, the map can still place you in the nearest coastal zone
--- while the game has you in The Great Sea -- an area of its own, with music
--- of its own.  GetZoneText() is the game's answer, so FAME compares against
--- that, using the client's own name for the mapped area (C_Map.GetAreaInfo)
--- and the English one only on an English client.  If neither is available
--- the check is skipped rather than guessed.
-local zoneNames = {}
+-- Out on the open sea, a ship can still be inside a zone's map, but the game
+-- names the sea as the zone and plays its own sea music.  So FAME steps aside
+-- when the game's zone is one of the seas -- and only then: a building or a
+-- town can name itself differently from the map (an inn, for one), and that
+-- is no reason to stop.  The seas' names come from the client, in its own
+-- language, with the English ones as a fallback.
+local SEAS = { 214, 332, 308, 457 }   -- The Great Sea (both coasts), The Forbidding Sea, The Veiled Sea
+local SEA_NAMES_EN = { "The Great Sea", "The Forbidding Sea", "The Veiled Sea", "South Seas" }
+local seaNames
 
-local function gameAgreesOnZone(zm)
-    local expected = zoneNames[zm.area]
-    if expected == nil then
-        expected = (C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(zm.area))
-            or (GetLocale and GetLocale():sub(1, 2) == "en" and zm.name)
-            or false
-        zoneNames[zm.area] = expected
+local function atSea()
+    if not seaNames then
+        seaNames = {}
+        for _, name in ipairs(SEA_NAMES_EN) do seaNames[name] = true end
+        for _, areaID in ipairs(SEAS) do
+            local name = C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(areaID)
+            if name then seaNames[name] = true end
+        end
     end
-    if not expected then return true end
-    local actual = GetZoneText()
-    if not actual or actual == "" then return true end
-    return actual == expected
+    local zone = GetZoneText()
+    return zone ~= nil and seaNames[zone] == true
 end
 
 -- The music context for where the player stands, or nil plus the reason
@@ -234,6 +265,9 @@ end
 local function resolveContext()
     if not db.enabled then return nil, "off" end
     if not soundAvailable() then return nil, "muted" end
+    -- A cutscene or movie brings its own music: a new character's opening
+    -- cinematic, a quest's scripted scene.  FAME's track would play on top.
+    if FAME.inMovie or (InCinematic and InCinematic()) then return nil, "cinematic" end
     -- Dead, or walking back as a spirit: the game has music rules of its own
     -- for that, and FAME stays out of them entirely.
     if UnitIsDeadOrGhost and UnitIsDeadOrGhost("player") then return nil, "dead" end
@@ -243,7 +277,7 @@ local function resolveContext()
     local zm = mapID and ns.zoneMusic[mapID]
     local prof = mapID and ns.zones[mapID]
     if not (zm and prof) then return nil, "unmapped" end
-    if not gameAgreesOnZone(zm) then return nil, "elsewhere" end
+    if atSea() then return nil, "elsewhere" end
 
     local ctx = { mapID = mapID, prof = prof, setID = zm.set, area = zm.area, introID = zm.intro }
     local sub = subzoneEntry(mapID, GetSubZoneText())
@@ -383,6 +417,25 @@ local function unbanned(list)
     return out
 end
 
+-- The player's own choices about the extended pool, from the Settings panel
+-- and the music window.  They only ever narrow it: the game's own tracks are
+-- never filtered by era or zone, so the schedule's original share and its
+-- silences stay exactly as they were.
+function FAME:EraOn(era)
+    return era == nil or db.eras[era] ~= false
+end
+
+function FAME:ZoneOff(mapID, track)
+    local off = mapID and db.zoneOff[mapID]
+    return off ~= nil and off[trackKey(track)] == true
+end
+
+function FAME:Allowed(track, mapID)
+    return not isBanned(track) and self:EraOn(track.era) and not self:ZoneOff(mapID, track)
+end
+
+function FAME:IsBanned(track) return isBanned(track) end
+
 -- A random entry, avoiding the track just played when there is a choice.
 -- `ok` filters further (the presence probe for local files).
 local function pickFrom(list, previous, ok)
@@ -397,9 +450,46 @@ local function pickFrom(list, previous, ok)
     return nil
 end
 
--- Extended tracks for this profile that are not banned.
-function FAME:ExtendedChoices(prof)
-    return unbanned(self:Pool(prof))
+-- Extended tracks for this profile that the player allows: not banned, from
+-- an era that is on, and not taken out of this zone.
+function FAME:ExtendedChoices(prof, mapID)
+    mapID = mapID or (self.ctx and self.ctx.mapID)
+    local out = {}
+    for _, track in ipairs(self:Pool(prof)) do
+        if self:Allowed(track, mapID) then out[#out + 1] = track end
+    end
+    return out
+end
+
+-- Every extended track that could play under any of these profiles, by day
+-- or by night, for the music window: { track = t, day = bool, night = bool }.
+-- Sorted by era, then name.
+function FAME:TracksFor(profs)
+    local out = {}
+    for _, track in ipairs(ns.allTracks) do
+        local day, night = false, false
+        for _, prof in ipairs(profs) do
+            day = day or eligible(track, prof, false)
+            night = night or eligible(track, prof, true)
+        end
+        if day or night then out[#out + 1] = { track = track, day = day, night = night } end
+    end
+    table.sort(out, function(a, b)
+        local ra, rb = ns.ERA_ORDER[a.track.era] or 99, ns.ERA_ORDER[b.track.era] or 99
+        if ra ~= rb then return ra < rb end
+        return tostring(a.track.name or a.track.file) < tostring(b.track.name or b.track.file)
+    end)
+    return out
+end
+
+-- A zone's profile and the towns and coves inside it, which share its
+-- uiMapID and so its per-zone choices.
+function FAME:ZoneTracks(mapID)
+    local prof = ns.zones[mapID]
+    if not prof then return {} end
+    local profs = { prof }
+    for _, town in pairs(prof.towns or {}) do profs[#profs + 1] = town end
+    return self:TracksFor(profs)
 end
 
 -- The game's own tracks for this set that are not banned, the way the game
@@ -418,6 +508,9 @@ end
 function FAME:PickOriginal(musicSet)
     return pickFrom(self:OriginalChoices(musicSet), self.previous)
 end
+
+-- See NextTrack: below this many extended tracks, the game's own play more.
+local SMALL_POOL = 8
 
 local function silenceFor(musicSet)
     local s = musicSet.silence
@@ -781,23 +874,32 @@ end
 -- What FAME is doing.  The quiet states are the interesting ones: they all
 -- sound the same from the speakers.
 local STATE = {
-    off      = "off -- the game plays its own music",
-    muted    = "music is off in the sound options",
-    instance = "in an instance -- the game plays its own music",
-    unmapped = "no data for this place -- the game plays its own music",
-    dead     = "dead or a spirit -- the game plays its own music",
-    elsewhere = "the game has you outside this zone (at sea?) -- it plays its own music",
-    inn      = "in an inn FAME doesn't know the race of -- the game plays its own music",
-    original = "playing the game's own track",
-    extended = "playing an extended track",
-    intro    = "playing the game's intro for this place",
-    test     = "playing a track by request",
-    silence  = "holding the game's silence between tracks",
+    off       = "FAME is off. The game plays its own music",
+    muted     = "Music is off in the sound settings",
+    instance  = "In an instance. The game plays its own music",
+    unmapped  = "FAME doesn't cover this place. The game plays its own music",
+    dead      = "While you're dead, the game plays its own music",
+    cinematic = "A cutscene is playing its own music",
+    elsewhere = "At sea. The game plays its own music",
+    inn       = "This inn plays the game's own music",
+    original  = "Playing the game's own track",
+    extended  = "Playing an extended track",
+    intro     = "Playing this place's intro",
+    test      = "Playing a track you picked",
+    preview   = "Previewing a track",
+    silence   = "Quiet between tracks, as the game would be",
 }
 
 function FAME:SetState(state)
     if self.state ~= state then debugf("-> %s", STATE[state] or state) end
     self.state = state
+    self:Changed()
+end
+
+-- Something the music window shows has changed.  The window is optional and
+-- loads after Core, so this is a no-op until it registers itself.
+function FAME:Changed()
+    if ns.ui and ns.ui.Refresh then ns.ui:Refresh() end
 end
 
 function FAME:StateText()
@@ -876,7 +978,12 @@ function FAME:NextTrack()
     if ctx.first and not db.displaceFirst then
         wantOriginal = true
     else
-        wantOriginal = math.random() < db.originalChance
+        -- Where only a few extended tracks fit, they would come round again
+        -- and again, so the game's own take a bigger share: the extended
+        -- share is capped at 1/SMALL_POOL per track that fits.  From
+        -- SMALL_POOL tracks up this changes nothing.
+        local share = math.min(1 - db.originalChance, #extended / SMALL_POOL)
+        wantOriginal = math.random() >= share
     end
     ctx.first = false
 
@@ -944,9 +1051,58 @@ function FAME:Release(state)
     self:SetState(state)
 end
 
+-- A preview from the music window: the first PREVIEW_SECONDS of a track,
+-- through the music channel, then on as if the track had ended -- into the
+-- game's silence, or the next track with Loop Music on.  Outside a place
+-- FAME runs (an instance, say) it hands the channel back to the game after.
+local PREVIEW_SECONDS = 20
+local PREVIEW_FADE = 1.5
+
+function FAME:Preview(track)
+    self:CancelTimer()
+    if self.state ~= "preview" then self.previewReturn = self.state end
+    self:FadeOut(0.4, function()
+        FAME:PlayTrack(track, "preview")
+        local seconds = math.min(PREVIEW_SECONDS, track.len)
+        FAME:In(math.max(1, seconds - PREVIEW_FADE), function() FAME:EndPreview(PREVIEW_FADE) end)
+    end, false)
+end
+
+function FAME:EndPreview(fade)
+    if self.state ~= "preview" then return end
+    self:CancelTimer()
+    fade = fade or FADE_CUT
+    if self.ctx then return self:AfterTrack(fade) end
+    local back = self.previewReturn or "off"
+    self:FadeOut(fade, function()
+        StopMusic()
+        FAME.audible = false
+        FAME:SetState(back)
+    end, false)
+end
+
+-- A cutscene starts: stop at once, with no fade.  Anything of ours still
+-- sounding would play on top of the cutscene's own music, which is how a new
+-- character's opening cinematic came to have two songs at once.  The volume
+-- is put back first, in case a fade had it part way down.
+function FAME:Cutscene()
+    self:CancelTimer()
+    self:StopRamps()
+    self:RestoreVolume()
+    if self.audible or self.holding then StopMusic() end
+    self.audible, self.holding = false, false
+    if self.playing then self.previous = self.playing end
+    self.playing, self.kind = nil, nil
+    self.ctx, self.area = nil, nil
+    self:SetState("cinematic")
+end
+
 -- Work out where we are and react.  Runs on every location event and on a
 -- slow poll, so it has to be cheap and idempotent.
 function FAME:Evaluate()
+    -- A preview runs its 20 seconds; EndPreview hands back to whatever is
+    -- right by then, and the next poll catches up with any change.
+    if self.state == "preview" then return end
     local ctx, why = resolveContext()
     if not ctx then
         if self.ctx or self.state ~= why then self:Release(why) end
@@ -991,6 +1147,11 @@ FAME:RegisterEvent("PLAYER_UPDATE_RESTING")
 FAME:RegisterEvent("PLAYER_DEAD")
 FAME:RegisterEvent("PLAYER_ALIVE")
 FAME:RegisterEvent("PLAYER_UNGHOST")
+-- Cutscenes (in-game cinematics) and movies bring their own music.
+FAME:RegisterEvent("CINEMATIC_START")
+FAME:RegisterEvent("CINEMATIC_STOP")
+FAME:RegisterEvent("PLAY_MOVIE")
+FAME:RegisterEvent("STOP_MOVIE")
 -- A fade in progress has the player's music volume turned part way down.
 -- These two make sure it always gets put back.
 FAME:RegisterEvent("PLAYER_LEAVING_WORLD")
@@ -1042,6 +1203,14 @@ FAME:SetScript("OnEvent", function(self, event, arg1)
                 FAME:Evaluate()
             end)
         end
+    elseif event == "CINEMATIC_START" or event == "PLAY_MOVIE" then
+        if event == "PLAY_MOVIE" then self.inMovie = true end
+        self:Cutscene()
+    elseif event == "CINEMATIC_STOP" or event == "STOP_MOVIE" then
+        if event == "STOP_MOVIE" then self.inMovie = false end
+        -- Back in the world: start over like arriving, the game's track first.
+        self.ctx = nil
+        self:Evaluate()
     elseif event == "PLAYER_LEAVING_WORLD" or event == "PLAYER_LOGOUT" then
         self:CancelTimer()
         self:RestoreVolume()
@@ -1058,6 +1227,135 @@ local function save(key, value)
     db[key] = value
     ForeverAmbientMusicExtendedDB = ForeverAmbientMusicExtendedDB or {}
     ForeverAmbientMusicExtendedDB[key] = value
+end
+
+-- --------------------------------------------------------------------------
+-- Actions, shared by the slash commands, the Settings panel and the music
+-- window.  They change state quietly; whoever calls them says what happened.
+-- --------------------------------------------------------------------------
+
+function FAME:Save(key, value)
+    save(key, value)
+    self:Changed()
+end
+
+function FAME:SetEnabled(on)
+    save("enabled", on and true or false)
+    if on then self:Evaluate() else self:Release("off") end
+    self:Changed()
+end
+
+function FAME:SetOriginalChance(fraction)
+    save("originalChance", math.max(0, math.min(1, fraction)))
+    self:Changed()
+end
+
+function FAME:SetDisplaceFirst(on)
+    save("displaceFirst", on and true or false)
+    self:Changed()
+end
+
+-- A track from an era switched off mid-play finishes; the era only stops
+-- the next ones.
+function FAME:SetEra(era, on)
+    if on then db.eras[era] = nil else db.eras[era] = false end
+    save("eras", db.eras)
+    self:Changed()
+end
+
+function FAME:SetZoneOff(mapID, track, off)
+    local key = trackKey(track)
+    local zone = db.zoneOff[mapID]
+    if off then
+        if not zone then zone = {}; db.zoneOff[mapID] = zone end
+        zone[key] = true
+    elseif zone then
+        zone[key] = nil
+        if next(zone) == nil then db.zoneOff[mapID] = nil end
+    end
+    save("zoneOff", db.zoneOff)
+    self:Changed()
+end
+
+-- Count of tracks taken out of a zone, for the window's zone picker.
+function FAME:ZoneOffCount(mapID)
+    local n = 0
+    for _ in pairs(db.zoneOff[mapID] or {}) do n = n + 1 end
+    return n
+end
+
+-- End the current track the way it would have ended anyway.
+function FAME:Skip()
+    if not self.playing then return nil end
+    local track = self.playing
+    self:CancelTimer()
+    if self.state == "preview" then self:EndPreview() else self:AfterTrack(FADE_CUT) end
+    return track
+end
+
+function FAME:PlayExtendedNow()
+    local ctx = self.ctx
+    if not ctx then return nil end
+    local track = self:Pick(ctx.prof)
+    if not track then return nil end
+    self:CancelTimer()
+    self:FadeOut(0.8, function() FAME:PlayTrack(track, "extended") end, false)
+    return track
+end
+
+-- Ban a track everywhere.  If it is the one playing, it ends the way it would
+-- have ended anyway.
+function FAME:Ban(track)
+    local key = trackKey(track)
+    local zone, sub = GetZoneText() or "?", GetSubZoneText() or ""
+    local where = (sub ~= "" and sub ~= zone) and (zone .. ", " .. sub) or zone
+    local kind = "?"
+    if track == self.playing then
+        kind = (self.kind == "test" or self.kind == "preview") and "by request" or (self.kind or "?")
+    end
+    db.banned[key] = { zone = where, kind = kind, name = track.name, at = time and time() or 0 }
+    save("banned", db.banned)
+    if track == self.playing then
+        self:CancelTimer()
+        if self.state == "preview" then self:EndPreview(FADE_CUT) else self:AfterTrack(FADE_CUT) end
+    end
+    self:Changed()
+    return key
+end
+
+local function afterUnban()
+    -- If everything here had been banned, there is something to play again.
+    if FAME.ctx and FAME.ctx.allBanned and FAME.state == "silence" then
+        FAME:NextTrack()
+    end
+    FAME:Changed()
+end
+
+function FAME:Unban(key)
+    local b = db.banned[key]
+    if not b then return nil end
+    db.banned[key] = nil
+    save("banned", db.banned)
+    afterUnban()
+    return b
+end
+
+function FAME:UnbanAll()
+    local n = 0
+    for k in pairs(db.banned) do db.banned[k] = nil; n = n + 1 end
+    save("banned", db.banned)
+    afterUnban()
+    return n
+end
+
+-- Banned tracks for display, sorted by name: { key, name, zone, kind }.
+function FAME:BanList()
+    local out = {}
+    for key, b in pairs(db.banned) do
+        out[#out + 1] = { key = key, name = b.name or tostring(key), zone = b.zone, kind = b.kind }
+    end
+    table.sort(out, function(a, b) return tostring(a.name) < tostring(b.name) end)
+    return out
 end
 
 -- Output.  Every command prints a one-line headline with the FAME prefix,
@@ -1108,6 +1406,8 @@ local commands = {}
 commands.help = function()
     say("commands")
     local function cmd(c, what) print(("  %-25s %s"):format("/fame " .. c, what)) end
+    cmd("ui", "open the music window: tracks by zone, bans")
+    cmd("settings", "open FAME's settings: eras and more")
     cmd("status", "what's playing, and what comes next")
     cmd("skip", "end this track as it would end anyway")
     cmd("next", "play an extended track now")
@@ -1126,14 +1426,12 @@ commands.help = function()
 end
 
 commands.on = function()
-    save("enabled", true)
+    FAME:SetEnabled(true)
     say("on -- running the music")
-    FAME:Evaluate()
 end
 
 commands.off = function()
-    save("enabled", false)
-    FAME:Release("off")
+    FAME:SetEnabled(false)
     say("off -- the game plays its own music")
 end
 
@@ -1230,20 +1528,16 @@ end
 -- `skip` ends the track the way it would have ended anyway: into the
 -- game's silence, or straight into the next one with Loop Music on.
 commands.skip = function()
-    if not FAME.playing then return say("nothing is playing to skip") end
-    say("skipping %s", describe(FAME.playing))
-    FAME:CancelTimer()
-    FAME:AfterTrack(FADE_CUT)
+    local track = FAME:Skip()
+    if not track then return say("nothing is playing to skip") end
+    say("skipping %s", describe(track))
 end
 
 commands.next = function()
-    local ctx = FAME.ctx
-    if not ctx then return say("%s", FAME:StateText()) end
-    local track = FAME:Pick(ctx.prof)
+    if not FAME.ctx then return say("%s", FAME:StateText()) end
+    local track = FAME:PlayExtendedNow()
     if not track then return say("no extended track fits here") end
-    FAME:CancelTimer()
     say("playing %s, %s", describe(track), clock(track.len))
-    FAME:FadeOut(0.8, function() FAME:PlayTrack(track, "extended") end, false)
 end
 
 commands.play = function(rest)
@@ -1288,11 +1582,6 @@ commands.scan = function(rest)
     end
 end
 
-local function persistBans()
-    ForeverAmbientMusicExtendedDB = ForeverAmbientMusicExtendedDB or {}
-    ForeverAmbientMusicExtendedDB.banned = db.banned
-end
-
 -- Ban whatever is playing -- the game's own track or an extended one -- and
 -- end it the way it would have ended anyway.
 commands.ban = function()
@@ -1303,15 +1592,8 @@ commands.ban = function()
         return say("the game chooses the music here, so there's nothing for FAME to ban")
     end
     if not track then return say("nothing is playing to ban") end
-    local key = trackKey(track)
-    local zone, sub = GetZoneText() or "?", GetSubZoneText() or ""
-    local where = (sub ~= "" and sub ~= zone) and (zone .. ", " .. sub) or zone
-    local kind = FAME.kind == "test" and "by request" or (FAME.kind or "?")
-    db.banned[key] = { zone = where, kind = kind, name = track.name, at = time and time() or 0 }
-    persistBans()
+    local key = FAME:Ban(track)
     say("banned %s -- /fame unban %s to undo", describe(track), tostring(key))
-    FAME:CancelTimer()
-    FAME:AfterTrack(FADE_CUT)
 end
 
 commands.banlist = function()
@@ -1332,21 +1614,12 @@ commands.unban = function(rest)
         return say("usage: /fame unban <id> or /fame unban all -- /fame banlist shows the ids")
     end
     if rest:lower() == "all" then
-        local n = 0
-        for k in pairs(db.banned) do db.banned[k] = nil; n = n + 1 end
-        persistBans()
-        say("unbanned all %d", n)
+        say("unbanned all %d", FAME:UnbanAll())
     else
         local key = tonumber(rest) or rest
-        local b = db.banned[key]
+        local b = FAME:Unban(key)
         if not b then return say("%s is not banned -- /fame banlist shows what is", tostring(key)) end
-        db.banned[key] = nil
-        persistBans()
         say("unbanned %s", b.name and ("%s (%s)"):format(b.name, tostring(key)) or tostring(key))
-    end
-    -- If everything here had been banned, there is something to play again.
-    if FAME.ctx and FAME.ctx.allBanned and FAME.state == "silence" then
-        FAME:NextTrack()
     end
 end
 
@@ -1356,13 +1629,23 @@ commands.chance = function(rest)
         return say("%s of tracks are the game's own -- /fame chance <0-100> to change it",
             pct(db.originalChance))
     end
-    save("originalChance", value / 100)
+    FAME:SetOriginalChance(value / 100)
     say("%s of tracks will be the game's own", pct(db.originalChance))
 end
 
 commands.first = function()
-    save("displaceFirst", not db.displaceFirst)
+    FAME:SetDisplaceFirst(not db.displaceFirst)
     say("new places now %s", firstText())
+end
+
+commands.ui = function()
+    if ns.ui and ns.ui.Toggle then return ns.ui:Toggle() end
+    say("the music window isn't available on this client")
+end
+
+commands.settings = function()
+    if ns.ui and ns.ui.OpenSettings and ns.ui:OpenSettings() then return end
+    say("the Settings panel isn't available on this client -- the slash commands still work")
 end
 
 commands.debug = function()
