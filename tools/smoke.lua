@@ -509,6 +509,32 @@ end
 check(biomeless == 0, "no track without a biome is eligible anywhere")
 
 ------------------------------------------------------------------------------
+realPrint("\ncutscenes bring their own music")
+InCinematic = function() return state.cinematic == true end
+state.map, state.sub = 1429, ""; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+while not FAME.playing do go(10) end
+local nc = #log
+state.cinematic = true; fire("CINEMATIC_START")
+check(log[#log] and log[#log].stop and #log == nc + 1, "a cutscene stops FAME's track at once, with no fade under it")
+check(FAME.state == "cinematic" and cvars.Sound_MusicVolume == START_VOLUME, "and hands the music to the cutscene, volume intact")
+go(600)
+check(#log == nc + 1, "nothing of FAME's plays during it, even past the poll")
+state.cinematic = false; fire("CINEMATIC_STOP"); go(3)
+check(FAME.playing ~= nil and FAME.kind == "original", "when it ends, music starts over like arriving: the game's own track")
+-- A new character logs straight into the opening cinematic.
+state.cinematic = true
+fire("PLAYER_ENTERING_WORLD"); go(5)
+check(FAME.state == "cinematic", "logging in during the opening cinematic leaves the music to it")
+state.cinematic = false; fire("CINEMATIC_STOP"); go(3)
+check(FAME.playing ~= nil, "and FAME starts once it's over")
+-- Pre-rendered movies too.
+nc = #log
+fire("PLAY_MOVIE")
+check(FAME.state == "cinematic" and log[#log].stop, "a movie stops it the same way")
+fire("STOP_MOVIE"); go(3)
+check(FAME.playing ~= nil, "and it resumes after")
+
+------------------------------------------------------------------------------
 realPrint("\nhanding the channel back")
 state.map = 1431; fire("ZONE_CHANGED_NEW_AREA"); go(5)
 state.instance = true; fire("ZONE_CHANGED_NEW_AREA")
@@ -580,6 +606,11 @@ n0 = #log
 check(FAME.state == "elsewhere", "out on The Great Sea -- still on the Wetlands map -- the game takes over")
 go(1200)
 check(#log == n0, "and plays its own sea music for the whole crossing")
+-- A place the game names differently from the map -- an inn, a building,
+-- a town -- is not the sea, and FAME keeps playing there.
+state.zoneText = "The Scarlet Raven Tavern"; state.map = 1431; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+check(FAME.ctx ~= nil and FAME.state ~= "elsewhere",
+    ("a building the game names differently from the map is not the sea (%s)"):format(FAME:StateText()))
 state.zoneText = nil; state.map = 1445; fire("ZONE_CHANGED_NEW_AREA"); go(3)
 check(FAME.ctx ~= nil and FAME.kind == "original", "docking at Theramore starts Dustwallow with the game's own track")
 
@@ -888,7 +919,7 @@ for _, input in ipairs({ "", "help", "status", "where", "pool 3", "skip", "next"
                           "scan 53492 53493 1", "play 53519", "play 8180778", "play 99999", "status",
                           "off", "status", "where", "on", "toggle", "toggle", "bogus",
                           "ban", "banlist", "unban", "unban all", "banlist", "verify",
-                          "pool", "pool 3", "chance 40", "first", "first" }) do
+                          "pool", "pool 3", "chance 40", "first", "first", "ui", "settings" }) do
     local ok, err = run(input)
     check(ok, ("/fame %s"):format(input == "" and "(no args)" or input))
     if not ok then realPrint("        " .. tostring(err)) end
@@ -897,6 +928,478 @@ go(3)                        -- toggling off starts a 1.2s fade-out; on waits fo
 check(FAME.state ~= "off", "back on after toggling twice")
 go(30)
 check(cvars.Sound_MusicVolume == START_VOLUME, "volume intact after every command")
+
+------------------------------------------------------------------------------
+realPrint("\nchoosing the music: eras, zones, small pools, previews")
+local function nameOf(id)
+    for _, tr in ipairs(ns.allTracks) do if tr.id == id then return tr.name end end
+end
+local function anyName(list, pattern)
+    for _, tr in ipairs(list) do if (tr.name or ""):find(pattern) then return tr.name end end
+end
+
+-- Eras.
+state.map, state.sub = 1431, ""; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+local function eraCount(list, era)
+    local n = 0
+    for _, tr in ipairs(list) do if tr.era == era then n = n + 1 end end
+    return n
+end
+check(eraCount(FAME:ExtendedChoices(ns.zones[1431], 1431), "forever") > 0, "Duskwood draws on the Forever soundtrack")
+FAME:SetEra("forever", false)
+check(not FAME:EraOn("forever") and FAME:EraOn("cata"), "switching an era off leaves the others on")
+check(eraCount(FAME:ExtendedChoices(ns.zones[1431], 1431), "forever") == 0, "an era switched off leaves the pool")
+check(ForeverAmbientMusicExtendedDB.eras and ForeverAmbientMusicExtendedDB.eras.forever == false, "and is saved")
+local t4, foreverPlays = now, 0
+go(4 * 3600)
+for _, e in ipairs(log) do
+    if e.t > t4 + 5 and e.play then
+        for _, tr in ipairs(ns.allTracks) do if tr.id == e.play and tr.era == "forever" then foreverPlays = foreverPlays + 1 end end
+    end
+end
+check(foreverPlays == 0, "and none of its tracks plays (four hours)")
+FAME:SetEra("forever", true)
+check(FAME:EraOn("forever") and ForeverAmbientMusicExtendedDB.eras.forever == nil, "switching it back on clears it")
+
+-- Taking a track out of one zone.
+-- A track Duskwood shares with another zone, so "elsewhere" can be checked.
+local some, otherZone
+for _, tr in ipairs(FAME:ExtendedChoices(ns.zones[1431], 1431)) do
+    for zoneID, prof in pairs(ns.zones) do
+        if zoneID ~= 1431 and not otherZone then
+            for _, o in ipairs(FAME:ExtendedChoices(prof, zoneID)) do
+                if o == tr then some, otherZone = tr, zoneID end
+            end
+        end
+    end
+    if some then break end
+end
+FAME:SetZoneOff(1431, some, true)
+local stillThere = false
+for _, tr in ipairs(FAME:ExtendedChoices(ns.zones[1431], 1431)) do if tr == some then stillThere = true end end
+check(not stillThere, ("taking %s out of Duskwood removes it there"):format(some.name))
+check(FAME:ZoneOffCount(1431) == 1 and ForeverAmbientMusicExtendedDB.zoneOff[1431] ~= nil, "and is saved per zone")
+local elsewhere = false
+for _, tr in ipairs(FAME:ExtendedChoices(ns.zones[otherZone], otherZone)) do if tr == some then elsewhere = true end end
+check(elsewhere, ("but it still plays in %d, where it also fits"):format(otherZone))
+FAME:SetZoneOff(1431, some, false)
+check(FAME:ZoneOffCount(1431) == 0 and ForeverAmbientMusicExtendedDB.zoneOff[1431] == nil, "putting it back leaves nothing behind")
+
+-- Small pools lean on the game's own.  No zone is that small out of the box,
+-- but eras switched off or tracks unticked can make one, so Ironforge is
+-- narrowed here to its cave music.
+local ironforge = ns.zones[1455]
+ns.zones[1455] = { capital = true, biomes = { "cave", "underground" }, cultures = { "earthen" },
+                   moods = { "mysterious" } }
+FAME.pool = nil
+local small = #FAME:Pool(ns.zones[1455], false)
+check(small > 0 and small < 8, ("a narrowed Ironforge has a small pool (%d)"):format(small))
+state.map, state.sub = 1455, ""; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+cvars.Sound_ZoneMusicNoDelay = "1"
+local t5 = now
+go(12 * 3600)
+cvars.Sound_ZoneMusicNoDelay = "0"
+local orig5, ext5 = 0, 0
+for _, p in ipairs(plays(t5 + 5, now)) do
+    if originalIDs[p.src] then orig5 = orig5 + 1 else ext5 = ext5 + 1 end
+end
+local share5 = orig5 / math.max(1, orig5 + ext5)
+local expected = 1 - math.min(0.6, small / 8)
+check(math.abs(share5 - expected) < 0.09, ("there the game's own take a bigger share: %.0f%% (expected about %.0f%%, not 40%%) of %d")
+    :format(share5 * 100, expected * 100, orig5 + ext5))
+ns.zones[1455] = ironforge
+FAME.pool = nil
+
+-- Previews: twenty seconds, then on as if the track had ended.
+state.map, state.sub = 1431, ""; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+local candidate = FAME:ExtendedChoices(ns.zones[1431], 1431)[2]
+FAME:Preview(candidate); go(2)
+check(FAME.state == "preview" and FAME.playing == candidate, "a preview plays the chosen track")
+fire("ZONE_CHANGED"); go(11)
+check(FAME.state == "preview", "location events and the poll leave it alone")
+go(10)
+check(FAME.state == "silence", ("after 20 seconds it ends into the game's silence (%s)"):format(tostring(FAME.state)))
+check(cvars.Sound_MusicVolume == START_VOLUME, "with the volume back")
+FAME:Preview(candidate); go(3)
+FAME:EndPreview(); go(4)
+check(FAME.state ~= "preview", "stopping a preview early ends it")
+state.instance = true; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+FAME:Preview(candidate); go(2)
+check(FAME.state == "preview", "a preview works inside an instance too")
+go(25)
+check(FAME.state == "instance" and log[#log].stop, "and hands the music back to the game after")
+state.instance = false; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+
+------------------------------------------------------------------------------
+realPrint("\nthe Settings page")
+-- A stand-in for the client's Settings API that records what is registered,
+-- in order.
+local registered, settingsByVar = {}, {}
+local category = { GetID = function() return 77 end }
+local layout = { AddInitializer = function(_, init) registered[#registered + 1] = init end }
+Settings = {
+    VarType = { Boolean = "boolean", Number = "number" },
+    RegisterVerticalLayoutCategory = function(name) category.name = name; return category, layout end,
+    RegisterProxySetting = function(_, variable, varType, name, default, get, set)
+        local setting = { variable = variable, name = name, default = default, get = get, set = set }
+        settingsByVar[variable] = setting
+        return setting
+    end,
+    CreateCheckbox = function(_, setting)
+        -- Blizzard's row functions must never be replaced by addon code (that
+        -- taints the pooled rows and breaks gamepad navigation in the whole
+        -- Settings panel); only hooksecurefunc may add to them.
+        local initializer = setmetatable({}, { __newindex = function(_, k)
+            error("replaced the Settings row's own " .. tostring(k) .. " -- use hooksecurefunc", 2)
+        end })
+        rawset(initializer, "InitFrame", function() end)
+        rawset(initializer, "Resetter", function() end)
+        registered[#registered + 1] = { checkbox = setting.name, setting = setting, initializer = initializer }
+        return initializer
+    end,
+    CreateSlider = function(_, setting) registered[#registered + 1] = { slider = setting.name, setting = setting } end,
+    CreateSliderOptions = function() return { SetLabelFormatter = function() end } end,
+    RegisterAddOnCategory = function(cat) category.registered = true end,
+    OpenToCategory = function(id) category.opened = id end,
+}
+MinimalSliderWithSteppersMixin = { Label = { Right = 2 } }
+-- Like the client's: the original runs first, untouched, then the hook.
+function hooksecurefunc(t, key, hook)
+    local original = t[key]
+    rawset(t, key, function(...)
+        local results = { original(...) }
+        hook(...)
+        return unpack(results)
+    end)
+end
+unpack = unpack or table.unpack
+CreateSettingsListSectionHeaderInitializer = function(name) return { header = name } end
+CreateSettingsButtonInitializer = function(name, text, click) return { button = text, click = click } end
+assert(loadfile(ROOT .. "/Options.lua"))(ADDON, ns)
+
+local order = {}
+for _, r in ipairs(registered) do order[#order + 1] = r.checkbox or r.slider or r.header or r.button end
+check(category.registered and category.name == "FAME", "FAME gets a page under Settings > AddOns")
+check(order[1] == "Extend the zone music", "first: on or off")
+check(order[2] == "Music from" and order[3] == "Classic" and order[13] == "Midnight",
+    ("then the eras, Classic to Midnight (%s .. %s)"):format(tostring(order[3]), tostring(order[13])))
+check(order[14] == "Minimap button", "then the opt-in minimap button")
+check(order[15] == "More options" and order[16] == "Game's own tracks"
+    and order[17] == "Game's track on arrival", "then the mix, under More options")
+check(order[#order - 1] == "Edit tracklists" and order[#order] == "Show banned tracks",
+    "and last, Edit tracklists and Show banned tracks")
+check(settingsByVar.FAME_Minimap.get() == false, "the minimap entry is off until chosen")
+
+settingsByVar.FAME_Era_cata.set(false)
+check(not FAME:EraOn("cata") and settingsByVar.FAME_Era_cata.get() == false, "an era checkbox switches the era")
+settingsByVar.FAME_Era_cata.set(true)
+settingsByVar.FAME_OriginalChance.set(55)
+check(math.abs(ns.db.originalChance - 0.55) < 1e-9 and settingsByVar.FAME_OriginalChance.get() == 55, "the slider sets the share")
+settingsByVar.FAME_OriginalChance.set(40)
+settingsByVar.FAME_FirstOriginal.set(false)
+check(ns.db.displaceFirst == true, "unticking the first-track box lets new places open extended")
+settingsByVar.FAME_FirstOriginal.set(true)
+local okSettings = run("settings")
+check(okSettings and category.opened == 77, "/fame settings opens the page")
+
+------------------------------------------------------------------------------
+realPrint("\nthe music window")
+-- A stand-in frame that keeps what the window reads back: scripts, shown
+-- state, text, checked state, enabled state.  Any other method is a no-op.
+local mockMeta = {}
+eventFrames = {}
+local function fireUI(event)
+    for _, f in ipairs(eventFrames[event] or {}) do
+        if f._scripts.OnEvent then f._scripts.OnEvent(f, event) end
+    end
+end
+-- Like real frames: shown when created, visible only while every parent is.
+local function mock(name, parent)
+    local f = { _scripts = {}, _shown = true, _name = name, _parent = parent }
+    return setmetatable(f, mockMeta)
+end
+local methods = {
+    SetScript = function(self, what, fn) self._scripts[what] = fn end,
+    GetScript = function(self, what) return self._scripts[what] end,
+    Show = function(self)
+        if not self._shown then self._shown = true; if self._scripts.OnShow then self._scripts.OnShow(self) end end
+    end,
+    Hide = function(self)
+        if self._shown then self._shown = false; if self._scripts.OnHide then self._scripts.OnHide(self) end end
+    end,
+    IsShown = function(self) return self._shown end,
+    IsVisible = function(self)
+        if not self._shown then return false end
+        return self._parent == nil or self._parent:IsVisible()
+    end,
+    GetEffectiveScale = function() return 1 end,
+    SetShown = function(self, v) if v then self:Show() else self:Hide() end end,
+    SetPoint = function(self, ...) self._point = { ... } end,
+    RegisterEvent = function(self, event)
+        eventFrames[event] = eventFrames[event] or {}
+        table.insert(eventFrames[event], self)
+    end,
+    SetText = function(self, t) self._text = t end,
+    SetFormattedText = function(self, fmt, ...) self._text = fmt:format(...) end,
+    GetText = function(self) return self._text end,
+    SetChecked = function(self, v) self._checked = v and true or false end,
+    GetChecked = function(self) return self._checked end,
+    SetEnabled = function(self, v) self._enabled = v end,
+    IsEnabled = function(self) return self._enabled ~= false end,
+    GetName = function(self) return self._name end,
+    SetID = function(self, id) self._id = id end,
+    GetID = function(self) return self._id end,
+    CreateFontString = function(self) return mock(nil, self) end,
+    CreateTexture = function(self) return mock(nil, self) end,
+    Click = function(self) if self._scripts.OnClick then self._scripts.OnClick(self, "LeftButton") end end,
+}
+-- Methods are capitalised, as on real frames; a lowercase field that was
+-- never set reads as nil, as it would in the client.
+mockMeta.__index = function(t, k)
+    if methods[k] then return methods[k] end
+    if type(k) == "string" and k:match("^%u") then return function() end end
+    return nil
+end
+-- The era rows carry a grey track count beside the checkbox.
+local fakeRow = mock("SettingsRow")
+fakeRow.Checkbox = mock("SettingsRowCheckbox")
+local fontStrings = {}
+fakeRow.CreateFontString = function(self) local f = mock(nil, self); fontStrings[#fontStrings + 1] = f; return f end
+registered[3].initializer:InitFrame(fakeRow)       -- Classic
+check(fontStrings[1] and fontStrings[1]:GetText() == "89 tracks" and fontStrings[1]._point[2] == fakeRow.Checkbox,
+    ("each era shows its track count to the right of its checkbox (%s)"):format(fontStrings[1] and fontStrings[1]:GetText() or "none"))
+registered[3].initializer:Resetter(fakeRow)
+check(not fontStrings[1]:IsShown(), "and the count is hidden when the list recycles the row for another page")
+registered[3].initializer:InitFrame(fakeRow)
+check(#fontStrings == 1 and fontStrings[1]:IsShown(), "drawing the row again reuses the same note")
+local frames = {}
+local coreCreateFrame = CreateFrame
+CreateFrame = function(kind, name, parent, template)
+    local f = mock(name, parent)
+    f.Inset = mock()
+    if kind == "Frame" and template == "ButtonFrameTemplate" then frames.main = f end
+    if template == "WowScrollBoxList" then
+        frames.list = f
+        f.SetDataProvider = function(self, provider)
+            self.rows = {}
+            for i = 1, math.min(12, #provider) do
+                local row = mock()
+                row.elementData = provider[i]
+                self.view.initializer(row, provider[i])
+                self.rows[i] = row
+            end
+        end
+        f.ForEachFrame = function(self, fn)
+            for _, row in ipairs(self.rows or {}) do fn(row, row.elementData) end
+        end
+    end
+    if name then _G[name] = f end
+    return f
+end
+CreateScrollBoxListLinearView = function()
+    return { SetElementExtent = function() end,
+             SetElementInitializer = function(self, _, init) self.initializer = init end }
+end
+ScrollUtil = { InitScrollBoxListWithScrollBar = function(list, _, view) list.view = view end }
+CreateDataProvider = function(t) return t end
+ScrollBoxConstants = { RetainScrollPosition = true }
+PanelTemplates_SetNumTabs = function(f, n) f.numTabs = n end
+PanelTemplates_SetTab = function(f, i) f.selectedTab = i end
+-- The game's panel manager is protected: in the client, an addon calling it
+-- gets "blocked from an action only available to the Blizzard UI".  Here it
+-- raises, so any path that reaches it fails the test.
+local function protected(name) return function() error(name .. " is protected -- addons must not call it", 2) end end
+RegisterUIPanel, ShowUIPanel, HideUIPanel = protected("RegisterUIPanel"), protected("ShowUIPanel"), protected("HideUIPanel")
+UISpecialFrames = {}
+local padShown, padHidden = 0, 0
+GamepadMode = {
+    CreateBindingGroup = function() return {} end,
+    FrameControlsManager = {
+        FrameShown = function(_, f) padShown = padShown + 1 end,
+        FrameHidden = function(_, f) padHidden = padHidden + 1 end,
+    },
+}
+Minimap = mock("Minimap")
+Minimap.GetWidth = function() return 140 end
+Minimap.GetCenter = function() return 900, 600 end
+Minimap.GetEffectiveScale = function() return 1 end
+GameTooltip = mock("GameTooltip")
+navRefreshes = 0
+-- Forever's navigation override API, recording what the window pins.
+SMART_NAV_INPUT_DIRECTION = { UP = { dirKey = "up" }, DOWN = { dirKey = "down" },
+                              LEFT = { dirKey = "left" }, RIGHT = { dirKey = "right" } }
+function SmartNavigation_AddJumpNavigationOverride(b, dir, target) b["nav-" .. dir.dirKey] = target end
+-- Where the D-pad goes from a button: the pinned target, resolved now.
+function padFrom(b, dirKey)
+    local t = b["nav-" .. dirKey]
+    if type(t) == "function" then return t() end
+    return t
+end
+local inCombat = false
+InCombatLockdown = function() return inCombat end
+SmartNavigation = { RefreshButtonGroups = function() navRefreshes = navRefreshes + 1 end }
+function zoneNameFor(mapID) return C_Map.GetMapInfo(mapID).name end
+-- Another addon's button already on the ring, where FAME would go first (225 deg).
+local otherButton = mock("PulseHapticsMinimapButton")
+otherButton._shown = true
+otherButton.GetCenter = function() return 900 + math.cos(math.rad(225)) * 76, 600 + math.sin(math.rad(225)) * 76 end
+Minimap.GetChildren = function() return otherButton, _G.FAMEMinimapButton end
+local opened = {}
+C_Map.GetMapInfo = function(mapID)
+    local zm = ns.zoneMusic[mapID]
+    return { name = zm and zm.name or ("Map " .. mapID) }
+end
+assert(loadfile(ROOT .. "/Window.lua"))(ADDON, ns)
+
+state.map, state.sub = 1453, ""; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+local okUI, errUI = run("ui")
+check(okUI and frames.main and frames.main:IsShown(), "/fame ui opens the window" .. (errUI and (": " .. tostring(errUI)) or ""))
+check(UISpecialFrames[#UISpecialFrames] == "FAMEMusicFrame", "Escape closes it, like any game window")
+check(padShown == 1, "and it tells the game's gamepad layer it is open, so the D-pad moves through it")
+-- The rows on the current page that are shown, as the player sees them.
+local list = setmetatable({}, { __index = function(_, k)
+    if k ~= "rows" then return nil end
+    local shown = {}
+    for _, row in ipairs(frames.main.rows) do if row:IsShown() then shown[#shown + 1] = row end end
+    return shown
+end })
+check(#list.rows > 0, ("the Here tab lists what fits in Stormwind (%d rows)"):format(#list.rows))
+check(navRefreshes > 0, "and tells the gamepad navigation its buttons changed")
+local row1 = list.rows[1]
+check(row1.check:GetChecked() == true and row1.preview:GetText() == "Preview", "each row: a ticked checkbox and a Preview button")
+
+-- Untick: out of Stormwind, and the row stays where it is.
+local rowTrack = row1.data.track
+row1.check:SetChecked(false); row1.check:Click()
+check(FAME:ZoneOff(1453, rowTrack), "unticking a row takes the track out of this zone")
+check(list.rows[1] == row1 and row1.check:GetChecked() == false, "and redraws in place")
+row1.check:SetChecked(true); row1.check:Click()
+check(not FAME:ZoneOff(1453, rowTrack), "ticking it puts it back")
+
+-- Preview from a row.
+row1.preview:Click(); go(2)
+check(FAME.state == "preview" and FAME.playing == rowTrack, "Preview plays the row's track")
+check(row1.preview:GetText() == "Stop", "and the button becomes Stop")
+row1.preview:Click(); go(4)
+check(FAME.state ~= "preview", "Stop ends it")
+row1.preview:Click(); go(2)
+frames.main:Hide(); go(4)
+check(FAME.state ~= "preview", "closing the window ends a preview")
+frames.main:Show()
+
+-- Zones tab, and the D-pad paths on it.
+ns.ui:SelectTab(2)
+local W = frames.main
+check(padFrom(W.head.prev, "right") == W.head.next and padFrom(W.head.next, "left") == W.head.prev,
+    "the D-pad goes straight from < to > and back, without dropping into the list")
+check(padFrom(W.now.skip, "down") == W.head.prev and padFrom(W.now.ban, "down") == W.head.next,
+    "from the playing controls, down lands on the zone switcher")
+check(padFrom(W.head.prev, "down") == list.rows[1].check and padFrom(W.head.next, "down") == list.rows[1].preview,
+    "and down again on the first row, in the same column")
+check(padFrom(list.rows[1].check, "down") == list.rows[2].check and padFrom(list.rows[2].preview, "up") == list.rows[1].preview,
+    "up and down keep the column through the rows")
+check(padFrom(list.rows[1].check, "right") == list.rows[1].preview, "right goes from a checkbox to its Preview")
+check(padFrom(list.rows[1].check, "up") == W.head.prev, "up from the first row goes back to the switcher")
+local firstZone = frames.main.head.title:GetText()
+ns.ui:StepZone(1)
+check(frames.main.head.title:GetText() ~= firstZone, "the Zones tab steps through zones")
+for _ = 1, 60 do ns.ui:StepZone(1) end
+check(true, "and wraps around all of them without error")
+-- A zone with more tracks than a page holds.
+local bigZone, bigCount = nil, 0
+for mapID in pairs(ns.zones) do
+    local n = #FAME:ZoneTracks(mapID)
+    if n > bigCount then bigZone, bigCount = mapID, n end
+end
+for _ = 1, 80 do
+    if frames.main.head.title:GetText():find(zoneNameFor(bigZone), 1, true) == 1 then break end
+    ns.ui:StepZone(1)
+end
+check(#list.rows == 10 and frames.main.pager:IsShown(), ("a long zone list is paged, ten rows a page (%d tracks)"):format(bigCount))
+local firstOnPage1 = list.rows[1].name:GetText()
+local before = navRefreshes
+frames.main.pager.next:Click()
+check(list.rows[1].name:GetText() ~= firstOnPage1 and navRefreshes > before, "Next page turns it, and the gamepad navigation is told")
+-- (still on page 2, where both pager buttons work)
+check(padFrom(list.rows[10].check, "down") == W.pager.prev and padFrom(list.rows[10].preview, "down") == W.pager.next,
+    "down from the last row reaches the pager, in the same column")
+check(padFrom(W.pager.prev, "right") == W.pager.next and padFrom(W.pager.prev, "down") == W.Tabs[1],
+    "the pager buttons go straight to each other, and down to the tabs")
+check(padFrom(W.Tabs[1], "right") == W.Tabs[2] and padFrom(W.Tabs[1], "up") == W.pager.prev,
+    "the tabs go along the bottom and up into the pager")
+
+frames.main.pager.prev:Click()
+check(list.rows[1].name:GetText() == firstOnPage1, "Previous page turns back")
+
+-- Banned tab: ban from the now-playing strip, unban from the list.
+ns.ui:SelectTab(1)
+while not FAME.playing do go(10) end
+local nowTrack = FAME.playing
+frames.main.now.ban:Click(); go(4)
+check(FAME:IsBanned(nowTrack), "Never play again bans what's playing")
+ns.ui:SelectTab(3)
+check(#list.rows == 1 and list.rows[1].name:GetText() == (nowTrack.name or tostring(nowTrack.id)),
+    "the Banned tab lists it")
+list.rows[1].unban:Click()
+check(not FAME:IsBanned(nowTrack) and #list.rows == 0, "and Unban takes it off")
+FAME:Ban(nowTrack); FAME:Ban(FAME:ExtendedChoices(ns.zones[1453], 1453)[1])
+check(padFrom(list.rows[1].unban, "up") == W.head.unbanAll, "on Banned, up from the first Unban reaches Unban all")
+frames.main.head.unbanAll:Click()
+check(next(ns.db.banned) == nil, "Unban all clears them")
+
+-- Outside a place FAME runs, Here says why.
+ns.ui:SelectTab(1)
+state.instance = true; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+check(#list.rows == 0 and (frames.main.empty:GetText() or ""):find("instance", 1, true),
+    "in an instance, the Here tab says the game has the music")
+state.instance = false; fire("ZONE_CHANGED_NEW_AREA"); go(5)
+check(#list.rows > 0, "and lists tracks again on the way out")
+
+-- Combat: the gamepad paths are refused there, so the window stays out of it.
+frames.main:Show()
+inCombat = true
+fireUI("PLAYER_REGEN_DISABLED")
+check(not frames.main:IsShown(), "entering combat closes the window")
+check(chat[#chat]:find("closed for combat", 1, true), "and says so in chat")
+run("ui")
+check(not frames.main:IsShown() and chat[#chat]:find("after combat", 1, true), "it won't open during combat, and says when it will")
+inCombat = false
+
+-- Every way in.
+frames.main:Hide()
+FAME_ToggleWindow()
+check(frames.main:IsShown(), "the key binding opens it")
+FAME_ToggleWindow()
+check(not frames.main:IsShown(), "and closes it")
+check(padHidden >= 1, "closing tells the gamepad layer too, so the controller goes back to the game")
+check(_G.FAMEMinimapButton == nil, "no minimap button until it is turned on")
+settingsByVar.FAME_Minimap.set(true)
+local mmb = _G.FAMEMinimapButton
+check(mmb and mmb:IsShown(), "turning it on puts a FAME button on the minimap")
+local px, py = mmb._point and mmb._point[4], mmb._point and mmb._point[5]
+local took = px and math.deg((math.atan2 or math.atan)(py, px)) % 360 or -1
+-- Two 31 px buttons on a 76 px ring need about 25 deg between centres.
+local gap = math.abs((took - 225 + 180) % 360 - 180)
+check(gap >= 24 and gap <= 27,
+    ("it sits right beside another addon's button at 225 deg, not on it or a step away (took %.0f deg, %.1f apart)")
+        :format(took, gap))
+category.opened = nil
+mmb._scripts.OnClick(mmb, "LeftButton")
+check(category.opened == 77, "left-click opens FAME's Settings")
+mmb._scripts.OnClick(mmb, "RightButton")
+check(frames.main:IsShown(), "right-click opens the music window")
+mmb._scripts.OnClick(mmb, "RightButton")
+settingsByVar.FAME_Minimap.set(false)
+check(not mmb:IsShown(), "and turning it off takes it away")
+local okSettingsButton, errSettingsButton
+for _, click in ipairs(registered) do if click.click then okSettingsButton, errSettingsButton = pcall(click.click) end end
+check(okSettingsButton and frames.main:IsShown(),
+    "the Settings button opens the window above Settings, without touching the protected panel manager"
+    .. (errSettingsButton and (": " .. tostring(errSettingsButton)) or ""))
+frames.main:Hide()
+go(30)
+check(cvars.Sound_MusicVolume == START_VOLUME, "volume intact after all of it")
+CreateFrame = coreCreateFrame
 
 ------------------------------------------------------------------------------
 realPrint("\na new session after quitting mid-fade")
