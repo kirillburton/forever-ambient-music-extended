@@ -1,5 +1,45 @@
 # Changelog
 
+## 2.0.0
+
+FAME gets its first UI: a settings page and a music window. Both are built from the game's own parts, so they look and behave like the rest of the interface, and both work fully with a gamepad - nothing needs a mouse.
+
+This is the first iteration of the UI, and more is coming (see below).
+
+Features:
+- Settings > AddOns > FAME:
+  - turn FAME on or off
+  - choose which eras you hear - Classic, the Forever soundtrack, Cataclysm through Midnight, with the number of tracks beside each. Only here for the Cataclysm pieces? Untick the rest. The game's own music always plays, whatever you choose
+  - a FAME button on the minimap (off unless you turn it on) - left-click for settings, right-click for the music window. It sits down next to other addons' buttons instead of on top of them
+  - how often the game's own tracks play, and whether a new place opens with one of them
+  - Edit tracklists and Show banned tracks, which open the music window
+- the music window - from Settings, the minimap button, a key binding or /fame ui:
+  - Here - every extended track that can play where you're standing. Untick one to stop it playing in this zone, or preview it for 20 seconds
+  - Zones - the same for any zone, so you can tune Westfall from Stormwind
+  - Banned - everything you've banned, with Unban and Unban all
+  - what's playing, with Skip, Play extended now and Never play again
+- gamepad - we take it seriously:
+  - the window opens like any game window, so Forever's own gamepad navigation moves through it. D-pad to move, A to tick, preview or turn the page, B to close
+  - every direction is set by hand: left and right stay in a row, up and down stay in a column, and the zone arrows lead straight to each other
+  - long lists come in pages of ten, which the gamepad moves through better than a scrolling list
+  - no hovering, right-clicking, dragging or typing needed anywhere
+  - the window closes when combat starts, and opens again after
+- added key binding "Open the music window" under Key Bindings > AddOns
+- added /fame ui and /fame settings
+
+Changes:
+- if you narrow a place down to only a few extended tracks - say, with most eras switched off - the game's own tracks play more often, so the same few don't come round again and again
+- shorter addon list description, and plainer status messages
+
+Bugfixes:
+- cutscenes could play two songs at once - a new character's opening cinematic, for one. FAME now stops the moment a cutscene or movie starts, and picks up again after it ends
+- in some inns and buildings FAME thought you were at sea and went quiet - now it only does that out on the open sea
+
+What's next:
+- for now tracklists only let you take tracks out of a zone. Adding tracks to a zone - any track, anywhere you like - is planned for the next release in some form
+- more polish for the window, with gamepad support kept first-class
+- evening out volume between tracks, since some extended tracks are louder than the game's own
+
 ## 1.0.0
 
 First full release, for the live World of Warcraft: Forever client.

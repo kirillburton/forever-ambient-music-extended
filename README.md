@@ -12,8 +12,10 @@ standing. They're drawn from Classic pieces Forever doesn't use in those
 zones, the new Forever soundtrack, and selections from Cataclysm through
 Midnight.
 
-There's no UI and nothing to set up. It sounds like the default ambient
-music, with more variety.
+There's nothing to set up. It sounds like the default ambient music, with
+more variety. When you want a say in what plays, there's a settings page and
+a music window, both built from the game's own parts and fully playable with
+a gamepad.
 
 **No Blizzard audio is bundled with or distributed by this addon.** Every
 track it plays is a file your Forever client already has.
@@ -38,6 +40,10 @@ track it plays is a file your Forever client already has.
 4. Log in. There's nothing to configure.
 
 To check that it loaded, type `/fame status`.
+
+You don't need retail, and the `Music` folder is meant to be empty: every
+track FAME plays is already in your Forever client. The folder is only for
+[optional extras](#adding-your-own-music-experimental).
 
 ## What to expect
 
@@ -65,7 +71,7 @@ To check that it loaded, type `/fame status`.
   in a row.
 - **Some places are left entirely to the game:** dungeons, raids,
   battlegrounds, being dead or walking back to your corpse, ships on the
-  open sea, and anywhere you've turned music off. FAME steps aside there and
+  open sea, cutscenes and movies, and anywhere you've turned music off. FAME steps aside there and
   the game's own music plays as normal.
 
 Nothing should turn up out of place: a track only plays where every one of
@@ -77,7 +83,58 @@ reaching for something that doesn't fit.
 
 All 46 Classic zones and cities, plus the new Forever zones: Mount Hyjal,
 Riverglades, Shen'dralas, Darkspear Islands and Zephras Isle. Most zones
-have 20–60 extended tracks to draw from.
+have 20–60 extended tracks to draw from; none has fewer than twelve. If you
+narrow a place down below eight (switching most eras off, say), the game's own
+tracks play more often, so the same few don't come round again and again.
+
+## Settings and the music window
+
+**Settings > AddOns > FAME** goes from what most players want to what few do:
+
+1. **Extend the zone music**: FAME on or off.
+2. **Music from**: one checkbox per era, Classic, the Forever soundtrack,
+   then Cataclysm through Midnight, each with its number of tracks beside it. Unticking an era takes its tracks out of
+   the extended pool everywhere. The game's own music always plays.
+3. **Minimap button**: off unless you turn it on.
+   Left-click opens these settings, right-click the music window. It finds
+   a spot clear of other addons' minimap buttons; drag it with the mouse to
+   put it somewhere else.
+4. **More options**: the share of the game's own tracks, and **Game's track
+   on arrival**: whether a new place opens with one of them.
+5. **Edit tracklists** and **Show banned tracks**: open the music window on
+   its Zones or Banned tab.
+
+**The music window** opens from that button, `/fame ui`, the key binding
+"Open the music window" (Key Bindings > AddOns), or the minimap button.
+
+- **Now playing** across the top: the track, its era and time, with
+  **Skip**, **Play extended now** and **Never play again**.
+- **Here**: every extended track that fits where you're standing. Untick a
+  track to stop it playing in this zone. Other zones keep it. **Preview**
+  plays its first 20 seconds, then the music carries on as if a track had
+  ended. A track that's banned, from an era you've turned off, or plays only
+  by day or by night says so in its row.
+- **Zones**: the same for any zone, stepped through with `<` and `>`.
+  Choices for a zone also cover the towns and coves inside it.
+- **Banned**: your bans, with **Unban** and **Unban all**.
+
+### With a gamepad
+
+Both screens are built from the game's own templates, and the window
+registers itself with Forever's gamepad layer when it opens, so that layer
+handles it like Blizzard's windows: the D-pad moves between rows, buttons
+and tabs, A ticks, previews or turns the page, and B closes the window.
+Long lists come in pages of ten with Previous and Next page buttons rather
+than a scrolling list, since the gamepad navigation moves through plain
+buttons best. Every D-pad direction is set explicitly: left and right stay
+within a row of controls, up and down stay in a column, and the zone
+switcher's `<` and `>` lead straight to each other. Nothing needs a mouse:
+no hovering, right-clicking, dragging or typing.
+
+The window closes when combat starts and opens again once it ends. In
+combat the game refuses addon changes to gamepad navigation, and there's
+nothing to choose there anyway. Bind "Open the music window" to
+a button to reach it without the keyboard.
 
 ## Commands
 
@@ -86,6 +143,8 @@ setting's current value.
 
 | Everyday | |
 |---|---|
+| `/fame ui` | open the music window |
+| `/fame settings` | open FAME's page in Settings |
 | `/fame status` | what's playing, how far in, and what comes next |
 | `/fame skip` | end this track the way it would end anyway: into the usual silence, or straight to the next track with Loop Music on |
 | `/fame next` | play an extended track now |
@@ -128,10 +187,6 @@ volume always ends up where you set it.
 
 ## Known limitations
 
-- **Settings may not survive a logout on some builds.** Some Forever builds
-  write saved variables but don't load them back. If so, settings and bans
-  last until you log out. FAME tells you once if it detects this. The
-  defaults are what the addon is tuned for.
 - **Inns are recognised by their English names.** On other client languages,
   inns fall back to the game's own music. Everything else works in any
   language.
@@ -156,6 +211,9 @@ meantime, `/fame ban` gets rid of it.
 ```
 ForeverAmbientMusicExtended/   the addon, exactly as it ships
   Core.lua                     scheduler, location, volume, commands
+  Options.lua                  the Settings page
+  Window.lua                   the music window, key binding, minimap entry
+  Bindings.xml                 the "Open the music window" key binding
   Zones.lua                    zone profiles, towns, coves, inns   (hand-written)
   Tracks.lua                   the extended pool                  (generated)
   Originals.lua                the game's own music rules         (generated)
@@ -194,7 +252,7 @@ at the next login.
 
 Wherever FAME isn't confident, it calls `StopMusic()` and hands the channel
 back to the game: instances, death, places with no data, and anywhere the
-game's own zone name disagrees with the map (ships at sea).
+game names the zone as one of the seas (a ship crossing open water).
 
 ## How a track gets chosen
 
@@ -246,6 +304,17 @@ it's true across entire capitals.
 
 Dungeons and raids are intentionally not covered: their music is written for
 the encounters.
+
+**The player's own choices** narrow the eligible pool further, at pick time:
+bans (everywhere), eras switched off in Settings (each track's `era` field in
+`Tracks.lua`), and tracks unticked for one zone in the music window (saved
+per uiMapID). They apply only to the extended pool. The game's own tracks,
+its silences and intros are never filtered by them.
+
+**Small pools.** The extended share is capped at one eighth of the pool size
+(`SMALL_POOL` in `Core.lua`), so where fewer than eight extended tracks fit,
+the game's own play more often than the configured 40% instead of the same
+few repeating.
 
 **Forever's map IDs** are the Classic block (1411–1464), plus new IDs for
 its new zones: Mount Hyjal 2482, Riverglades 2548, Shen'dralas 2652,
