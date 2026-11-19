@@ -161,7 +161,9 @@ def blte_modes(data):
 # Encoding: content key -> encoding key
 # --------------------------------------------------------------------------
 
-def parse_encoding(raw):
+def parse_encoding(raw, sizes=None):
+    """{content key: encoding key}.  Pass a dict as `sizes` to also get
+    {content key: decoded file size}."""
     if raw[:2] != b"EN":
         raise ValueError("not an encoding file")
     ckey_size, ekey_size = raw[3], raw[4]
@@ -180,8 +182,51 @@ def parse_encoding(raw):
             ckey = raw[p + 6:p + 6 + ckey_size]
             ekey = raw[p + 6 + ckey_size:p + 6 + ckey_size + ekey_size]
             table[ckey] = ekey
+            if sizes is not None:
+                sizes[ckey] = int.from_bytes(raw[p + 1:p + 6], "big")
             p += 6 + ckey_size + n * ekey_size
     return table
+
+
+# --------------------------------------------------------------------------
+# CDN archive indexes (Data/indices/<archive>.index): what the launcher knows
+# about Blizzard's CDN.  encoding key -> (encoded size, offset in archive)
+# --------------------------------------------------------------------------
+
+def parse_cdn_index(raw):
+    """{encoding key: (size, offset)} from a CDN .index file.
+
+    Entries sit in fixed-size blocks; the footer at the end gives the block
+    size, the field widths and the entry count (8-byte checksums assumed,
+    which is what WoW uses)."""
+    footer = raw[-28:]
+    block_kb, offset_len, size_len, key_len = footer[11], footer[12], footer[13], footer[14]
+    count = struct.unpack_from("<I", footer, 16)[0]
+    block, rec = block_kb * 1024, key_len + size_len + offset_len
+    out, pos = {}, 0
+    while count > 0 and pos + rec <= len(raw) - 28:
+        p, end = pos, pos + block
+        while p + rec <= end and count > 0:
+            key = raw[p:p + key_len]
+            if not any(key):
+                break
+            size = int.from_bytes(raw[p + key_len:p + key_len + size_len], "big")
+            offset = int.from_bytes(raw[p + key_len + size_len:p + rec], "big")
+            out[key] = (size, offset)
+            p += rec
+            count -= 1
+        pos = end
+    return out
+
+
+def blte_layout(data):
+    """(start, [chunk sizes]) of a BLTE blob: where the first chunk begins and
+    how long each chunk is, its one-byte mode included."""
+    header_size = struct.unpack_from(">I", data, 4)[0]
+    if header_size == 0:
+        return 8, [len(data) - 8]
+    count = int.from_bytes(data[9:12], "big")
+    return header_size, [struct.unpack_from(">I", data, 12 + 24 * i)[0] for i in range(count)]
 
 
 # --------------------------------------------------------------------------
