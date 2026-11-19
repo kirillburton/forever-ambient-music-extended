@@ -21,3 +21,7 @@ tools/cache/*_root.txt
 tools/cache/all_music_names.json
 tools/cache/wowf_music.json
 tools/cache/unnamed_audio_*.json
+
+# Retail catalogue inputs (tools/retail_catalog.py) -- large, re-downloadable.
+tools/cache/db2_retail/
+tools/cache/community-listfile.csv

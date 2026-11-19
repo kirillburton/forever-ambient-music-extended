@@ -1,0 +1,230 @@
+# Retail open-world zone -> FAME tags, for tools/retail_catalog.py.
+#   zone,tags
+# `zone` is the top-level AreaTable name the game plays the music in.  A track
+# takes the tags of its home zone (where the game plays it most), plus what
+# its music set's name adds (caves, inns, night, naga...: see SET_KEYWORDS).
+# Tags are FAME's vocabulary (Core.lua BIOME / CULTURE / MOOD).  Keep each
+# row to what is true of the whole zone; the set keywords do the rest.
+# A zone left out falls back to the file name.
+#
+# --- Eastern Kingdoms and Kalimdor (Cataclysm-era and later music) ---------
+Ashenvale,forest nightelf melancholy
+Arathi Highlands,plains arathi somber
+Azshara,forest goblin tense
+Azuremyst Isle,forest draenei calm
+Badlands,desert ruins somber
+Blasted Lands,blighted demon ominous
+Bloodmyst Isle,forest draenei tense
+Burning Steppes,volcanic ominous
+Blackrock Depths,volcanic underground dwarf ominous
+Darkshore,forest coast nightelf melancholy
+Darnassus,city nightelf sacred
+Deadwind Pass,mountain eerie
+Desolace,barrens centaur somber
+Dun Morogh,snow mountain dwarf calm
+Durotar,barrens orc heroic
+Duskwood,darkforest human eerie
+Dustwallow Marsh,swamp tense
+Eastern Plaguelands,blighted undead somber
+Elwynn Forest,forest human calm
+Eversong Woods,forest highelf calm
+Eversong Woods (Burning Crusade),forest highelf calm
+Felwood,blighted demon eerie
+Feralas,forest nightelf mysterious
+Feralas (copy),forest nightelf mysterious
+Ghostlands,blighted highelf undead eerie
+Gilneas,darkforest coast human melancholy
+Hillsbrad Foothills,forest mountain human tense
+Ironforge,city dwarf grand
+Isle of Quel'Danas,coast highelf sacred
+Kezan,city goblin playful
+Loch Modan,mountain dwarf calm
+Moonglade,forest enchanted nightelf sacred
+Mount Hyjal,forest mountain nightelf sacred
+Mulgore,plains tauren calm
+Northern Barrens,barrens tense
+Orgrimmar,city orc grand
+Redridge Mountains,mountain human calm
+Ruins of Gilneas,darkforest ruins human melancholy
+Ruins of Gilneas City,city ruins human melancholy
+Searing Gorge,volcanic dwarf ominous
+Silithus,desert ominous
+Silvermoon City,city highelf grand
+Silvermoon City (Burning Crusade),city highelf grand
+Silverpine Forest,darkforest undead ominous
+Southern Barrens,barrens tense
+Stonetalon Mountains,mountain forest tense
+Stormwind,city human grand
+Stormwind City,city human grand
+Stranglethorn Vale,jungle troll tense
+Swamp of Sorrows,swamp melancholy
+Tanaris,desert goblin mysterious
+Teldrassil,forest nightelf calm
+The Exodar,city draenei arcane
+The Hinterlands,forest mountain troll mysterious
+The Lost Isles,jungle coast goblin playful
+Thousand Needles,desert coast playful
+Thunder Bluff,city tauren calm
+Tirisfal Glades,blighted undead somber
+Tol Barad,ruins coast tense
+Tol Barad Peninsula,ruins coast tense
+Twilight Highlands,plains mountain dwarf heroic
+Uldum,desert ruins mysterious
+Un'Goro Crater,jungle volcanic wild
+Undercity,city undead ominous
+Western Plaguelands,blighted undead somber
+Westfall,plains human melancholy
+Wetlands,swamp dwarf melancholy
+Winterspring,snow mountain nightelf calm
+Ahn'Qiraj: The Fallen Kingdom,desert ruins ominous
+War of the Shifting Sands,desert ominous
+Vashj'ir,sea naga mysterious
+Deepholm,underground elemental mysterious
+The Maelstrom,sea elemental ominous
+Molten Front,volcanic elemental tense
+Firelands,volcanic elemental ominous
+The Vortex Pinnacle,sky elemental grand
+Gilneas City,city human melancholy
+# --- Outland ----------------------------------------------------------------
+Hellfire Peninsula,barrens volcanic demon ominous
+Zangarmarsh,swamp enchanted mysterious
+Terokkar Forest,forest ruins somber
+Nagrand (Outland),plains sky orc calm
+Blade's Edge Mountains,mountain wild ominous
+Netherstorm,arcane sky mysterious
+Shadowmoon Valley (Outland),volcanic blighted demon ominous
+Shattrath City,city draenei sacred
+# --- Northrend --------------------------------------------------------------
+Borean Tundra,snow coast calm
+Howling Fjord,snow coast vrykul heroic
+Dragonblight,snow dragon melancholy
+Grizzly Hills,forest snow wild calm
+Zul'Drak,snow ruins troll ominous
+Sholazar Basin,jungle wild calm
+Crystalsong Forest,forest enchanted arcane calm
+The Storm Peaks,snow mountain vrykul grand
+Icecrown,snow blighted undead ominous
+Icecrown Citadel,snow blighted undead ominous
+Hrothgar's Landing,snow coast vrykul tense
+Wintergrasp,snow tense
+Dalaran,city arcane mysterious
+Dalaran Sewers,underground arcane playful
+The Underbelly,underground arcane playful
+Sewer Exit Pipe,underground arcane playful
+Circle of Wills,underground arcane playful
+The Violet Hold,city arcane tense
+The Frozen Sea,snow sea calm
+Pit of Saron,snow cave undead ominous
+Acherus: The Ebon Hold,blighted undead ominous
+Plaguelands: The Scarlet Enclave,blighted undead somber
+# --- Pandaria ---------------------------------------------------------------
+The Jade Forest,forest pandaren calm
+Valley of the Four Winds,plains pandaren calm
+Krasarang Wilds,jungle coast pandaren melancholy
+Kun-Lai Summit,snow mountain pandaren heroic
+Townlong Steppes,plains pandaren somber
+Dread Wastes,swamp ominous
+Vale of Eternal Blossoms,plains pandaren sacred
+The Veiled Stair,mountain pandaren mysterious
+The Wandering Isle,forest pandaren calm
+Isle of Thunder,jungle troll ominous
+Isle of Giants,jungle wild
+Timeless Isle,coast pandaren mysterious
+Pandaren Revolution,plains pandaren tense
+# --- Draenor ----------------------------------------------------------------
+Frostfire Ridge,snow mountain orc heroic
+Shadowmoon Valley,forest draenei mysterious
+Gorgrond,desert jungle wild ominous
+Talador,forest draenei grand
+Spires of Arak,mountain forest mysterious
+Nagrand,plains orc heroic
+Tanaan Jungle,jungle demon ominous
+Ashran,coast tense
+Town Hall,town calm
+# --- Broken Isles and Argus -------------------------------------------------
+Azsuna,coast ruins nightelf melancholy
+Val'sharah,forest enchanted nightelf mysterious
+Highmountain,mountain tauren grand
+Stormheim,mountain coast vrykul heroic
+Suramar,city arcane nightelf mysterious
+Broken Shore,coast demon ominous
+Eye of Azshara,coast naga ominous
+Antoran Wastes,volcanic demon ominous
+Krokuun,volcanic demon ominous
+Eredath,arcane draenei mysterious
+"Mardum, the Shattered Abyss",volcanic demon ominous
+Niskara,void demon ominous
+Vault of the Wardens,underground nightelf ominous
+Netherlight Temple,void sacred
+Hall of the Guardian,arcane mysterious
+Skyhold,mountain sky heroic
+Dreadscar Rift,volcanic demon ominous
+Helheim,sea vrykul eerie
+Emerald Dreamway,forest enchanted sacred
+Malorne's Nightmare,darkforest eerie
+The Vindicaar,arcane draenei sacred
+Telogrus Rift,void mysterious
+# --- Kul Tiras, Zandalar, BfA ------------------------------------------------
+Tiragarde Sound,coast kultiran heroic
+Drustvar,darkforest drust eerie
+Stormsong Valley,coast plains kultiran calm
+Kul Tiras,coast kultiran
+Zuldazar,jungle troll grand
+Nazmir,swamp troll ominous
+Vol'dun,desert mysterious
+Nazjatar,sea naga mysterious
+Mechagon,coast gnome playful
+Mechagon City,city gnome playful
+Tol Dagor,coast kultiran tense
+Chamber of Heart,underground elemental grand
+Vale of Eternal Twilight,void ominous
+Vision of the Twisting Sands,desert void ominous
+"Ny'alotha, the Waking City",void ominous
+The Black Empire,void ominous
+Lordaeron Garrison,blighted human somber
+Thros, the Blighted Lands,darkforest drust eerie
+South Seas,sea coast calm
+The Great Sea,sea coast heroic
+The North Sea,sea coast heroic
+The Veiled Sea,sea coast mysterious
+Exile's Reach,coast human heroic
+# --- Shadowlands ------------------------------------------------------------
+Oribos,city arcane mysterious
+Bastion,sky sacred grand
+Maldraxxus,blighted undead ominous
+Ardenweald,forest enchanted mysterious
+Revendreth,darkforest city ominous
+The Maw,void blighted ominous
+Korthia,ruins void mysterious
+Zereth Mortis,arcane sacred mysterious
+Seat of the Archon,sky sacred grand
+"Tazavesh, the Veiled Market",city arcane playful
+# --- Dragon Isles -----------------------------------------------------------
+The Waking Shores,coast volcanic dragon heroic
+Ohn'ahran Plains,plains centaur calm
+The Azure Span,snow forest tuskarr calm
+Thaldraszus,mountain dragon grand
+The Forbidden Reach,coast ruins dragon mysterious
+Zaralek Cavern,underground cave dragon mysterious
+Emerald Dream,forest enchanted dragon sacred
+Amirdrassil,forest nightelf sacred
+The Primalist Future,snow elemental ominous
+# --- Khaz Algar -------------------------------------------------------------
+Isle of Dorn,plains coast earthen calm
+The Ringing Deeps,underground earthen grand
+Hallowfall,plains arathi sacred
+Azj-Kahet,underground nerubian eerie
+Siren Isle,coast mysterious
+Undermine,city goblin playful
+K'aresh,desert void arcane mysterious
+Hall of Awakening,underground earthen sacred
+Crapopolis,city goblin playful
+# --- Quel'Thalas and Midnight ------------------------------------------------
+Zul'Aman,jungle forest troll ominous
+Harandar,forest enchanted mysterious
+Voidstorm,void ominous
+The Coiled Isle,coast naga mysterious
+Arcantina,city tavern arcane playful
+Vaults of Atal'Utek,underground troll ominous
+Val,void ominous
+Naigtal,void demon ominous

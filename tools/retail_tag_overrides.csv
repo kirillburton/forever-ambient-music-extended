@@ -1,0 +1,19 @@
+# Hand corrections for tools/retail_catalog.csv, per track.
+#   fileDataID,tags
+# `tags` replaces whatever the zone table and keywords gave.  Lines starting
+# with # are ignored.
+#
+# Loamm is the niffen town in Zaralek Cavern; Azj-Kahet reuses its music
+# more often than Zaralek does, which made it look nerubian.
+5168460,tavern wild festive
+5168462,tavern wild festive
+5168464,underground town wild playful
+5168466,underground town wild playful
+5168468,underground town wild playful
+# Scarlet Monastery exterior: the crusade's grounds in Tirisfal.
+642257,blighted human sacred tense
+642258,blighted human sacred tense
+642259,blighted human sacred tense
+# Crucible of Storms entrance, Stormsong Valley's Shrine of Storms.
+2844613,coast void ominous
+2844616,coast void ominous

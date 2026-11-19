@@ -400,6 +400,26 @@ None is shipped: the `Music` folder and `LocalTracks.lua` are empty.
 Local files are checked once per session before their first play, and any
 the client can't load are skipped.
 
+### Retail music catalogue (groundwork)
+
+`tools/retail_catalog.csv` lists every music file the retail client ships
+that Forever does not, with its era, length, where retail plays it and a
+first set of FAME tags. It is not used by the addon yet, and no zone
+lists it. Regenerate it with an installed retail client:
+
+```
+python3 tools/retail_catalog.py
+```
+
+It reads both clients' manifests from the shared local `Data` folder. It
+uses retail's own zone-music tables (via wago.tools) to see where each track
+plays, and the wowdev community listfile for file names. Durations are
+measured from the local archives with ffprobe, and the audio is deleted at
+once. Tags come from `tools/retail_zone_tags.csv` (one row per zone),
+refined by the music set's name, with `tools/retail_tag_overrides.csv` for
+single tracks. The `status` column says which rows are ambient candidates:
+`world` and `sibling`, plus `reused` and `unlinked` after a look.
+
 ## Packaging and releases
 
 Build the zip with the script, not Finder's Compress or `zip -r`, which add
