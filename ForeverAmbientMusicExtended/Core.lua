@@ -1408,6 +1408,7 @@ commands.help = function()
     local function cmd(c, what) print(("  %-25s %s"):format("/fame " .. c, what)) end
     cmd("ui", "open the music window: tracks by zone, bans")
     cmd("settings", "open FAME's settings: eras and more")
+    cmd("import", "music from modern WoW: where to get it, what you have")
     cmd("status", "what's playing, and what comes next")
     cmd("skip", "end this track as it would end anyway")
     cmd("next", "play an extended track now")
@@ -1646,6 +1647,11 @@ end
 commands.settings = function()
     if ns.ui and ns.ui.OpenSettings and ns.ui:OpenSettings() then return end
     say("the Settings panel isn't available on this client -- the slash commands still work")
+end
+
+commands.import = function()
+    if ns.ui and ns.ui.ShowImport then return ns.ui:ShowImport() end
+    say("get music from modern WoW at https://kirillburton.github.io/forever-ambient-music-extended/import/")
 end
 
 commands.debug = function()

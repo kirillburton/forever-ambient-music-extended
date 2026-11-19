@@ -4,6 +4,7 @@
 ## Version: 2.0.0
 ## Author: kirillburton8
 ## SavedVariables: ForeverAmbientMusicExtendedDB
+## OptionalDeps: ForeverAmbientMusicExtended_RetailPack
 ## IconTexture: Interface\AddOns\ForeverAmbientMusicExtended\Media\logo
 
 Tracks.lua
@@ -13,3 +14,4 @@ Zones.lua
 Core.lua
 Options.lua
 Window.lua
+Import.lua

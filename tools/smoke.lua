@@ -1086,8 +1086,9 @@ check(order[2] == "Music from" and order[3] == "Classic" and order[13] == "Midni
 check(order[14] == "Minimap button", "then the opt-in minimap button")
 check(order[15] == "More options" and order[16] == "Game's own tracks"
     and order[17] == "Game's track on arrival", "then the mix, under More options")
-check(order[#order - 1] == "Edit tracklists" and order[#order] == "Show banned tracks",
-    "and last, Edit tracklists and Show banned tracks")
+check(order[#order - 2] == "Edit tracklists" and order[#order - 1] == "Show banned tracks"
+    and order[#order] == "Import music",
+    "and last, Edit tracklists, Show banned tracks and Import music")
 check(settingsByVar.FAME_Minimap.get() == false, "the minimap entry is off until chosen")
 
 settingsByVar.FAME_Era_cata.set(false)
@@ -1177,7 +1178,8 @@ local coreCreateFrame = CreateFrame
 CreateFrame = function(kind, name, parent, template)
     local f = mock(name, parent)
     f.Inset = mock()
-    if kind == "Frame" and template == "ButtonFrameTemplate" then frames.main = f end
+    if name == "FAMEMusicFrame" then frames.main = f end
+    if name == "FAMEImportFrame" then frames.import = f end
     if template == "WowScrollBoxList" then
         frames.list = f
         f.SetDataProvider = function(self, provider)
@@ -1250,6 +1252,7 @@ C_Map.GetMapInfo = function(mapID)
     return { name = zm and zm.name or ("Map " .. mapID) }
 end
 assert(loadfile(ROOT .. "/Window.lua"))(ADDON, ns)
+assert(loadfile(ROOT .. "/Import.lua"))(ADDON, ns)
 
 state.map, state.sub = 1453, ""; fire("ZONE_CHANGED_NEW_AREA"); go(5)
 local okUI, errUI = run("ui")
@@ -1397,6 +1400,54 @@ check(okSettingsButton and frames.main:IsShown(),
     "the Settings button opens the window above Settings, without touching the protected panel manager"
     .. (errSettingsButton and (": " .. tostring(errSettingsButton)) or ""))
 frames.main:Hide()
+
+------------------------------------------------------------------------------
+realPrint("\nthe import window")
+local IW = frames.import
+check(IW and IW:IsShown(), "the Settings button \"Import music\" opens the import window")
+check(UISpecialFrames[#UISpecialFrames] == "FAMEImportFrame", "Escape closes it")
+IW:Hide()
+local padBefore = padShown
+FAMERetailPack = nil
+local okImport = run("import")
+check(okImport and IW:IsShown() and padShown == padBefore + 1, "/fame import opens it, and tells the gamepad layer")
+check(IW.status:GetText() == "Not installed", "with no pack it says so")
+check(IW.box:IsShown() and not IW.address:IsShown() and IW.box:GetText() == ns.ui.IMPORT_PAGE,
+    "with a keyboard, the page's address is in a box to copy from")
+IW.box:SetText("oops"); IW.box._scripts.OnTextChanged(IW.box, true)
+check(IW.box:GetText() == ns.ui.IMPORT_PAGE, "typing over the address puts it back")
+check((IW.after:GetText() or ""):find("restart the game", 1, true), "and the steps end with restarting the game")
+InputUtil = { IsGamepadUIEnabled = function() return true end }
+ns.ui:RefreshImport()
+check(not IW.box:IsShown() and IW.address:IsShown() and IW.address:GetText() == ns.ui.IMPORT_PAGE,
+    "with a gamepad, the address is plain text to read: no box to get stuck in")
+InputUtil = nil
+FAMERetailPack = { format = 1, retail = "12.1.5.70961", imported = "2026-11-19", bytes = 2576980378,
+                   tracks = { [53353] = "classic", [53354] = "classic", [228572] = "legion", [2844613] = "tbc" } }
+ns.ui:RefreshImport()
+check(IW.status:GetText():find("4 tracks", 1, true) and IW.status:GetText():find("2.4 GB", 1, true)
+      and IW.status:GetText():find("2026-11-19", 1, true),
+    "with a pack: how many tracks, how big, and when -- " .. IW.status:GetText())
+check(IW.body:GetText() == "Music from Classic, The Burning Crusade, Legion.",
+    "and which expansions, in order -- " .. tostring(IW.body:GetText()))
+FAMERetailPack = { format = 99, tracks = {} }
+ns.ui:RefreshImport()
+check(IW.status:GetText():find("older script", 1, true), "a pack this FAME can't read asks for the script to be run again")
+FAMERetailPack = nil
+C_AddOns = { GetAddOnInfo = function(name) return name, "FAME Retail Music Pack", "", false, "DISABLED" end }
+ns.ui:RefreshImport()
+check(IW.status:GetText():find("turned off", 1, true), "an installed but disabled pack says how to turn it on")
+C_AddOns = nil
+IW.close:Click()
+check(not IW:IsShown(), "Close closes it")
+ns.ui:ShowImport()
+inCombat = true
+fireUI("PLAYER_REGEN_DISABLED")
+check(not IW:IsShown(), "entering combat closes it")
+run("import")
+check(not IW:IsShown() and chat[#chat]:find("after combat", 1, true), "and it won't open in combat")
+inCombat = false
+
 go(30)
 check(cvars.Sound_MusicVolume == START_VOLUME, "volume intact after all of it")
 CreateFrame = coreCreateFrame
