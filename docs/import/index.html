@@ -5,101 +5,156 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FAME Retail Music Import</title>
 <meta name="description" content="Add zone music from modern World of Warcraft to Forever Ambient Music Extended, from your own computer.">
+<meta property="og:title" content="Music from modern WoW for FAME">
+<meta property="og:description" content="Zone music from every era of the game, mixed into WoW: Forever. A small script puts it on your own computer.">
+<meta property="og:image" content="https://kirillburton.github.io/forever-ambient-music-extended/import/logo-512.png">
+<meta name="theme-color" content="#03566f">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="icon" href="logo-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="logo-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
 <style>
+/* The logo's colours: teal #03566f, sand #c4ac87, gold #e0c192, cream #fbf1dd,
+   and the dark disc behind it in game, #0b262e. */
 :root {
-    --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b16; --muted: #6b665c; --line: #e4dfd4;
-    --accent: #8a6514; --accent-soft: #f3ead6; --code-bg: #f1ede4;
+    --teal: #03566f; --teal-deep: #0b262e; --sand: #c4ac87; --gold: #e0c192; --cream: #fbf1dd;
+    --bg: #faf6ee; --panel: #ffffff; --ink: #1c2326; --muted: #5f6a6d; --line: #e6dfd0;
+    --accent: #03566f; --accent-ink: #fbf1dd; --accent-soft: #e3eef1; --code-bg: #f3eee3; --link: #03566f;
+    --display: "Cinzel", Georgia, "Times New Roman", serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-    :root { --bg: #15130f; --panel: #1e1b15; --ink: #ece7dc; --muted: #a39d90; --line: #343028;
-            --accent: #dcb65e; --accent-soft: #2c261a; --code-bg: #29251e; }
+    :root { --bg: #0d1a1e; --panel: #13252b; --ink: #ece6da; --muted: #9fa9aa; --line: #22383f;
+            --accent: #e0c192; --accent-ink: #0b262e; --accent-soft: #1f3a41; --code-bg: #0b1c21; --link: #e0c192; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink);
        font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-main { max-width: 700px; margin: 0 auto; padding: 48px 16px 80px; }
-h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; letter-spacing: -0.01em; }
-h2 { font-size: 21px; margin: 48px 0 14px; }
+a { color: var(--link); text-underline-offset: 2px; }
 p { margin: 0 0 12px; }
-a { color: var(--accent); }
-.lede { font-size: 18px; color: var(--muted); margin-bottom: 28px; }
 code { font-family: var(--mono); font-size: .88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
 .muted { color: var(--muted); }
 .small { font-size: 14px; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+
+/* Header: the badge on the logo's own teal */
+header { background: radial-gradient(120% 140% at 50% 0%, #03566f 0%, #073e50 45%, #0b262e 100%);
+         color: var(--cream); text-align: center; padding: 44px 0 40px; position: relative; overflow: hidden; }
+header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+                background: linear-gradient(90deg, transparent, var(--sand), var(--gold), var(--sand), transparent); }
+header img { width: 112px; height: 112px; display: block; margin: 0 auto 14px;
+             filter: drop-shadow(0 6px 18px rgba(0,0,0,.35)); }
+.eyebrow { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--sand); margin-bottom: 6px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 38px; line-height: 1.15; margin: 0 0 12px;
+     letter-spacing: .02em; color: var(--cream); }
+.lede { font-size: 17px; color: #d9cdb6; max-width: 520px; margin: 0 auto; }
+.lede a { color: var(--gold); }
+
+main.wrap { padding-top: 36px; padding-bottom: 72px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 22px; letter-spacing: .03em; margin: 52px 0 16px;
+     display: flex; align-items: center; gap: 12px; }
+h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--sand), transparent); opacity: .7; }
 
 /* Three short facts */
 .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--sand);
+        border-radius: 10px; padding: 14px 16px; }
 .fact b { display: block; margin-bottom: 4px; }
 .fact span { color: var(--muted); font-size: 14px; line-height: 1.5; display: block; }
-@media (max-width: 620px) { .facts { grid-template-columns: 1fr; } }
 
 /* Platform tabs */
-.tabs { display: flex; gap: 4px; padding: 4px; background: var(--code-bg); border-radius: 10px; margin-bottom: 14px; }
-.tabs button { flex: 1; font: inherit; font-size: 15px; padding: 8px 6px; border: 0; border-radius: 7px;
-               background: transparent; color: var(--muted); cursor: pointer; }
-.tabs button[aria-selected="true"] { background: var(--panel); color: var(--ink); font-weight: 600;
-                                     box-shadow: 0 1px 2px rgba(0,0,0,.12); }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px 22px 12px; }
-.panel h3 { display: none; margin: 0 0 12px; font-size: 17px; }
+.tabs { display: flex; gap: 4px; padding: 4px; background: var(--code-bg); border: 1px solid var(--line);
+        border-radius: 12px; margin-bottom: 14px; }
+.tabs button { flex: 1; font: inherit; font-size: 15px; padding: 9px 6px; border: 0; border-radius: 8px;
+               background: transparent; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600;
+                                     box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+.tabs button:focus-visible { outline: 2px solid var(--sand); outline-offset: 2px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px 24px 12px;
+         box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(3,86,111,.06); }
+.panel h3 { display: none; margin: 0 0 12px; font-family: var(--display); font-size: 18px; }
 .no-js .tabs { display: none; }
 .no-js .panel { margin-bottom: 14px; }
 .no-js .panel h3 { display: block; }
 .steps { list-style: none; counter-reset: step; padding: 0; margin: 0; }
-.steps > li { counter-increment: step; position: relative; padding-left: 38px; margin: 0 0 16px; }
-.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px;
-                      border-radius: 50%; background: var(--accent-soft); color: var(--accent);
-                      font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.steps > li { counter-increment: step; position: relative; padding-left: 40px; margin: 0 0 18px; }
+.steps > li::before { content: counter(step); position: absolute; left: 0; top: -1px; width: 27px; height: 27px;
+                      border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+                      font-family: var(--display); font-weight: 700; font-size: 14px;
+                      display: flex; align-items: center; justify-content: center; }
 .cmd { position: relative; margin: 8px 0 4px; }
-.cmd pre { margin: 0; font-family: var(--mono); font-size: 13.5px; line-height: 1.5; background: var(--code-bg);
-           padding: 12px 84px 12px 14px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
-.copy { position: absolute; top: 7px; right: 7px; font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        padding: 7px 12px; border: 0; border-radius: 6px; background: var(--accent); color: var(--panel); cursor: pointer; }
-.copy.done { background: #2f8a4a; color: #fff; }
-.tip { border-top: 1px solid var(--line); margin: 4px -22px 0; padding: 12px 22px 2px; font-size: 14px; color: var(--muted); }
+.cmd pre { margin: 0; font-family: var(--mono); font-size: 13.5px; line-height: 1.55; background: var(--teal-deep);
+           color: #e9e2d2; padding: 13px 88px 13px 15px; border-radius: 9px; white-space: pre-wrap; word-break: break-all;
+           border: 1px solid rgba(196,172,135,.25); }
+.copy { position: absolute; top: 8px; right: 8px; font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        padding: 8px 13px; border: 0; border-radius: 6px; background: var(--gold); color: var(--teal-deep); cursor: pointer; }
+.copy:hover { background: var(--cream); }
+.copy.done { background: #4f9a6a; color: #fff; }
+.tip { border-top: 1px solid var(--line); margin: 6px -24px 0; padding: 12px 24px 2px; font-size: 14px; color: var(--muted); }
+.note { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: 14px; color: var(--muted); }
+.note::before { content: ""; flex: none; width: 4px; align-self: stretch; border-radius: 2px; background: var(--sand); }
 
 /* What you get */
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 15px; }
-th, td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--line); }
-th { color: var(--muted); font-weight: 600; font-size: 13px; }
+th, td { text-align: left; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
 td.num, th.num { text-align: right; }
-tfoot td { font-weight: 600; border-bottom: 0; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 18px; }
+td.num { white-space: nowrap; }
+tbody tr:hover td { background: var(--accent-soft); }
+tfoot td { font-weight: 700; border-bottom: 0; color: var(--accent); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 8px 20px; }
 
 /* Questions */
-details { border-bottom: 1px solid var(--line); }
-details:first-of-type { border-top: 1px solid var(--line); }
-summary { cursor: pointer; padding: 13px 0; font-weight: 600; list-style: none; position: relative; padding-right: 24px; }
+.faq { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 0 20px; }
+details + details { border-top: 1px solid var(--line); }
+summary { cursor: pointer; padding: 15px 28px 15px 0; font-weight: 600; list-style: none; position: relative; }
 summary::-webkit-details-marker { display: none; }
-summary::after { content: "+"; position: absolute; right: 2px; top: 11px; color: var(--muted); font-weight: 400; font-size: 20px; }
-details[open] summary::after { content: "\2212"; }
-details > div { padding: 0 0 14px; }
+summary::after { content: ""; position: absolute; right: 4px; top: 50%; width: 8px; height: 8px; margin-top: -6px;
+                 border-right: 2px solid var(--sand); border-bottom: 2px solid var(--sand); transform: rotate(45deg);
+                 transition: transform .15s; }
+details[open] summary::after { transform: rotate(-135deg); margin-top: -2px; }
+summary:hover { color: var(--accent); }
+details > div { padding: 0 0 16px; color: var(--ink); }
 details > div p:last-child { margin-bottom: 0; }
 
-footer { margin-top: 56px; font-size: 13px; color: var(--muted); }
+footer { border-top: 1px solid var(--line); margin-top: 60px; padding-top: 22px; font-size: 13px; color: var(--muted);
+         display: flex; gap: 14px; align-items: center; }
+footer img { width: 34px; height: 34px; flex: none; opacity: .9; }
+footer p { margin: 0; }
 
 /* Phones: the command gets the full width, with Copy under it. */
-td.num { white-space: nowrap; }
+@media (max-width: 620px) { .facts { grid-template-columns: 1fr; } }
 @media (max-width: 560px) {
-    main { padding-top: 32px; }
-    h1 { font-size: 26px; }
-    .panel { padding: 18px 16px 8px; }
-    .tip { margin: 4px -16px 0; padding: 12px 16px 2px; }
-    .steps > li { padding-left: 34px; }
-    .cmd pre { padding-right: 14px; font-size: 13px; }
-    .copy { position: static; display: block; width: 100%; margin-top: 6px; padding: 10px; font-size: 14px; }
+    header { padding: 34px 0 30px; }
+    header img { width: 88px; height: 88px; }
+    h1 { font-size: 29px; }
+    .lede { font-size: 16px; }
+    .panel { padding: 20px 16px 8px; }
+    .tip { margin: 6px -16px 0; padding: 12px 16px 2px; }
+    .steps > li { padding-left: 36px; }
+    .cmd pre { padding-right: 15px; font-size: 13px; }
+    .copy { position: static; display: block; width: 100%; margin-top: 6px; padding: 11px; font-size: 14px; }
     table { font-size: 14px; }
     .card { padding: 6px 12px; }
+    .faq { padding: 0 14px; }
 }
 </style>
 </head>
 <body class="no-js">
-<main>
-<h1>Music from modern WoW</h1>
-<p class="lede">An optional add-on for <a href="https://github.com/kirillburton/forever-ambient-music-extended">Forever
-Ambient Music Extended</a>: zone music from every era of the game, mixed into WoW: Forever.</p>
+<header>
+  <div class="wrap">
+    <img src="logo.svg" alt="FAME logo" width="112" height="112">
+    <div class="eyebrow">Forever Ambient Music Extended</div>
+    <h1>Music from modern WoW</h1>
+    <p class="lede">An optional add-on for <a href="https://github.com/kirillburton/forever-ambient-music-extended">FAME</a>:
+    zone music from every era of the game, mixed into WoW: Forever.</p>
+  </div>
+</header>
 
+<main class="wrap">
 <div class="facts">
   <div class="fact"><b>Your own copy</b><span>The music is Blizzard's, so FAME can't ship it. A small script puts it on your computer.</span></div>
   <div class="fact"><b>Straight from Blizzard</b><span>Copied from your retail game if you have it, otherwise from Blizzard's servers. Every file is checked.</span></div>
@@ -154,7 +209,7 @@ Ambient Music Extended</a>: zone music from every era of the game, mixed into Wo
   Run it as yourself, not with <code>sudo</code>.</p>
 </section>
 
-<p class="small muted" style="margin-top:12px">Restart the game rather than typing <code>/reload</code>: the game only notices new addon files when it starts.</p>
+<p class="note">Restart the game rather than typing <code>/reload</code>: the game only notices new addon files when it starts.</p>
 
 <h2>What you get</h2>
 <p>Pick any mix when the script asks. FAME plays each track only in zones it suits, so the music stays in
@@ -169,6 +224,7 @@ character wherever you are.</p>
 <p class="small muted" id="list-meta" style="margin-top:8px"></p>
 
 <h2>Questions</h2>
+<div class="faq">
 <details>
   <summary>Can I add or remove expansions later?</summary>
   <div><p>Yes: run the same line again and choose differently. Tracks you already have are skipped, and it
@@ -210,8 +266,10 @@ character wherever you are.</p>
   <a href="https://github.com/kirillburton/forever-ambient-music-extended/issues">open an issue</a> with what the
   script printed.</p></div>
 </details>
+</div>
 
 <footer>
+  <img src="logo.svg" alt="">
   <p>Script version <span id="version">&hellip;</span>. Not affiliated with Blizzard Entertainment. World of Warcraft and
   its music are &copy; Blizzard Entertainment; this project distributes none of it.</p>
 </footer>
