@@ -463,14 +463,19 @@ from_cdn() {  # ekey, stored size, cdn location -> $BLOB, or fail
 }
 
 # Every chunk is stored as-is behind a one-byte 'N': the audio is each chunk
-# without its first byte, in order.
-unwrap() {  # chunks ("start:size,size,..."), out
-    local start="${1%%:*}" sizes="${1#*:}" pos c
+# without its first byte, in order.  Each chunk is checked against its own MD5
+# in the header (24-byte entries from byte 12, the MD5 at +8), which the
+# encoding key vouches for; with no header, the key covers the whole blob.
+unwrap() {  # chunks ("start:size,size,..."), out -> fails on a damaged chunk
+    local start="${1%%:*}" sizes="${1#*:}" pos c i=0 sums=""
     pos=$start
     : > "$2"
+    [ "$start" = 8 ] || sums=$(od -An -v -tx1 -j 12 -N $((start - 12)) "$BLOB" | tr -d ' \n')
     for c in $(printf '%s' "$sizes" | tr ',' ' '); do
-        tail -c +$((pos + 2)) "$BLOB" | head -c $((c - 1)) >> "$2"
-        pos=$((pos + c))
+        tail -c +$((pos + 1)) "$BLOB" | head -c "$c" > "$WORK/chunk"
+        [ -z "$sums" ] || [ "$(md5of "$WORK/chunk")" = "${sums:$((i * 48 + 16)):32}" ] || return 1
+        tail -c +2 "$WORK/chunk" >> "$2"
+        pos=$((pos + c)); i=$((i + 1))
     done
 }
 
@@ -494,9 +499,12 @@ if [ "$FAST" = 1 ] && [ "$todo_n" -gt 0 ]; then
             # Valid if the MD5 of its header (all of it, when the chunks start at byte 8) is the key.
             my ($start, $sizes) = split /:/, $chunks;
             if (length $blob && md5_hex($start == 8 ? $blob : substr($blob, 0, $start)) eq $ekey) {
-                # Every chunk is stored as-is behind a one-byte N.
-                my $pos = $start;
-                for (split /,/, $sizes) { $out .= substr($blob, $pos + 1, $_ - 1); $pos += $_ }
+                # Every chunk is stored as-is behind a one-byte N, and checked against its MD5 in the header.
+                my ($pos, $i) = ($start, 0);
+                for (split /,/, $sizes) {
+                    if ($start > 8 && md5_hex(substr($blob, $pos, $_)) ne unpack("H32", substr($blob, 20 + 24 * $i++, 16))) { $out = ""; last }
+                    $out .= substr($blob, $pos + 1, $_ - 1); $pos += $_;
+                }
             }
             if (length $out == $bytes) {
                 open my $o, ">:raw", $part or die "$part: $!\n";
@@ -519,8 +527,7 @@ while IFS=$'\t' read -r fid era seconds ekey bytes stored cdn chunks; do
         got=cdn
     fi
     if [ -n "$got" ]; then
-        unwrap "$chunks" "$PART"
-        if [ "$(wc -c < "$PART" | tr -d ' ')" = "$bytes" ]; then
+        if unwrap "$chunks" "$PART" && [ "$(wc -c < "$PART" | tr -d ' ')" = "$bytes" ]; then
             mv -f "$PART" "$MUSIC/$fid.mp3"
             done_n=$((done_n + 1))
             if [ "$got" = local ]; then from_local_n=$((from_local_n + 1)); else from_cdn_n=$((from_cdn_n + 1)); fi
