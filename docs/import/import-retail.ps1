@@ -26,7 +26,7 @@
 #
 # Instructions and the latest version: https://kirillburton.github.io/forever-ambient-music-extended/import/
 
-$SCRIPT_VERSION = 2
+$SCRIPT_VERSION = 3
 $LIST_FORMAT = 1
 $PAGE = "https://kirillburton.github.io/forever-ambient-music-extended/import/"
 $PACK_NAME = "ForeverAmbientMusicExtended_RetailPack"
