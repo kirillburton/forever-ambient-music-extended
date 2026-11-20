@@ -94,9 +94,11 @@ tracks play more often, so the same few don't come round again and again.
 1. **Extend the zone music**: FAME on or off.
 2. **Music from**: one checkbox per era, Classic, Forever,
    then Cataclysm through Midnight, each with its number of tracks beside it. Unticking an era takes its tracks out of
-   the extended pool everywhere. The game's own music always plays.
-3. **Minimap button**: off unless you turn it on.
-   Left-click opens these settings, right-click the music window. It finds
+   the extended pool everywhere. The game's own music always plays. Right
+   under them, **Import music** shows how to add music from modern WoW, and
+   what you already have.
+3. **Minimap button**: on unless you turn it off.
+   Left-click opens the music window, right-click these settings. It finds
    a spot clear of other addons' minimap buttons; drag it with the mouse to
    put it somewhere else.
 4. **More options**: the share of the game's own tracks, and **Game's track

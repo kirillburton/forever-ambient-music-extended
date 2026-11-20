@@ -1084,13 +1084,13 @@ check(category.registered and category.name == "FAME", "FAME gets a page under S
 check(order[1] == "Extend the zone music", "first: on or off")
 check(order[2] == "Music from" and order[3] == "Classic" and order[13] == "Midnight",
     ("then the eras, Classic to Midnight (%s .. %s)"):format(tostring(order[3]), tostring(order[13])))
-check(order[14] == "Minimap button", "then the opt-in minimap button")
-check(order[15] == "More options" and order[16] == "Game's own tracks"
-    and order[17] == "Game's track on arrival", "then the mix, under More options")
-check(order[#order - 2] == "Edit tracklists" and order[#order - 1] == "Show banned tracks"
-    and order[#order] == "Import music",
-    "and last, Edit tracklists, Show banned tracks and Import music")
-check(settingsByVar.FAME_Minimap.get() == false, "the minimap entry is off until chosen")
+check(order[14] == "Import music", "right under the eras, Import music, where the retail notes point")
+check(order[15] == "Minimap button", "then the minimap button")
+check(order[16] == "More options" and order[17] == "Game's own tracks"
+    and order[18] == "Game's track on arrival", "then the mix, under More options")
+check(order[#order - 1] == "Edit tracklists" and order[#order] == "Show banned tracks",
+    "and last, Edit tracklists and Show banned tracks")
+check(settingsByVar.FAME_Minimap.get() == true, "the minimap button is on until turned off")
 
 settingsByVar.FAME_Era_cata.set(false)
 check(not FAME:EraOn("cata") and settingsByVar.FAME_Era_cata.get() == false, "an era checkbox switches the era")
@@ -1445,7 +1445,8 @@ check(frames.main:IsShown(), "the key binding opens it")
 FAME_ToggleWindow()
 check(not frames.main:IsShown(), "and closes it")
 check(padHidden >= 1, "closing tells the gamepad layer too, so the controller goes back to the game")
-check(_G.FAMEMinimapButton == nil, "no minimap button until it is turned on")
+settingsByVar.FAME_Minimap.set(false)
+check(_G.FAMEMinimapButton == nil or not _G.FAMEMinimapButton:IsShown(), "turned off, there's no minimap button")
 settingsByVar.FAME_Minimap.set(true)
 local mmb = _G.FAMEMinimapButton
 check(mmb and mmb:IsShown(), "turning it on puts a FAME button on the minimap")
@@ -1458,10 +1459,11 @@ check(gap >= 24 and gap <= 27,
         :format(took, gap))
 category.opened = nil
 mmb._scripts.OnClick(mmb, "LeftButton")
-check(category.opened == 77, "left-click opens FAME's Settings")
+check(frames.main:IsShown() and category.opened == nil, "left-click opens the music window")
+mmb._scripts.OnClick(mmb, "LeftButton")
+check(not frames.main:IsShown(), "and closes it again")
 mmb._scripts.OnClick(mmb, "RightButton")
-check(frames.main:IsShown(), "right-click opens the music window")
-mmb._scripts.OnClick(mmb, "RightButton")
+check(category.opened == 77, "right-click opens FAME's Settings")
 settingsByVar.FAME_Minimap.set(false)
 check(not mmb:IsShown(), "and turning it off takes it away")
 local okSettingsButton, errSettingsButton

@@ -56,7 +56,7 @@ local defaults = {
     zoneOff = {},
     -- Show a FAME button on the minimap, and where on its edge (degrees).
     -- nil until the player drags it: it finds a spot clear of other buttons.
-    minimap = false,
+    minimap = true,
     minimapAngle = false,
 }
 

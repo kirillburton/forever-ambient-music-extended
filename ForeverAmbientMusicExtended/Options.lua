@@ -115,15 +115,24 @@ for _, era in ipairs(ns.ERAS) do
     end
 end
 
--- 3. Minimap entry, opt-in
+-- Right under the eras, where the "+N with the retail pack" notes point: the
+-- way to get those tracks.  It opens the import window above Settings.
+if CreateSettingsButtonInitializer then
+    layout:AddInitializer(CreateSettingsButtonInitializer("Music from modern WoW", "Import music",
+        function() if ns.ui.ShowImport then ns.ui:ShowImport() end end,
+        "Zone music from later expansions that fits Forever's zones, fetched onto your own computer by a small script. Shows where to get it, and what you have.",
+        true))
+end
+
+-- 3. Minimap entry, on unless turned off
 checkbox("Minimap", "Minimap button",
-    "A round FAME button on the minimap's edge. Left-click opens these settings, right-click the music window. Drag it with the mouse to move it around the edge.",
+    "A round FAME button on the minimap's edge. Left-click opens the music window, right-click these settings. Drag it with the mouse to move it around the edge.",
     function() return ns.db.minimap end,
     function(value)
         FAME:Save("minimap", value)
         if ns.ui.UpdateMinimap then ns.ui:UpdateMinimap() end
     end,
-    false)
+    true)
 
 -- 4. The mix
 header("More options")
@@ -148,9 +157,8 @@ checkbox("FirstOriginal", "Game's track on arrival",
     function(value) FAME:SetDisplaceFirst(not value) end,
     true)
 
--- 5. Full customisation, out of the way at the bottom.  The first two open
--- the music window above the Settings panel, the last the import window;
--- closing either comes back here.  Settings is left alone: closing it from
+-- 5. Full customisation, out of the way at the bottom.  Both open the music
+-- window above the Settings panel; closing it comes back here.  Settings is left alone: closing it from
 -- addon code is a protected action.
 if CreateSettingsButtonInitializer then
     layout:AddInitializer(CreateSettingsButtonInitializer("Tracklists", "Edit tracklists",
@@ -160,10 +168,6 @@ if CreateSettingsButtonInitializer then
     layout:AddInitializer(CreateSettingsButtonInitializer("Banned tracks", "Show banned tracks",
         function() if ns.ui.Show then ns.ui:Show(ns.ui.TAB_BANNED) end end,
         "Tracks you've banned with Never play again, to unban them.",
-        true))
-    layout:AddInitializer(CreateSettingsButtonInitializer("Music from modern WoW", "Import music",
-        function() if ns.ui.ShowImport then ns.ui:ShowImport() end end,
-        "Over 3,000 zone music tracks from later expansions, fetched onto your own computer by a small script. Shows where to get it, and what you have.",
         true))
 end
 

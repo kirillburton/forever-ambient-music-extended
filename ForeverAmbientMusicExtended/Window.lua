@@ -862,8 +862,8 @@ function FAME_ToggleWindow() ui:Toggle() end
 
 -- A round button on the minimap's edge, built the way minimap buttons
 -- always have been: the tracking border, a dark disc, the logo.  Left-click
--- opens FAME's Settings, right-click the music window; drag with the mouse
--- to move it around the edge.  Off unless the player turns it on.
+-- opens the music window, right-click FAME's Settings; drag with the mouse
+-- to move it around the edge.  On unless the player turns it off.
 --
 -- Until the player drags it, it finds itself a free spot: other addons'
 -- buttons sit on the same ring, so it looks at what is already there and
@@ -977,16 +977,16 @@ local function createMinimapButton()
 
     b:SetScript("OnClick", function(_, mouseButton)
         if mouseButton == "RightButton" then
+            if ui.OpenSettings then ui:OpenSettings() end
+        else
             ui:Toggle()
-        elseif ui.OpenSettings then
-            ui:OpenSettings()
         end
     end)
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:AddLine("FAME")
-        GameTooltip:AddDoubleLine("Left-click", "Settings", 0.4, 1, 0.4, 1, 1, 1)
-        GameTooltip:AddDoubleLine("Right-click", "Tracks by zone", 0.4, 1, 0.4, 1, 1, 1)
+        GameTooltip:AddDoubleLine("Left-click", "Music window", 0.4, 1, 0.4, 1, 1, 1)
+        GameTooltip:AddDoubleLine("Right-click", "Settings", 0.4, 1, 0.4, 1, 1, 1)
         GameTooltip:AddDoubleLine("Drag", "Move", 0.6, 0.6, 0.6, 1, 1, 1)
         GameTooltip:Show()
     end)
