@@ -65,10 +65,13 @@ for k, v in pairs(defaults) do db[k] = v end
 ns.db = db
 
 -- The eras a built-in track can come from, in the order Settings lists them.
--- Local files carry no era and are always on.
+-- Local files carry no era and are always on.  `retail`: only the retail
+-- music pack has tracks from it, so Settings lists it only with the pack.
 ns.ERAS = {
     { key = "classic",  label = "Classic" },
     { key = "forever",  label = "Forever soundtrack" },
+    { key = "tbc",      label = "The Burning Crusade", retail = true },
+    { key = "wrath",    label = "Wrath of the Lich King", retail = true },
     { key = "cata",     label = "Cataclysm" },
     { key = "mop",      label = "Mists of Pandaria" },
     { key = "wod",      label = "Warlords of Draenor" },
@@ -105,7 +108,7 @@ local BIOME = set("forest", "darkforest", "enchanted", "jungle", "swamp",
 local CULTURE = set("human", "dwarf", "gnome", "nightelf", "highelf", "orc",
     "tauren", "troll", "undead", "goblin", "naga", "draenei", "pandaren",
     "dragon", "demon", "centaur", "tuskarr", "earthen", "arathi", "kultiran",
-    "drust", "vrykul", "nerubian", "pirate", "wild")
+    "drust", "vrykul", "nerubian", "pirate", "titan", "wild")
 
 local MOOD = set("calm", "melancholy", "mysterious", "eerie", "ominous",
     "heroic", "sacred", "festive", "somber", "tense", "grand", "playful")
@@ -280,6 +283,7 @@ local function resolveContext()
     if atSea() then return nil, "elsewhere" end
 
     local ctx = { mapID = mapID, prof = prof, setID = zm.set, area = zm.area, introID = zm.intro }
+    ctx.retailArea = ns.packTracks > 0 and FAME:RetailAreaAt(mapID, GetSubZoneText()) or nil
     local sub = subzoneEntry(mapID, GetSubZoneText())
     if sub then
         ctx.area, ctx.introID = sub.area, sub.intro
@@ -360,7 +364,11 @@ function FAME:Pool(prof, night)
     end
     local pool = {}
     for _, track in ipairs(ns.allTracks) do
-        if eligible(track, prof, night) then pool[#pool + 1] = track end
+        -- Retail pack tracks take their own, stricter route (RetailFor); only
+        -- an inn matches them by tag, for the pack's few tavern tracks.
+        if (not track.rid or prof.inn) and eligible(track, prof, night) then
+            pool[#pool + 1] = track
+        end
     end
     self.pool, self.poolProf, self.poolNight = pool, prof, night
     return pool
@@ -450,6 +458,296 @@ local function pickFrom(list, previous, ok)
     return nil
 end
 
+-- --------------------------------------------------------------------------
+-- The retail music pack: where its tracks play
+-- --------------------------------------------------------------------------
+--
+-- The pack is several times FAME's own pool, so its tracks don't go through
+-- the open tag matching above, which would bury every zone's character under
+-- anything that merely isn't wrong for it.  Two routes instead:
+--
+--   * Where retail plays it.  Cataclysm gave the old world its music area by
+--     area, and Forever kept the areas: a track retail plays in a zone plays
+--     anywhere in it, one it plays in a subzone plays only there (`at` in
+--     RetailTracks.lua).  Night elf music at Stonetalon Peak, not across
+--     Stonetalon.
+--   * Fitting the zone's strict list (ns.retailFit in Zones.lua): only what
+--     defines the zone, not every minority living in it.  Of the tracks that
+--     fit, the closest RETAIL_CAP are kept, turn about by era, so a big zone
+--     doesn't get ten times the music of a small one -- and no more than
+--     PER_FAMILY variations of one piece (mus_70_highmountain1_a, _b, 2_a...)
+--     or PER_ERA from one expansion.
+--
+-- Day and night tags still apply to both.
+
+local RETAIL_CAP = 80
+local PER_FAMILY = 6
+local PER_ERA = 20
+
+-- Variations of one piece share a name up to their numbering:
+-- mus_70_highmountain4_a and mus_70_highmountain10_b are both
+-- "mus_70_highmountain", ol_corrupt03 is "ol_corrupt".  The War Within's
+-- long names go by their zone: "zone 11.0.7 - siren isle".
+local function family(name)
+    name = name:lower()
+    local zone = name:match("^(.- %- .-) %- ")
+    if zone then return zone end
+    local f = name:gsub("_%a?%a?%d*$", "")
+    return (f:gsub("%d+$", ""))
+end
+
+local retailPlaced = {}    -- [mapID] = { zone = { tracks }, sub = { [areaID] = { tracks } } }
+local retailFitCache = {}  -- [mapID] = { tracks }, chosen once per session
+local retailNames = {}     -- [mapID] = { [subzone name] = areaID }
+
+local function placedIn(mapID)
+    local placed = retailPlaced[mapID]
+    if not placed then
+        placed = { zone = {}, sub = {} }
+        retailPlaced[mapID] = placed
+    end
+    return placed
+end
+
+-- Called at load with the tracks the pack has.
+local function placeRetail(tracks)
+    local zoneOfArea = {}
+    for mapID, zm in pairs(ns.zoneMusic) do zoneOfArea[zm.area] = mapID end
+    for _, track in ipairs(tracks) do
+        for _, area in ipairs(track.at or {}) do
+            local sub = ns.retailAreas[area]
+            if sub then
+                local placed = placedIn(sub[1])
+                placed.sub[area] = placed.sub[area] or {}
+                table.insert(placed.sub[area], track)
+            elseif zoneOfArea[area] then
+                table.insert(placedIn(zoneOfArea[area]).zone, track)
+            end
+        end
+    end
+end
+
+-- The subzone the player is in, if retail gives it music of its own.
+local function retailAreaAt(mapID, subName)
+    if not mapID or not subName or subName == "" then return nil end
+    local index = retailNames[mapID]
+    if not index then
+        index = {}
+        for area, entry in pairs(ns.retailAreas) do
+            if entry[1] == mapID then
+                local localName = C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(area)
+                index[localName or entry[2]] = area
+                index[entry[2]] = index[entry[2]] or area
+            end
+        end
+        retailNames[mapID] = index
+    end
+    return index[subName]
+end
+
+-- A zone's strict list as sets, for scoring every pack track against it.
+local function fitSets(prof, fit)
+    local function asSet(list)
+        local t = {}
+        for _, v in ipairs(list or {}) do t[v] = true end
+        return t
+    end
+    local biomes = fit.biomes or prof.biomes
+    return { biomes = asSet(biomes), cultures = asSet(fit.cultures or prof.cultures),
+             moods = asSet(fit.moods or prof.moods), signature = biomes[1], require = fit.require }
+end
+
+-- How well a track fits a zone's strict list, or nil if it doesn't.  Every
+-- tag has to be on the list (as for FAME's own tracks), the track has to name
+-- a place, and naming the zone's own people counts most.  A track naming no
+-- people (or only "wild") must carry the zone's signature biome, the first
+-- on its list: "coast, mysterious" is no reason to play in Durotar.
+local function retailScore(track, sets)
+    for _, tag in ipairs(sets.require or {}) do
+        if not carries(track, tag) then return nil end
+    end
+    local score, placed, people, signature = 0, false, false, false
+    for _, tag in ipairs(track.tags) do
+        if BIOME[tag] then
+            if not sets.biomes[tag] then return nil end
+            placed, score = true, score + 1
+            if tag == sets.signature then signature = true end
+        elseif CULTURE[tag] then
+            if not sets.cultures[tag] then return nil end
+            if tag == "wild" then score = score + 1 else score, people = score + 3, true end
+        elseif MOOD[tag] then
+            if not sets.moods[tag] then return nil end
+            score = score + 1
+        end
+    end
+    if not placed or not (people or signature) then return nil end
+    return score
+end
+
+local function timeFits(track, night)
+    if night == nil then return true end
+    for _, tag in ipairs(track.tags) do
+        if tag == "day" and night then return false end
+        if tag == "night" and not night then return false end
+    end
+    return true
+end
+
+-- The pack tracks a zone takes by fit: the best RETAIL_CAP, alternating eras
+-- within each score so one expansion can't fill the list.
+local function retailFitted(mapID)
+    local cached = retailFitCache[mapID]
+    if cached then return cached end
+    local prof, fit = ns.zones[mapID], ns.retailFit and ns.retailFit[mapID]
+    local out = {}
+    if prof then
+        -- Already everywhere in the zone: nothing to choose.  Music retail
+        -- gives one of its subzones is the zone's own, though: if it fits
+        -- the zone as a whole it can play anywhere in it, ahead of the rest.
+        local zoneWide, ownSub = {}, {}
+        local placed = retailPlaced[mapID]
+        for _, track in ipairs(placed and placed.zone or {}) do zoneWide[track] = true end
+        for _, list in pairs(placed and placed.sub or {}) do
+            for _, track in ipairs(list) do ownSub[track] = true end
+        end
+        -- Chosen from the whole list, imported or not, so what a zone takes
+        -- doesn't shift with which expansions a player imported.
+        -- Candidates by score, then by era: tiers[score][era] = { tracks }.
+        local tiers, scores = {}, {}
+        local sets = fitSets(prof, fit or prof)
+        for _, track in ipairs(ns.retailTracks) do
+            if not zoneWide[track] then
+                local score = retailScore(track, sets)
+                if score then
+                    if ownSub[track] then score = score + 3 end
+                    local tier = tiers[score]
+                    if not tier then
+                        tier = {}
+                        tiers[score] = tier
+                        scores[#scores + 1] = score
+                    end
+                    local era = track.era or ""
+                    tier[era] = tier[era] or {}
+                    table.insert(tier[era], track)
+                end
+            end
+        end
+        table.sort(scores, function(a, b) return a > b end)
+        -- Best score first.  Inside a score, turn about by era (the n-th of
+        -- each era before the (n+1)-th of any), each era in a fixed shuffle
+        -- so a zone always keeps the same tracks.  Stop when the zone is full.
+        local function mix(track) return (track.rid * 2654435761) % 4294967296 end
+        local fams, eras = {}, {}
+        for _, score in ipairs(scores) do
+            if #out >= RETAIL_CAP then break end
+            local queues, longest = {}, 0
+            for _, era in ipairs(ns.ERAS) do
+                local list = tiers[score][era.key]
+                if list then
+                    table.sort(list, function(a, b) return mix(a) < mix(b) end)
+                    queues[#queues + 1] = list
+                    if #list > longest then longest = #list end
+                end
+            end
+            for turn = 1, longest do
+                for _, list in ipairs(queues) do
+                    local track = list[turn]
+                    if track and #out < RETAIL_CAP then
+                        local fam, era = family(track.name), track.era
+                        if (fams[fam] or 0) < PER_FAMILY and (eras[era] or 0) < PER_ERA then
+                            fams[fam], eras[era] = (fams[fam] or 0) + 1, (eras[era] or 0) + 1
+                            out[#out + 1] = track
+                        end
+                    end
+                end
+                if #out >= RETAIL_CAP then break end
+            end
+        end
+    end
+    retailFitCache[mapID] = out
+    return out
+end
+
+-- The pack tracks that can play in a zone: where retail plays them, and the
+-- zone's fitted ones.  `area`: the subzone the player is in (nil: none of
+-- retail's; true: every subzone, for the music window's zone view).
+-- `night`: nil for both.  `all`: tracks the pack would bring, imported or
+-- not (for counting what's missing); otherwise only the imported ones.
+function FAME:RetailFor(mapID, area, night, all)
+    local out, seen = {}, {}
+    if not mapID or (not all and ns.packTracks == 0) then return out end
+    local function add(list)
+        for _, track in ipairs(list or {}) do
+            if not seen[track] and (all or track.file) and timeFits(track, night) then
+                seen[track] = true
+                out[#out + 1] = track
+            end
+        end
+    end
+    local placed = retailPlaced[mapID]
+    if placed then
+        add(placed.zone)
+        if area == true then
+            for _, list in pairs(placed.sub) do add(list) end
+        elseif area then
+            add(placed.sub[area])
+        end
+    end
+    add(retailFitted(mapID))
+    return out
+end
+
+function FAME:RetailAreaAt(mapID, subName) return retailAreaAt(mapID, subName) end
+
+-- How many tracks the pack would add here that aren't imported: for the
+-- music window's "Retail music pack" row.
+function FAME:RetailMissing(mapID, area)
+    local n = 0
+    for _, track in ipairs(self:RetailFor(mapID, area, nil, true)) do
+        if not track.file then n = n + 1 end
+    end
+    return n
+end
+
+-- Per era, the pack tracks that can play somewhere: { [era] = { imported =
+-- n, missing = m } }.  Settings shows these beside the era checkboxes.  It
+-- works out every zone's list, so it is done once, when first asked.
+local retailEraCounts
+function FAME:RetailEraCounts()
+    if retailEraCounts then return retailEraCounts end
+    local seen, counts = {}, {}
+    for mapID in pairs(ns.zones) do
+        for _, track in ipairs(self:RetailFor(mapID, true, nil, true)) do
+            if not seen[track] then
+                seen[track] = true
+                local c = counts[track.era] or { imported = 0, missing = 0 }
+                counts[track.era] = c
+                if track.file then c.imported = c.imported + 1 else c.missing = c.missing + 1 end
+            end
+        end
+    end
+    retailEraCounts = counts
+    return counts
+end
+
+-- "Stonetalon Peak, The Talon Den": the subzones of this zone where retail
+-- plays the track, in the client's language.
+function FAME:RetailSubzones(mapID, track)
+    local names = {}
+    local placed = retailPlaced[mapID]
+    for area, list in pairs(placed and placed.sub or {}) do
+        for _, t in ipairs(list) do
+            if t == track then
+                local entry = ns.retailAreas[area]
+                names[#names + 1] = (C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(area)) or entry[2]
+                break
+            end
+        end
+    end
+    table.sort(names)
+    return #names > 0 and table.concat(names, ", ") or nil
+end
+
 -- Extended tracks for this profile that the player allows: not banned, from
 -- an era that is on, and not taken out of this zone.
 function FAME:ExtendedChoices(prof, mapID)
@@ -458,21 +756,45 @@ function FAME:ExtendedChoices(prof, mapID)
     for _, track in ipairs(self:Pool(prof)) do
         if self:Allowed(track, mapID) then out[#out + 1] = track end
     end
+    if not prof.inn then
+        local area = self.ctx and self.ctx.mapID == mapID and self.ctx.retailArea or nil
+        for _, track in ipairs(self:RetailFor(mapID, area, isNight())) do
+            if self:Allowed(track, mapID) then out[#out + 1] = track end
+        end
+    end
     return out
 end
 
 -- Every extended track that could play under any of these profiles, by day
 -- or by night, for the music window: { track = t, day = bool, night = bool }.
 -- Sorted by era, then name.
-function FAME:TracksFor(profs)
+-- `mapID` and `area` add the retail pack's tracks for that zone (see
+-- RetailFor); without a mapID there are none.
+function FAME:TracksFor(profs, mapID, area)
     local out = {}
+    local inn = false
+    for _, prof in ipairs(profs) do inn = inn or prof.inn == true end
     for _, track in ipairs(ns.allTracks) do
-        local day, night = false, false
-        for _, prof in ipairs(profs) do
-            day = day or eligible(track, prof, false)
-            night = night or eligible(track, prof, true)
+        if not track.rid or inn then
+            local day, night = false, false
+            for _, prof in ipairs(profs) do
+                day = day or eligible(track, prof, false)
+                night = night or eligible(track, prof, true)
+            end
+            if day or night then out[#out + 1] = { track = track, day = day, night = night } end
         end
-        if day or night then out[#out + 1] = { track = track, day = day, night = night } end
+    end
+    if mapID and not inn then
+        -- In the zone view, music retail keeps to some subzones says which.
+        local everywhere = {}
+        if area == true then
+            for _, track in ipairs(self:RetailFor(mapID, nil)) do everywhere[track] = true end
+        end
+        for _, track in ipairs(self:RetailFor(mapID, area)) do
+            local item = { track = track, day = timeFits(track, false), night = timeFits(track, true) }
+            if area == true and not everywhere[track] then item.only = self:RetailSubzones(mapID, track) end
+            out[#out + 1] = item
+        end
     end
     table.sort(out, function(a, b)
         local ra, rb = ns.ERA_ORDER[a.track.era] or 99, ns.ERA_ORDER[b.track.era] or 99
@@ -489,7 +811,7 @@ function FAME:ZoneTracks(mapID)
     if not prof then return {} end
     local profs = { prof }
     for _, town in pairs(prof.towns or {}) do profs[#profs + 1] = town end
-    return self:TracksFor(profs)
+    return self:TracksFor(profs, mapID, true)
 end
 
 -- The game's own tracks for this set that are not banned, the way the game
@@ -1117,6 +1439,8 @@ function FAME:Evaluate()
     -- Same music, possibly a different zone (Orgrimmar and the Barrens share
     -- a set): keep playing, but draw future extended tracks from here.
     self.ctx.prof, self.ctx.mapID = ctx.prof, ctx.mapID
+    -- And from this subzone's retail music, if it has its own.
+    self.ctx.retailArea = ctx.retailArea
 
     if ctx.area ~= self.area then
         self.area = ctx.area
@@ -1323,6 +1647,25 @@ function FAME:Ban(track)
     return key
 end
 
+-- Take a track out of this zone only -- what unticking it in the music
+-- window does -- and, if it is the one playing, end it the way a ban does.
+-- Only for the extended pool: the game's own tracks aren't FAME's to move.
+function FAME:CanRemoveHere(track)
+    return track ~= nil and track.tags ~= nil and self.ctx ~= nil and self.ctx.mapID ~= nil
+        and not self.ctx.inn and not self:ZoneOff(self.ctx.mapID, track)
+end
+
+function FAME:RemoveFromZone(track)
+    if not self:CanRemoveHere(track) then return nil end
+    local mapID = self.ctx.mapID
+    self:SetZoneOff(mapID, track, true)
+    if track == self.playing then
+        self:CancelTimer()
+        if self.state == "preview" then self:EndPreview(FADE_CUT) else self:AfterTrack(FADE_CUT) end
+    end
+    return mapID
+end
+
 local function afterUnban()
     -- If everything here had been banned, there is something to play again.
     if FAME.ctx and FAME.ctx.allBanned and FAME.state == "silence" then
@@ -1379,6 +1722,7 @@ end
 -- "mus_80_drustvar_h (1780914)", or just the name for a local file.
 local function describe(track)
     if track.id and track.name then return ("%s (%d)"):format(track.name, track.id) end
+    if track.rid and track.name then return ("%s (retail %d)"):format(track.name, track.rid) end
     return trackName(track)
 end
 
@@ -1412,7 +1756,8 @@ commands.help = function()
     cmd("status", "what's playing, and what comes next")
     cmd("skip", "end this track as it would end anyway")
     cmd("next", "play an extended track now")
-    cmd("ban", "never play this track again")
+    cmd("remove", "never play this track in this zone again")
+    cmd("ban", "never play this track again, anywhere")
     cmd("banlist", "banned tracks, and where")
     cmd("unban <id> | all", "allow banned tracks again")
     cmd("chance <0-100>", ("share of the game's own tracks (now %s)"):format(pct(db.originalChance)))
@@ -1546,7 +1891,7 @@ commands.play = function(rest)
     if not id then return say("usage: /fame play <file ID>") end
     local found
     for _, track in ipairs(ns.allTracks) do
-        if track.id == id then found = track break end
+        if track.id == id or track.rid == id then found = track break end
     end
     if not found then
         for _, musicSet in pairs(ns.musicSets) do
@@ -1581,6 +1926,20 @@ commands.scan = function(rest)
     for _, r in ipairs(results) do
         print(("  %s%-8s|r %d"):format(r[2] and "|cff80ff80" or RED, r[2] and "present" or "absent", r[1]))
     end
+end
+
+-- Take whatever is playing out of this zone only.
+commands.remove = function()
+    local track = FAME.playing
+    if not FAME.ctx then return say("the game chooses the music here, so there's nothing for FAME to remove") end
+    if not track then return say("nothing is playing to remove") end
+    if not track.tags then return say("that's the game's own music for this place: /fame ban stops it everywhere") end
+    if FAME.ctx.inn then return say("inns play by race, not zone: /fame ban stops it everywhere") end
+    local mapID = FAME:RemoveFromZone(track)
+    if not mapID then return say("%s is already off here", describe(track)) end
+    local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
+    say("%s won't play in %s again -- tick it in the music window (/fame ui) to undo",
+        describe(track), info and info.name or "this zone")
 end
 
 -- Ban whatever is playing -- the game's own track or an extended one -- and
@@ -1678,3 +2037,29 @@ ns.localTracks = ns.localTracks or {}
 ns.allTracks = {}
 for _, track in ipairs(ns.builtinTracks) do ns.allTracks[#ns.allTracks + 1] = track end
 for _, track in ipairs(ns.localTracks) do ns.allTracks[#ns.allTracks + 1] = track end
+
+-- The retail music pack: its own addon, which loads first (OptionalDeps) and
+-- sets FAMERetailPack.tracks = { [retail fileDataID] = era }.  Only the tracks
+-- it lists join the pool, played from its Music folder by path: Forever's
+-- client has none of these IDs, so PlayMusic(id) would be silence.  Like any
+-- file, each is probed once before its first play (FAME:Playable), so one
+-- deleted by hand is skipped rather than played as silence.
+ns.PACK_ADDON = ADDON .. "_RetailPack"
+ns.PACK_FORMAT = 1
+ns.PACK_DIR = "Interface\\AddOns\\" .. ns.PACK_ADDON .. "\\Music\\"
+ns.retailTracks = ns.retailTracks or {}
+ns.packTracks = 0
+ns.packEras = {}                       -- eras the pack has tracks from
+local pack = FAMERetailPack
+if type(pack) == "table" and pack.format == ns.PACK_FORMAT and type(pack.tracks) == "table" then
+    for _, track in ipairs(ns.retailTracks) do
+        if pack.tracks[track.rid] then
+            track.file = ns.PACK_DIR .. track.rid .. ".mp3"
+            ns.allTracks[#ns.allTracks + 1] = track
+            ns.packTracks = ns.packTracks + 1
+            ns.packEras[track.era] = true
+        end
+    end
+end
+ns.retailAreas = ns.retailAreas or {}
+placeRetail(ns.retailTracks)

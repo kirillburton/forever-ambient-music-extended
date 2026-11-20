@@ -59,6 +59,7 @@ end
 -- Without that, anything carrying no biome tag of its own walks straight in.
 local function restPool(cultures)
     return {
+        inn = true,
         require = { "tavern" },
         biomes = { "tavern" },
         cultures = cultures,
@@ -436,3 +437,86 @@ ns.innProfiles = {}
 for _, race in pairs(ns.inns) do
     ns.innProfiles[race] = ns.innProfiles[race] or restPool({ race })
 end
+
+-- ---------------------------------------------------------------------------
+-- The retail music pack: what a zone takes by fit
+-- ---------------------------------------------------------------------------
+--
+-- The pack (optional, see Import.lua) is over 3,000 tracks, so its tracks
+-- are held to more than the zone's allow-lists above.  Those lists have to
+-- admit everyone who lives in a zone -- Stonetalon's night elves at the Peak,
+-- its goblins at the logging camps -- because FAME's own pool is small and a
+-- zone would otherwise go quiet.  Matched against the pack, the same lists let
+-- a night elf forest theme play across all of Stonetalon.
+--
+-- So a pack track that retail doesn't itself play in the zone (those come
+-- from RetailTracks.lua's `at`, subzone by subzone) must fit these instead:
+-- only the land and people that define the zone, plus peoples whose music
+-- is kin to it without living there (Drustvar's folk horror in Duskwood, the
+-- Dragon Isles' dragonflights where Forever's dragons are).  Pandaria's music
+-- is left out everywhere: nothing in Forever's world sounds like it.  A list left out here falls
+-- back to the zone's own (moods, mostly).  The first biome is the zone's
+-- signature: a track that names no people has to carry it.  `require`, as in the zone lists:
+-- tags a track must carry, so a capital takes its own people's music rather
+-- than any music that happens to fit.  Of the tracks that fit, Core keeps
+-- the closest RETAIL_CAP.
+--
+-- `lua tools/retail_report.lua` shows what each zone ends up with.
+
+ns.retailFit = {
+    -- Eastern Kingdoms
+    [1416] = { biomes = { "mountain", "snow", "forest" }, cultures = { "human", "vrykul", "wild" } },             -- Alterac Mountains
+    [1417] = { biomes = { "plains", "mountain" }, cultures = { "human", "arathi", "wild" } },           -- Arathi Highlands
+    [1418] = { biomes = { "desert", "mountain", "ruins" }, cultures = { "dwarf", "titan", "dragon", "earthen", "wild" } },            -- Badlands
+    [1419] = { biomes = { "blighted", "desert", "void" }, cultures = { "demon", "orc" } },              -- Blasted Lands
+    [1420] = { biomes = { "blighted", "darkforest" }, cultures = { "undead", "human" } },               -- Tirisfal Glades
+    [1421] = { biomes = { "darkforest", "blighted" }, cultures = { "undead", "human", "drust" } },               -- Silverpine Forest
+    [1422] = { biomes = { "blighted", "plains" }, cultures = { "undead", "human" } },                   -- Western Plaguelands
+    [1423] = { biomes = { "blighted", "ruins" }, cultures = { "undead" } },                             -- Eastern Plaguelands
+    [1424] = { biomes = { "plains", "forest", "mountain" }, cultures = { "human", "kultiran", "wild" } },           -- Hillsbrad Foothills
+    [1425] = { biomes = { "forest", "mountain" }, cultures = { "troll", "dwarf", "wild" } },            -- The Hinterlands
+    [1426] = { biomes = { "snow", "mountain" }, cultures = { "dwarf", "gnome", "earthen", "wild" } },              -- Dun Morogh
+    [1427] = { biomes = { "volcanic", "mountain", "elemental" }, cultures = { "dwarf", "dragon", "earthen" } },    -- Searing Gorge
+    [1428] = { biomes = { "volcanic", "mountain", "elemental" }, cultures = { "orc", "dragon" } },      -- Burning Steppes
+    [1429] = { biomes = { "forest", "plains" }, cultures = { "human", "kultiran", "wild" } },                       -- Elwynn Forest
+    [1430] = { biomes = { "darkforest", "ruins", "arcane" }, cultures = { "undead", "demon" } },        -- Deadwind Pass
+    [1431] = { biomes = { "darkforest", "blighted" }, cultures = { "human", "undead", "drust", "wild" } },       -- Duskwood
+    [1432] = { biomes = { "mountain", "plains", "forest" }, cultures = { "dwarf", "gnome", "earthen", "wild" } },            -- Loch Modan
+    [1433] = { biomes = { "mountain", "forest", "plains" }, cultures = { "human", "orc", "wild" } },    -- Redridge Mountains
+    [1434] = { biomes = { "jungle", "ruins" }, cultures = { "troll", "wild" } },                        -- Stranglethorn Vale
+    [1435] = { biomes = { "swamp", "ruins" }, cultures = { "troll", "dragon", "wild" } },                         -- Swamp of Sorrows
+    [1436] = { biomes = { "plains", "coast" }, cultures = { "human", "kultiran", "wild" } },                        -- Westfall
+    [1437] = { biomes = { "swamp", "coast" }, cultures = { "dwarf", "dragon", "kultiran", "wild" } },                         -- Wetlands
+    [1453] = { biomes = { "city" }, cultures = { "human" } },                                           -- Stormwind City
+    [1455] = { biomes = { "city", "underground" }, cultures = { "dwarf", "gnome", "earthen" } },                   -- Ironforge
+    [1458] = { biomes = { "city", "underground", "blighted" }, cultures = { "undead" } },                           -- Undercity
+    [2548] = { biomes = { "forest", "plains", "swamp" }, cultures = { "human", "kultiran", "wild" } },              -- Riverglades
+
+    -- Kalimdor
+    [1411] = { biomes = { "barrens", "desert", "coast" }, cultures = { "orc", "troll", "wild" } },      -- Durotar
+    [1412] = { biomes = { "plains", "barrens" }, cultures = { "tauren", "centaur", "wild" } },                     -- Mulgore
+    [1413] = { biomes = { "barrens", "plains" }, cultures = { "orc", "tauren", "centaur", "wild" } },   -- The Barrens
+    [1438] = { biomes = { "forest", "enchanted" }, cultures = { "nightelf", "wild" } },                 -- Teldrassil
+    [1439] = { biomes = { "coast", "darkforest", "forest" }, cultures = { "nightelf", "naga", "wild" } },       -- Darkshore
+    [1440] = { biomes = { "forest", "enchanted" }, cultures = { "nightelf", "wild" } },                 -- Ashenvale
+    [1441] = { biomes = { "desert", "mountain", "barrens" }, cultures = { "tauren", "centaur", "wild" } }, -- Thousand Needles
+    [1442] = { biomes = { "mountain", "forest", "plains" }, cultures = { "tauren", "wild" } },          -- Stonetalon Mountains
+    [1443] = { biomes = { "desert", "barrens", "blighted" }, cultures = { "centaur", "demon", "wild" } },        -- Desolace
+    [1444] = { biomes = { "forest", "jungle", "enchanted" }, cultures = { "nightelf", "highelf", "wild" } },       -- Feralas
+    [1445] = { biomes = { "swamp", "coast" }, cultures = { "human", "dragon", "kultiran", "wild" } },                         -- Dustwallow Marsh
+    [1446] = { biomes = { "desert", "ruins" }, cultures = { "goblin", "dragon", "troll", "wild" } },                       -- Tanaris
+    [1447] = { biomes = { "forest", "coast", "ruins" }, cultures = { "highelf", "nightelf", "naga" } }, -- Azshara
+    [1448] = { biomes = { "darkforest", "blighted", "forest" }, cultures = { "demon", "wild" } },                 -- Felwood
+    [1449] = { biomes = { "jungle", "volcanic" }, cultures = { "wild" } },                              -- Un'Goro Crater
+    [1450] = { biomes = { "forest", "enchanted" }, cultures = { "nightelf", "wild" } },                 -- Moonglade
+    [1451] = { biomes = { "desert", "ruins" }, cultures = { "nerubian", "wild" } },                     -- Silithus
+    [1452] = { biomes = { "snow", "mountain", "forest" }, cultures = { "nightelf", "wild" } },                    -- Winterspring
+    [1454] = { biomes = { "city", "barrens" }, cultures = { "orc", "troll" } },                                    -- Orgrimmar
+    [1456] = { biomes = { "city", "plains", "mountain" }, cultures = { "tauren" } },                    -- Thunder Bluff
+    [1457] = { biomes = { "city", "forest", "enchanted" }, cultures = { "nightelf" }, require = { "nightelf" } },                           -- Darnassus
+    [2482] = { biomes = { "forest", "mountain", "enchanted" }, cultures = { "nightelf", "wild" } },     -- Mount Hyjal
+    [2652] = { biomes = { "enchanted", "forest", "ruins" }, cultures = { "highelf", "nightelf" } },               -- Shen'dralas
+    [2524] = { biomes = { "jungle", "coast" }, cultures = { "troll", "wild" } },                        -- Darkspear Islands
+    [2521] = { biomes = { "coast", "sea", "plains" }, cultures = { "wild" } },                          -- Zephras Isle
+    [2665] = { biomes = { "coast", "sea", "plains" }, cultures = { "wild" } },                          -- Zephras Isle
+}

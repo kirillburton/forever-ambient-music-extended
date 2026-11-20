@@ -81,7 +81,7 @@ TAG_ORDER = {t: i for i, t in enumerate(
     "forest darkforest enchanted jungle swamp plains barrens desert mountain snow volcanic "
     "coast sea cave underground ruins blighted void arcane elemental sky city town tavern "
     "human dwarf gnome nightelf highelf orc tauren troll undead goblin naga draenei pandaren "
-    "dragon demon centaur tuskarr earthen arathi kultiran drust vrykul nerubian pirate wild "
+    "dragon demon centaur tuskarr earthen arathi kultiran drust vrykul nerubian pirate titan wild "
     "calm melancholy mysterious eerie ominous heroic sacred festive somber tense grand playful "
     "day night".split())}
 
@@ -253,7 +253,7 @@ SET_KEYWORDS = [
     (r"pirate|bloodsail|freehold", "pirate coast"),
     (r"goblin|bilgewater|steamwheedle", "goblin"),
     (r"hozen|grummle|vulpera|tortollan|quilboar|niffen|gnoll|kobold|ogre", "wild"),
-    (r"tuskarr", "tuskarr coast"),
+    (r"tusk", "tuskarr coast"),
     (r"centaur", "centaur"),
     (r"\bfel\b|_fel|demon|felblood", "demon ominous"),
     (r"\bvoid|shadow.?enclave", "void"),
@@ -290,7 +290,7 @@ BIOMES = set("forest darkforest enchanted jungle swamp plains barrens desert mou
 # Biomes that say what kind of place a zone is rather than its ground; a set
 # naming its own ground (a forest, a cave) keeps these.
 CULTURES = set("human dwarf gnome nightelf highelf orc tauren troll undead goblin naga draenei pandaren "
-               "dragon demon centaur tuskarr earthen arathi kultiran drust vrykul nerubian pirate wild".split())
+               "dragon demon centaur tuskarr earthen arathi kultiran drust vrykul nerubian pirate titan wild".split())
 KEEP_BIOMES = {"blighted", "void", "arcane", "elemental", "enchanted", "darkforest", "city", "ruins"}
 
 
@@ -307,8 +307,9 @@ def keyword_tags(text, tags):
     if named:
         tags = {t for t in tags if t not in BIOMES or t in KEEP_BIOMES} | named
     # Likewise a people: the Iron Dwarf music in Howling Fjord is dwarven,
-    # not vrykul.  Demons stay -- they say what happened to a place.
-    if people - {"demon", "wild"}:
+    # not vrykul, and Stormsong's quilboar music isn't Kul Tiran ("wild").
+    # Demons stay -- they say what happened to a place.
+    if people - {"demon"}:
         tags = {t for t in tags if t not in CULTURES or t == "demon"}
     for rx, change in SET_KEYWORDS:
         if rx.search(text):
@@ -322,6 +323,69 @@ def keyword_tags(text, tags):
     if "night" in tags and "day" in tags:
         tags -= {"night", "day"}
     return tags
+
+
+# Old music lives in sound/music/zonemusic/<place>/, and <place> is where it
+# was written for.  Later zones borrow it -- Ulduar's halls play in a Legion
+# scenario under Tirisfal, Blade's Edge's ogres in Stormsong Valley -- and the
+# zone that borrows it most is not what it sounds like.  So when its home is
+# somewhere else, a track takes its tags from the place in the folder name: a
+# zone in retail_zone_tags.csv, or tags of its own for places that aren't one.
+# At home, its set's name says more (the Exodar's city music, Kaskala's
+# tuskarr) and the usual route stays.  "A|B": B is the same place too.
+ORIGIN = {
+    "argenttournament": "Icecrown|Icecrown Citadel",
+    "azjolnerub": "underground nerubian ominous",
+    "azuremyst": "Azuremyst Isle|The Exodar",
+    "blacktemple": "Shadowmoon Valley (Outland)",
+    "bladesedge": "Blade's Edge Mountains",
+    "bloodmyst": "Bloodmyst Isle",
+    "boreantundra": "Borean Tundra",
+    "brewfest": "tavern dwarf festive",
+    "crystalsong": "Crystalsong Forest",
+    "dalaran": "Dalaran|Crystalsong Forest|Dalaran Sewers",
+    "dragonblight": "Dragonblight",
+    "ebon hold": "Acherus: The Ebon Hold",
+    "eversong": "Eversong Woods|Eversong Woods (Burning Crusade)|Silvermoon City (Burning Crusade)|Silvermoon City",
+    "ghostlands": "Ghostlands|Eversong Woods|Eversong Woods (Burning Crusade)|Silvermoon City (Burning Crusade)",
+    "grizzlyhills": "Grizzly Hills",
+    "hellfirepeninsula": "Hellfire Peninsula",
+    "howlingfjord": "Howling Fjord",
+    "icecrownglacier": "Icecrown|Icecrown Citadel",
+    "icecrownraid": "Icecrown Citadel|Icecrown|Pit of Saron",
+    "karazhan": "darkforest arcane eerie",
+    "lakewintergrasp": "Wintergrasp",
+    "nagrand": "Nagrand (Outland)|Nagrand",
+    "netherstorm": "Netherstorm",
+    "nexus": "snow arcane mysterious|Borean Tundra",
+    "shadowmoonvalley": "Shadowmoon Valley (Outland)|Shadowmoon Valley",
+    "sholazarbasin": "Sholazar Basin",
+    "stormpeaks": "The Storm Peaks",
+    "sunwell": "Isle of Quel'Danas|Sunwell Plateau",
+    "tempestkeep": "Netherstorm",
+    "terokkar": "Terokkar Forest|Shattrath City",
+    "ulduar": "mountain titan mysterious",
+    "ulduarraidext": "mountain snow titan grand",
+    "ulduarraidint": "ruins titan mysterious",
+    "utgarde keep": "Howling Fjord|Utgarde Keep",
+    "violethold": "Dalaran|The Violet Hold",
+    "zangarmarsh": "Zangarmarsh",
+    "zulaman": "forest troll mysterious",
+    "zuldrak": "Zul'Drak",
+}
+
+
+def origin_tags(path, home_zone, zone_tags):
+    """Tags from the place an old track was written for, when it was
+    borrowed by another; otherwise None."""
+    m = re.match(r"sound/music/zonemusic/([^/]+)/", path or "")
+    entry = m and ORIGIN.get(m.group(1))
+    if not entry:
+        return None
+    place, *same = entry.split("|")
+    if home_zone == place or home_zone in same:
+        return None
+    return set(zone_tags[place]) if place in zone_tags else set(place.split())
 
 
 def stem(path):
@@ -448,7 +512,11 @@ def main():
                 status = "unlinked"
 
             tags = set()
-            if home:
+            origin = origin_tags(path, home[1] if home else None, zone_tags)
+            if origin is not None and home:
+                # The borrowing set's name says nothing about the music.
+                tags = keyword_tags(tail, origin)
+            elif home:
                 if home[1] in zone_tags:
                     tags.update(zone_tags[home[1]])
                 else:

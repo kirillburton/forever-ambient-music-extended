@@ -9,6 +9,7 @@
 
 Tracks.lua
 LocalTracks.lua
+RetailTracks.lua
 Originals.lua
 Zones.lua
 Core.lua

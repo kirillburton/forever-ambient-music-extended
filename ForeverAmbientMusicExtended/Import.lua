@@ -5,13 +5,11 @@
 -- project page builds it on the player's own computer, as a separate addon:
 -- ForeverAmbientMusicExtended_RetailPack.  That addon is only a Pack.lua
 -- setting the global FAMERetailPack -- what is in it -- and the music files.
--- The game can't open a web page, so this window shows the page's address:
---
---   * with a keyboard, in a box that selects itself for Ctrl+C, and puts the
---     address back if anything is typed over it (Spoken's link boxes work
---     the same way, so players have seen it before);
---   * with a gamepad, as plain text to read off the screen: there is no
---     Ctrl+C on a controller, and a focused edit box would take its input.
+-- The game can't open a web page, so this window shows the page's address in
+-- a box that is focused and selected as soon as the window opens, so Ctrl+C
+-- copies it straight away, with a mouse or a controller.  Anything typed over
+-- it puts the address back (Spoken's link boxes work the same way, so
+-- players have seen it before), and Escape closes the window.
 --
 -- Built like the music window: a plain frame above Settings, closed by
 -- Escape, telling Forever's gamepad layer when it opens and closes, and kept
@@ -24,19 +22,15 @@ ns.ui = ns.ui or {}
 local ui = ns.ui
 
 local PAGE = "https://kirillburton.github.io/forever-ambient-music-extended/import/"
-local PACK_ADDON = ADDON .. "_RetailPack"
-local PACK_FORMAT = 1                  -- the Pack.lua layout this FAME reads
+local PACK_ADDON = ns.PACK_ADDON
+local PACK_FORMAT = ns.PACK_FORMAT     -- the Pack.lua layout this FAME reads
 local WIDTH, HEIGHT = 500, 340
 local PORTRAIT = "Interface\\AddOns\\" .. ADDON .. "\\Media\\portrait"
 
 ui.IMPORT_PAGE = PAGE
 
--- Retail music goes back further than FAME's built-in eras.
-local EXTRA_ERAS = { tbc = "The Burning Crusade", wrath = "Wrath of the Lich King" }
-local ERA_ORDER = { "classic", "tbc", "wrath", "cata", "mop", "wod", "legion", "bfa", "sl", "df", "tww", "midnight" }
-
 local function eraLabel(key)
-    return EXTRA_ERAS[key] or (ns.ERA_LABEL and ns.ERA_LABEL[key]) or key
+    return ns.ERA_LABEL[key] or key
 end
 
 -- ---------------------------------------------------------------------------
@@ -76,8 +70,8 @@ function FAME:RetailPack()
         byEra[era] = true
     end
     local eras = {}
-    for _, key in ipairs(ERA_ORDER) do
-        if byEra[key] then eras[#eras + 1] = key end
+    for _, era in ipairs(ns.ERAS) do
+        if byEra[era.key] then eras[#eras + 1] = era.key end
     end
     return { state = count > 0 and "installed" or "none", tracks = count,
              bytes = tonumber(pack.bytes) or 0, imported = pack.imported, eras = eras }
@@ -95,10 +89,6 @@ local function thousands(n)
         s, done = s:gsub("^(%d+)(%d%d%d)", "%1,%2")
         if done == 0 then return s end
     end
-end
-
-local function gamepadUI()
-    return InputUtil and InputUtil.IsGamepadUIEnabled and InputUtil.IsGamepadUIEnabled() or false
 end
 
 -- ---------------------------------------------------------------------------
@@ -152,7 +142,7 @@ local function create()
     frame.step:SetPoint("RIGHT", -16, 0)
     frame.step:SetJustifyH("LEFT")
 
-    -- Keyboard: the address in a box that selects itself.
+    -- The address, in a box that selects itself.
     local box = CreateFrame("EditBox", nil, inset, "InputBoxTemplate")
     box:SetAutoFocus(false)
     box:SetHeight(24)
@@ -173,23 +163,17 @@ local function create()
             if userInput then box:HighlightText() end
         end
     end)
-    box:SetScript("OnEscapePressed", function() box:ClearFocus() end)
+    box:SetScript("OnEscapePressed", function() frame:Hide() end)
     box:SetScript("OnEnterPressed", function() box:ClearFocus() end)
     -- The gamepad cursor has nothing to do in a text box.
     if SmartNavigation_MarkFrameIgnored then SmartNavigation_MarkFrameIgnored(box) end
     frame.box = box
 
-    -- Gamepad: the same address, to read.
-    frame.address = inset:CreateFontString(nil, "ARTWORK", "GameFontHighlightLarge")
-    frame.address:SetPoint("TOPLEFT", frame.step, "BOTTOMLEFT", 0, -10)
-    frame.address:SetPoint("RIGHT", -16, 0)
-    frame.address:SetJustifyH("LEFT")
-    frame.address:SetText(PAGE)
-
     frame.hint = inset:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     frame.hint:SetPoint("TOPLEFT", box, "BOTTOMLEFT", -6, -6)
     frame.hint:SetPoint("RIGHT", -16, 0)
     frame.hint:SetJustifyH("LEFT")
+    frame.hint:SetText("Press Ctrl+C to copy the address. If it isn't highlighted, click it first.")
 
     frame.after = inset:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     frame.after:SetPoint("TOPLEFT", frame.hint, "BOTTOMLEFT", 0, -14)
@@ -209,6 +193,9 @@ local function create()
         ui:RefreshImport()
         local manager = gamepad()
         if manager and manager.FrameShown then manager:FrameShown(frame) end
+        -- Selected and ready: Ctrl+C is all it takes.
+        frame.box:SetFocus()
+        frame.box:HighlightText()
     end)
     frame:SetScript("OnHide", function()
         frame.box:ClearFocus()
@@ -224,7 +211,6 @@ local WHAT = "FAME can add over 3,000 zone music tracks from every era of WoW. B
 function ui:RefreshImport()
     if not frame then return end
     local pack = FAME:RetailPack()
-    local pad = gamepadUI()
 
     if pack.state == "installed" then
         frame.status:SetText(("|cff80ff80Installed:|r %s tracks · %s%s"):format(
@@ -259,18 +245,6 @@ function ui:RefreshImport()
     -- Text given to an edit box before it is first on screen isn't drawn,
     -- so it is given again on every refresh as well as on show.
     frame.box:SetText(PAGE)
-    frame.box:SetShown(not pad)
-    frame.address:SetShown(pad)
-    frame.hint:SetText(pad and "" or "Click the address, then press Ctrl+C to copy it.")
-    if pad then
-        frame.hint:ClearAllPoints()
-        frame.hint:SetPoint("TOPLEFT", frame.address, "BOTTOMLEFT", 0, -2)
-        frame.hint:SetPoint("RIGHT", -16, 0)
-    else
-        frame.hint:ClearAllPoints()
-        frame.hint:SetPoint("TOPLEFT", frame.box, "BOTTOMLEFT", -6, -6)
-        frame.hint:SetPoint("RIGHT", -16, 0)
-    end
 end
 
 function ui:ShowImport()

@@ -119,7 +119,7 @@ local function buildTrackRow(row)
     row.unban:SetPoint("RIGHT", -4, 0)
     row.unban:SetText("Unban")
     row.unban:SetScript("OnClick", function()
-        if row.banKey ~= nil then FAME:Unban(row.banKey) end
+        if row.action then row.action() elseif row.banKey ~= nil then FAME:Unban(row.banKey) end
     end)
     row.unban:Hide()
 
@@ -142,6 +142,7 @@ local function initTrackRow(row, data)
     local notes = { track.era and ns.ERA_LABEL[track.era] or "your file", clock(track.len) }
     if data.day and not data.night then notes[#notes + 1] = "day only" end
     if data.night and not data.day then notes[#notes + 1] = "night only" end
+    if data.only then notes[#notes + 1] = "only in " .. data.only end
     if banned then notes[#notes + 1] = "|cffff8080banned|r" end
     if not eraOn then notes[#notes + 1] = "|cffff8080era off|r" end
     row.info:SetText(table.concat(notes, "  ·  "))
@@ -161,8 +162,9 @@ end
 -- Unban button in the Preview button's place.
 local function initBanRow(row, data)
     if not row.built then buildTrackRow(row) end
-    row.data = nil
+    row.data, row.action = nil, nil
     row.check:Hide(); row.preview:Hide()
+    row.unban:SetText("Unban")
     row.unban:Show()
     row.banKey = data.key
     row.name:SetText(data.name)
@@ -170,8 +172,26 @@ local function initBanRow(row, data)
     row.info:SetText(("%s · %s"):format(data.zone or "?", tostring(data.key)))
 end
 
+-- The retail music pack, when it would add tracks here that aren't
+-- imported: one greyed row at the end of the list, saying how many, with a
+-- button to the import window in the Preview button's place.
+local function initPackRow(row, data)
+    if not row.built then buildTrackRow(row) end
+    row.data, row.banKey = nil, nil
+    row.check:Hide(); row.preview:Hide()
+    row.unban:SetText("Get it")
+    row.unban:Show()
+    row.action = function() if ui.ShowImport then ui:ShowImport() end end
+    row.name:SetText("Retail music pack")
+    row.name:SetTextColor(GREY[1], GREY[2], GREY[3])
+    row.info:SetText(("%d more track%s for here, from modern WoW"):format(data.count,
+        data.count == 1 and "" or "s"))
+end
+
 local function initRow(row, data)
-    if data.ban then initBanRow(row, data.ban) else initTrackRow(row, data) end
+    if data.ban then initBanRow(row, data.ban)
+    elseif data.pack then initPackRow(row, data.pack)
+    else row.action = nil; initTrackRow(row, data) end
 end
 
 -- ---------------------------------------------------------------------------
@@ -230,14 +250,19 @@ local function create()
     now.track:SetJustifyH("LEFT")
     now.track:SetWordWrap(false)
 
-    now.skip = button(now, "Skip", 90, function() FAME:Skip() end)
+    -- From the lightest touch to the heaviest: this time, here, everywhere.
+    now.skip = button(now, "Skip", 70, function() FAME:Skip() end)
     now.skip:SetPoint("BOTTOMLEFT", 0, 0)
-    now.extended = button(now, "Play extended now", 150, function() FAME:PlayExtendedNow() end)
+    now.extended = button(now, "Play extended now", 140, function() FAME:PlayExtendedNow() end)
     now.extended:SetPoint("LEFT", now.skip, "RIGHT", 6, 0)
-    now.ban = button(now, "Never play again", 150, function()
+    now.remove = button(now, "Not in this zone", 132, function()
+        if FAME.playing then FAME:RemoveFromZone(FAME.playing) end
+    end)
+    now.remove:SetPoint("LEFT", now.extended, "RIGHT", 6, 0)
+    now.ban = button(now, "Never play again", 132, function()
         if FAME.playing and FAME.ctx then FAME:Ban(FAME.playing) end
     end)
-    now.ban:SetPoint("LEFT", now.extended, "RIGHT", 6, 0)
+    now.ban:SetPoint("LEFT", now.remove, "RIGHT", 6, 0)
 
     -- The band: what the list below is for, and on the Zones tab the zone
     -- switcher, kept together in the middle so the D-pad goes straight from
@@ -370,6 +395,7 @@ function ui:RefreshNowPlaying()
     end
     now.skip:SetEnabled(track ~= nil)
     now.extended:SetEnabled(FAME.ctx ~= nil)
+    now.remove:SetEnabled(FAME:CanRemoveHere(track))
     now.ban:SetEnabled(track ~= nil and FAME.ctx ~= nil)
 end
 
@@ -388,11 +414,11 @@ local function rows()
         if #bans > 0 then head.unbanAll:Show() end
         empty = "Nothing is banned. \"Never play again\" bans the track that's playing."
     else
-        local mapID, profs, where
+        local mapID, profs, where, area
         if state.tab == TAB_HERE then
             local ctx = FAME.ctx
             if ctx then
-                mapID, profs = ctx.mapID, { ctx.prof }
+                mapID, profs, area = ctx.mapID, { ctx.prof }, ctx.retailArea
                 where = ctx.inn or zoneName(ctx.mapID)
             else
                 head.title:SetText("Here")
@@ -406,17 +432,24 @@ local function rows()
             where = zoneName(mapID)
             head.prev:Show(); head.next:Show()
         end
-        local list = profs and FAME:TracksFor(profs) or FAME:ZoneTracks(mapID)
+        local list = profs and FAME:TracksFor(profs, mapID, area) or FAME:ZoneTracks(mapID)
         local on = 0
         for _, item in ipairs(list) do
-            data[#data + 1] = { track = item.track, day = item.day, night = item.night, mapID = mapID }
+            data[#data + 1] = { track = item.track, day = item.day, night = item.night, mapID = mapID,
+                                only = item.only }
             if FAME:Allowed(item.track, mapID) then on = on + 1 end
         end
+        local inn = profs and profs[1] and profs[1].inn
+        local packArea = area
+        if not profs then packArea = true end      -- the Zones tab: every subzone
+        local missing = (mapID and not inn) and FAME:RetailMissing(mapID, packArea) or 0
+        if missing > 0 then data[#data + 1] = { pack = { count = missing } } end
         head.title:SetText(where)
         head.count:SetFormattedText("%d of %d extended tracks play here", on, #list)
         empty = "No extended tracks fit here. The game's own music plays as usual."
     end
     frame.empty:SetText(#data == 0 and empty or "")
+    if #data == 1 and data[1].pack then frame.empty:SetText("") end
     return data
 end
 
@@ -518,7 +551,7 @@ function ui:WireNavigation()
     end
     local function nowSide(left)
         if left then return usable(now.skip) or now.extended end
-        return usable(now.ban) or now.extended
+        return usable(now.ban) or usable(now.remove) or now.extended
     end
     local function pagerSide(left)
         if not pager:IsVisible() then return nil end
@@ -532,10 +565,14 @@ function ui:WireNavigation()
     end
     local function tabSide(left) return tabs[left and 1 or #tabs] end
 
-    -- Now playing: one row of three.
+    -- Now playing: one row of four.
     set(now.skip, "RIGHT", now.extended); set(now.extended, "LEFT", now.skip)
-    set(now.extended, "RIGHT", now.ban);  set(now.ban, "LEFT", now.extended)
-    for b, left in pairs({ [now.skip] = true, [now.extended] = true, [now.ban] = false }) do
+    -- "Not in this zone" is greyed out for the game's own tracks: step over it.
+    set(now.extended, "RIGHT", function() return usable(now.remove) or usable(now.ban) end)
+    set(now.remove, "LEFT", now.extended)
+    set(now.remove, "RIGHT", now.ban)
+    set(now.ban, "LEFT", function() return usable(now.remove) or now.extended end)
+    for b, left in pairs({ [now.skip] = true, [now.extended] = true, [now.remove] = false, [now.ban] = false }) do
         set(b, "DOWN", function()
             return headSide(left) or rowEnd(true, left) or pagerSide(left) or tabSide(left)
         end)

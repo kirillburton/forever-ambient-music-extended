@@ -43,7 +43,7 @@ UnitFactionGroup = function() return "Alliance" end
 -- --- load the addon ------------------------------------------------------
 
 local ns = {}
-for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     local chunk, err = loadfile(ROOT .. "/" .. file)
     if not chunk then
         io.stderr:write("SYNTAX ERROR in " .. file .. ": " .. tostring(err) .. "\n")

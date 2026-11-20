@@ -53,7 +53,9 @@ local function withNote(initializer, text)
         end
         note:ClearAllPoints()
         note:SetPoint("LEFT", frame.Checkbox or frame, "RIGHT", 14, 0)
-        note:SetText(text)
+        -- A function is asked each time the row is drawn: the retail counts
+        -- are only worked out once the panel is actually opened.
+        note:SetText(type(text) == "function" and text() or text)
         note:Show()
     end)
     if initializer.Resetter then
@@ -69,10 +71,26 @@ local function header(name)
     end
 end
 
--- How many built-in tracks each era contributes, for its tooltip.
+-- How many of FAME's own tracks each era contributes.  The retail pack's
+-- are counted apart (eraNote), as the ones that can actually play somewhere.
 local eraCount = {}
 for _, track in ipairs(ns.allTracks) do
-    if track.era then eraCount[track.era] = (eraCount[track.era] or 0) + 1 end
+    if track.era and not track.rid then eraCount[track.era] = (eraCount[track.era] or 0) + 1 end
+end
+
+-- "89 tracks · +36 from retail" with the pack; without it (or without this
+-- era imported), "+36 with the retail pack".
+local function eraNote(key)
+    local own = eraCount[key] or 0
+    local parts = {}
+    if own > 0 then parts[1] = own == 1 and "1 track" or (own .. " tracks") end
+    local retail = FAME.RetailEraCounts and FAME:RetailEraCounts()[key]
+    if retail and retail.imported > 0 then
+        parts[#parts + 1] = (own > 0 and "+%d from retail" or "%d from retail"):format(retail.imported)
+    elseif retail and retail.missing > 0 then
+        parts[#parts + 1] = ("+%d with the retail pack"):format(retail.missing)
+    end
+    return table.concat(parts, " · ")
 end
 
 -- 1. On or off
@@ -84,15 +102,17 @@ checkbox("Enabled", "Extend the zone music",
 
 -- 2. Eras
 header("Music from")
+-- An era only the retail pack has music from is listed only with the pack.
 for _, era in ipairs(ns.ERAS) do
-    local count = eraCount[era.key] or 0
-    local _, initializer = checkbox("Era_" .. era.key, era.label,
-        ("%d tracks from %s.\n\nThe game's own music for each place always plays, whatever is chosen here."):format(
-            eraCount[era.key] or 0, era.label),
-        function() return FAME:EraOn(era.key) end,
-        function(value) FAME:SetEra(era.key, value) end,
-        true)
-    withNote(initializer, count == 1 and "1 track" or (count .. " tracks"))
+    if not era.retail or ns.packEras[era.key] then
+        local _, initializer = checkbox("Era_" .. era.key, era.label,
+            ("Music from %s: FAME's own tracks, and any from the retail music pack.\n\nThe game's own music for each place always plays, whatever is chosen here."):format(
+                era.label),
+            function() return FAME:EraOn(era.key) end,
+            function(value) FAME:SetEra(era.key, value) end,
+            true)
+        withNote(initializer, function() return eraNote(era.key) end)
+    end
 end
 
 -- 3. Minimap entry, opt-in

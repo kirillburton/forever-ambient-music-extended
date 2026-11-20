@@ -76,6 +76,7 @@ local function areaName(areaID)
         if zm.area == areaID then return zm.name end
         for _, row in ipairs(zm.sub) do if row[1] == areaID then return row[2] end end
     end
+    if ns.retailAreas and ns.retailAreas[areaID] then return ns.retailAreas[areaID][2] end
     return nil
 end
 C_Map = {
@@ -136,7 +137,7 @@ print = function(...)
 end
 
 ns = {}
-for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     assert(loadfile(ROOT .. "/" .. file))(ADDON, ns)
 end
 local FAME = ns.core
@@ -1153,6 +1154,10 @@ local methods = {
     CreateFontString = function(self) return mock(nil, self) end,
     CreateTexture = function(self) return mock(nil, self) end,
     Click = function(self) if self._scripts.OnClick then self._scripts.OnClick(self, "LeftButton") end end,
+    SetFocus = function(self) self._focus = true end,
+    ClearFocus = function(self) self._focus = false end,
+    HasFocus = function(self) return self._focus == true end,
+    HighlightText = function(self) self._highlighted = true end,
 }
 -- Methods are capitalised, as on real frames; a lowercase field that was
 -- never set reads as nil, as it would in the client.
@@ -1167,8 +1172,10 @@ fakeRow.Checkbox = mock("SettingsRowCheckbox")
 local fontStrings = {}
 fakeRow.CreateFontString = function(self) local f = mock(nil, self); fontStrings[#fontStrings + 1] = f; return f end
 registered[3].initializer:InitFrame(fakeRow)       -- Classic
-check(fontStrings[1] and fontStrings[1]:GetText() == "89 tracks" and fontStrings[1]._point[2] == fakeRow.Checkbox,
+check(fontStrings[1] and (fontStrings[1]:GetText() or ""):find("^89 tracks") and fontStrings[1]._point[2] == fakeRow.Checkbox,
     ("each era shows its track count to the right of its checkbox (%s)"):format(fontStrings[1] and fontStrings[1]:GetText() or "none"))
+check((fontStrings[1]:GetText() or ""):find("+%d+ with the retail pack$"),
+    "and, without the pack, how many more it would bring")
 registered[3].initializer:Resetter(fakeRow)
 check(not fontStrings[1]:IsShown(), "and the count is hidden when the list recycles the row for another page")
 registered[3].initializer:InitFrame(fakeRow)
@@ -1350,6 +1357,35 @@ check(padFrom(list.rows[1].unban, "up") == W.head.unbanAll, "on Banned, up from 
 frames.main.head.unbanAll:Click()
 check(next(ns.db.banned) == nil, "Unban all clears them")
 
+do
+-- "Not in this zone": out of here only, not banned, and it ends.
+ns.ui:SelectTab(1)
+FAME:PlayExtendedNow(); go(2)
+local here = FAME.playing
+check(here and here.tags and frames.main.now.remove:IsEnabled(), "an extended track can be taken out of this zone")
+frames.main.now.remove:Click(); go(4)
+check(FAME:ZoneOff(1453, here) and not FAME:IsBanned(here), "Not in this zone takes it out of Stormwind, without banning it")
+check(FAME.playing ~= here, "and ends it")
+check(not FAME:CanRemoveHere({ id = 1, len = 60 }), "the game's own tracks can't be: they aren't FAME's to move")
+FAME:SetZoneOff(1453, here, false)
+FAME:PlayExtendedNow(); go(2)
+local again = FAME.playing
+local okRemove = run("remove")
+check(okRemove and FAME:ZoneOff(1453, again) and chat[#chat]:find("won't play in", 1, true), "/fame remove does the same")
+FAME:SetZoneOff(1453, again, false)
+
+-- Without the pack: one greyed row at the end, to the import window.
+ns.ui:SelectTab(1)
+while frames.main.pager:IsShown() and frames.main.pager.next:IsEnabled() do frames.main.pager.next:Click() end
+local last = list.rows[#list.rows]
+check(last and last.name:GetText() == "Retail music pack" and last.unban:GetText() == "Get it"
+      and not last.check:IsShown() and (last.info:GetText() or ""):find("more track"),
+    ("the list ends with the retail music pack: %s"):format(last and last.info:GetText() or "none"))
+last.unban:Click()
+check(frames.import and frames.import:IsShown(), "and Get it opens the import window")
+frames.import:Hide()
+end
+
 -- Outside a place FAME runs, Here says why.
 ns.ui:SelectTab(1)
 state.instance = true; fire("ZONE_CHANGED_NEW_AREA"); go(5)
@@ -1412,15 +1448,20 @@ FAMERetailPack = nil
 local okImport = run("import")
 check(okImport and IW:IsShown() and padShown == padBefore + 1, "/fame import opens it, and tells the gamepad layer")
 check(IW.status:GetText() == "Not installed", "with no pack it says so")
-check(IW.box:IsShown() and not IW.address:IsShown() and IW.box:GetText() == ns.ui.IMPORT_PAGE,
-    "with a keyboard, the page's address is in a box to copy from")
+check(IW.box:GetText() == ns.ui.IMPORT_PAGE and IW.box:HasFocus() and IW.box._highlighted,
+    "the page's address is in a box, focused and selected, so Ctrl+C copies it straight away")
 IW.box:SetText("oops"); IW.box._scripts.OnTextChanged(IW.box, true)
 check(IW.box:GetText() == ns.ui.IMPORT_PAGE, "typing over the address puts it back")
 check((IW.after:GetText() or ""):find("restart the game", 1, true), "and the steps end with restarting the game")
+IW:Hide()
 InputUtil = { IsGamepadUIEnabled = function() return true end }
-ns.ui:RefreshImport()
-check(not IW.box:IsShown() and IW.address:IsShown() and IW.address:GetText() == ns.ui.IMPORT_PAGE,
-    "with a gamepad, the address is plain text to read: no box to get stuck in")
+IW.box._highlighted = nil
+IW:Show()
+check(IW.box:IsShown() and IW.box:HasFocus() and IW.box._highlighted,
+    "with a gamepad too: the same box, selected, for Ctrl+C on a keyboard")
+IW.box._scripts.OnEscapePressed(IW.box)
+check(not IW:IsShown(), "Escape in the box closes the window, not just the box")
+IW:Show()
 InputUtil = nil
 FAMERetailPack = { format = 1, retail = "12.1.5.70961", imported = "2026-11-19", bytes = 2576980378,
                    tracks = { [53353] = "classic", [53354] = "classic", [228572] = "legion", [2844613] = "tbc" } }
@@ -1463,7 +1504,7 @@ local function freshSession()
     for _, t in ipairs(pending) do t.dead = true end
     local ns2 = {}
     ns = ns2
-    for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+    for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
         assert(loadfile(ROOT .. "/" .. file))(ADDON, ns2)
     end
     FAME = ns2.core
@@ -1495,6 +1536,96 @@ cvars.Sound_MusicVolume = "0.35"
 fire("CVAR_UPDATE", "Sound_MusicVolume")
 check(FAME.userVolume == 0.35 and ForeverAmbientMusicExtendedDB.userVolume == 0.35,
     "setting it once is remembered")
+
+------------------------------------------------------------------------------
+realPrint("\nwith the retail music pack")
+local function countPack()
+    local n, files = 0, true
+    for _, track in ipairs(ns.allTracks) do
+        if track.rid then
+            n = n + 1
+            files = files and track.file == "Interface\\AddOns\\" .. ADDON .. "_RetailPack\\Music\\" .. track.rid .. ".mp3"
+        end
+    end
+    return n, files
+end
+check(countPack() == 0, "without the pack, none of its tracks are in the pool")
+FAMERetailPack = { format = 1, tracks = { [53353] = "classic", [53354] = "classic", [999999999] = "tbc" } }
+for _, track in ipairs(ns.retailTracks) do
+    if track.era == "tbc" then FAMERetailPack.tracks[track.rid] = "tbc" break end
+end
+freshSession()
+local n, files = countPack()
+check(n == 3 and files, ("the tracks it lists join the pool, played from its Music folder (%d)"):format(n))
+local tbcCount = 0
+for _, track in ipairs(ns.allTracks) do if track.era == "tbc" then tbcCount = tbcCount + 1 end end
+check(tbcCount == 1 and ns.ERA_LABEL.tbc == "The Burning Crusade", "and bring eras FAME has nothing else from")
+check(ns.packTracks == 3, "an ID FAME doesn't know is ignored")
+local before = #log
+run("play 53353")
+go(2)
+local played
+for i = before + 1, #log do if log[i].play then played = log[i].play end end
+check(played == "Interface\\AddOns\\" .. ADDON .. "_RetailPack\\Music\\53353.mp3",
+    ("/fame play takes a retail ID, and plays the file, not the ID (%s)"):format(tostring(played)))
+FAMERetailPack = { format = 2, tracks = { [53353] = "classic" } }
+freshSession()
+check(countPack() == 0, "a pack in a layout this FAME can't read is left alone")
+
+-- Where pack tracks play, with all of it imported.
+FAMERetailPack = { format = 1, tracks = {} }
+for _, track in ipairs(ns.retailTracks) do FAMERetailPack.tracks[track.rid] = track.era end
+state.map, state.sub = 1442, ""
+freshSession()
+local function has(list, rid)
+    for _, track in ipairs(list) do if track.rid == rid then return true end end
+    return false
+end
+local function anyTagged(list, tag)
+    for _, track in ipairs(list) do
+        for _, t in ipairs(track.tags) do if t == tag then return track.name end end
+    end
+    return nil
+end
+local stonetalon = FAME:RetailFor(1442, nil)
+check(not anyTagged(stonetalon, "nightelf"),
+    ("no night elf music across Stonetalon: they live at the Peak, not the whole zone (%s)"):format(
+        tostring(anyTagged(stonetalon, "nightelf"))))
+check(has(stonetalon, 441760), "the zone's own Cataclysm music plays anywhere in it (mus_stonetalon_gu01)")
+check(has(FAME:RetailFor(1442, 467), 441527) and not has(stonetalon, 441527),
+    "Stonetalon Peak's night elf music plays at the Peak, and only there")
+state.sub = "Stonetalon Peak"
+fire("ZONE_CHANGED")
+check(FAME.ctx and FAME.ctx.retailArea == 467, "the Peak is recognised from the subzone name")
+check(has(FAME:ExtendedChoices(FAME.ctx.prof), 441527), "and its music is in the running there")
+state.sub = ""
+fire("ZONE_CHANGED")
+local inPool = false
+for _, track in ipairs(FAME:Pool(ns.zones[1442], false)) do inPool = inPool or track.rid ~= nil end
+check(not inPool, "pack tracks don't go through the open tag matching")
+local biggest, which = 0, nil
+for mapID in pairs(ns.zones) do
+    local zoneWide = {}
+    for _, area in ipairs({ ns.zoneMusic[mapID].area }) do
+        for _, track in ipairs(ns.retailTracks) do
+            for _, a in ipairs(track.at or {}) do if a == area then zoneWide[track] = true end end
+        end
+    end
+    local fitted = 0
+    for _, track in ipairs(FAME:RetailFor(mapID, nil)) do if not zoneWide[track] then fitted = fitted + 1 end end
+    if fitted > biggest then biggest, which = fitted, mapID end
+end
+check(biggest <= 80, ("no zone takes more than 80 by fit (most: %d, in %s)"):format(biggest, tostring(which)))
+local onlyNote
+for _, item in ipairs(FAME:ZoneTracks(1442)) do
+    if item.track.rid == 441527 then onlyNote = item.only end
+end
+check(onlyNote and onlyNote:find("Stonetalon Peak", 1, true),
+    ("the zone view says where such a track plays (%s)"):format(tostring(onlyNote)))
+check(FAME:RetailMissing(1442, true) == 0, "with all of it imported, nothing is missing for the list's pack row")
+local counts = FAME:RetailEraCounts()
+check(counts.cata and counts.cata.imported > 0 and counts.cata.missing == 0, "and Settings counts it all as imported")
+FAMERetailPack = nil
 
 realPrint(("\n%d failures"):format(failures))
 os.exit(failures > 0 and 1 or 0)
