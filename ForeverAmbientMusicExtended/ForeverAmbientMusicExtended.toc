@@ -8,6 +8,7 @@
 ## IconTexture: Interface\AddOns\ForeverAmbientMusicExtended\Media\logo
 
 Tracks.lua
+ForeverPlaces.lua
 LocalTracks.lua
 RetailTracks.lua
 Originals.lua

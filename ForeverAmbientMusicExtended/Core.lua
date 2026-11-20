@@ -69,7 +69,7 @@ ns.db = db
 -- music pack has tracks from it, so Settings lists it only with the pack.
 ns.ERAS = {
     { key = "classic",  label = "Classic" },
-    { key = "forever",  label = "Forever soundtrack" },
+    { key = "forever",  label = "Forever" },
     { key = "tbc",      label = "The Burning Crusade", retail = true },
     { key = "wrath",    label = "Wrath of the Lich King", retail = true },
     { key = "cata",     label = "Cataclysm" },
@@ -283,7 +283,7 @@ local function resolveContext()
     if atSea() then return nil, "elsewhere" end
 
     local ctx = { mapID = mapID, prof = prof, setID = zm.set, area = zm.area, introID = zm.intro }
-    ctx.retailArea = ns.packTracks > 0 and FAME:RetailAreaAt(mapID, GetSubZoneText()) or nil
+    ctx.placeArea = FAME:RetailAreaAt(mapID, GetSubZoneText())
     local sub = subzoneEntry(mapID, GetSubZoneText())
     if sub then
         ctx.area, ctx.introID = sub.area, sub.intro
@@ -433,7 +433,11 @@ function FAME:EraOn(era)
     return era == nil or db.eras[era] ~= false
 end
 
+-- Per-zone choices are kept under one ID for places with two (ns.zoneAlias).
+local function zoneKey(mapID) return mapID and ns.zoneAlias and ns.zoneAlias[mapID] or mapID end
+
 function FAME:ZoneOff(mapID, track)
+    mapID = zoneKey(mapID)
     local off = mapID and db.zoneOff[mapID]
     return off ~= nil and off[trackKey(track)] == true
 end
@@ -509,13 +513,16 @@ local function placedIn(mapID)
     return placed
 end
 
--- Called at load with the tracks the pack has.
-local function placeRetail(tracks)
+-- Called at load: every track with an `at`, retail or FAME's own (the
+-- areas the Forever client gives it, from ForeverPlaces.lua).
+local function subzoneEntryFor(area) return ns.retailAreas[area] or ns.foreverAreas[area] end
+
+local function placeTracks(tracks)
     local zoneOfArea = {}
     for mapID, zm in pairs(ns.zoneMusic) do zoneOfArea[zm.area] = mapID end
     for _, track in ipairs(tracks) do
         for _, area in ipairs(track.at or {}) do
-            local sub = ns.retailAreas[area]
+            local sub = subzoneEntryFor(area)
             if sub then
                 local placed = placedIn(sub[1])
                 placed.sub[area] = placed.sub[area] or {}
@@ -527,17 +534,20 @@ local function placeRetail(tracks)
     end
 end
 
--- The subzone the player is in, if retail gives it music of its own.
+-- The subzone the player is in, if the Forever client or retail gives it
+-- music of its own.
 local function retailAreaAt(mapID, subName)
     if not mapID or not subName or subName == "" then return nil end
     local index = retailNames[mapID]
     if not index then
         index = {}
-        for area, entry in pairs(ns.retailAreas) do
-            if entry[1] == mapID then
-                local localName = C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(area)
-                index[localName or entry[2]] = area
-                index[entry[2]] = index[entry[2]] or area
+        for _, areas in ipairs({ ns.foreverAreas, ns.retailAreas }) do
+            for area, entry in pairs(areas) do
+                if entry[1] == mapID then
+                    local localName = C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(area)
+                    index[localName or entry[2]] = area
+                    index[entry[2]] = index[entry[2]] or area
+                end
             end
         end
         retailNames[mapID] = index
@@ -678,7 +688,7 @@ function FAME:RetailFor(mapID, area, night, all)
     if not mapID or (not all and ns.packTracks == 0) then return out end
     local function add(list)
         for _, track in ipairs(list or {}) do
-            if not seen[track] and (all or track.file) and timeFits(track, night) then
+            if not seen[track] and track.rid and (all or track.file) and timeFits(track, night) then
                 seen[track] = true
                 out[#out + 1] = track
             end
@@ -698,6 +708,30 @@ function FAME:RetailFor(mapID, area, night, all)
 end
 
 function FAME:RetailAreaAt(mapID, subName) return retailAreaAt(mapID, subName) end
+
+-- FAME's own tracks that the Forever client plays in this zone (`area` as
+-- for RetailFor), whatever their tags say: back where Forever put them.
+function FAME:NativeFor(mapID, area, night)
+    local out = {}
+    local placed = mapID and retailPlaced[mapID]
+    if not placed then return out end
+    local seen = {}
+    local function add(list)
+        for _, track in ipairs(list or {}) do
+            if not track.rid and not seen[track] and timeFits(track, night) then
+                seen[track] = true
+                out[#out + 1] = track
+            end
+        end
+    end
+    add(placed.zone)
+    if area == true then
+        for _, list in pairs(placed.sub) do add(list) end
+    elseif area then
+        add(placed.sub[area])
+    end
+    return out
+end
 
 -- How many tracks the pack would add here that aren't imported: for the
 -- music window's "Retail music pack" row.
@@ -730,15 +764,15 @@ function FAME:RetailEraCounts()
     return counts
 end
 
--- "Stonetalon Peak, The Talon Den": the subzones of this zone where retail
--- plays the track, in the client's language.
-function FAME:RetailSubzones(mapID, track)
+-- "Stonetalon Peak, The Talon Den": the subzones of this zone the track is
+-- kept to (by retail or the Forever client), in the client's language.
+function FAME:PlacedSubzones(mapID, track)
     local names = {}
     local placed = retailPlaced[mapID]
     for area, list in pairs(placed and placed.sub or {}) do
         for _, t in ipairs(list) do
             if t == track then
-                local entry = ns.retailAreas[area]
+                local entry = subzoneEntryFor(area)
                 names[#names + 1] = (C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(area)) or entry[2]
                 break
             end
@@ -753,11 +787,15 @@ end
 function FAME:ExtendedChoices(prof, mapID)
     mapID = mapID or (self.ctx and self.ctx.mapID)
     local out = {}
+    local seen = {}
     for _, track in ipairs(self:Pool(prof)) do
-        if self:Allowed(track, mapID) then out[#out + 1] = track end
+        if self:Allowed(track, mapID) then out[#out + 1] = track; seen[track] = true end
     end
     if not prof.inn then
-        local area = self.ctx and self.ctx.mapID == mapID and self.ctx.retailArea or nil
+        local area = self.ctx and self.ctx.mapID == mapID and self.ctx.placeArea or nil
+        for _, track in ipairs(self:NativeFor(mapID, area, isNight())) do
+            if not seen[track] and self:Allowed(track, mapID) then out[#out + 1] = track; seen[track] = true end
+        end
         for _, track in ipairs(self:RetailFor(mapID, area, isNight())) do
             if self:Allowed(track, mapID) then out[#out + 1] = track end
         end
@@ -785,16 +823,29 @@ function FAME:TracksFor(profs, mapID, area)
         end
     end
     if mapID and not inn then
-        -- In the zone view, music retail keeps to some subzones says which.
+        local byTrack = {}
+        for _, item in ipairs(out) do byTrack[item.track] = item end
+        -- Tracks kept to some subzones say which, in the zone view.
         local everywhere = {}
         if area == true then
+            for _, track in ipairs(self:NativeFor(mapID, nil)) do everywhere[track] = true end
             for _, track in ipairs(self:RetailFor(mapID, nil)) do everywhere[track] = true end
         end
-        for _, track in ipairs(self:RetailFor(mapID, area)) do
-            local item = { track = track, day = timeFits(track, false), night = timeFits(track, true) }
-            if area == true and not everywhere[track] then item.only = self:RetailSubzones(mapID, track) end
+        local function add(track)
+            local day, night = timeFits(track, false), timeFits(track, true)
+            local item = byTrack[track]
+            if item then
+                -- Fits by tag too: wherever it plays, no subzone note.
+                item.day, item.night = item.day or day, item.night or night
+                return
+            end
+            item = { track = track, day = day, night = night }
+            if area == true and not everywhere[track] then item.only = self:PlacedSubzones(mapID, track) end
             out[#out + 1] = item
+            byTrack[track] = item
         end
+        for _, track in ipairs(self:NativeFor(mapID, area)) do add(track) end
+        for _, track in ipairs(self:RetailFor(mapID, area)) do add(track) end
     end
     table.sort(out, function(a, b)
         local ra, rb = ns.ERA_ORDER[a.track.era] or 99, ns.ERA_ORDER[b.track.era] or 99
@@ -1439,8 +1490,8 @@ function FAME:Evaluate()
     -- Same music, possibly a different zone (Orgrimmar and the Barrens share
     -- a set): keep playing, but draw future extended tracks from here.
     self.ctx.prof, self.ctx.mapID = ctx.prof, ctx.mapID
-    -- And from this subzone's retail music, if it has its own.
-    self.ctx.retailArea = ctx.retailArea
+    -- And from this subzone's own music, if it has any (Forever's or retail's).
+    self.ctx.placeArea = ctx.placeArea
 
     if ctx.area ~= self.area then
         self.area = ctx.area
@@ -1588,6 +1639,7 @@ function FAME:SetEra(era, on)
 end
 
 function FAME:SetZoneOff(mapID, track, off)
+    mapID = zoneKey(mapID)
     local key = trackKey(track)
     local zone = db.zoneOff[mapID]
     if off then
@@ -1603,6 +1655,7 @@ end
 
 -- Count of tracks taken out of a zone, for the window's zone picker.
 function FAME:ZoneOffCount(mapID)
+    mapID = zoneKey(mapID)
     local n = 0
     for _ in pairs(db.zoneOff[mapID] or {}) do n = n + 1 end
     return n
@@ -2062,4 +2115,7 @@ if type(pack) == "table" and pack.format == ns.PACK_FORMAT and type(pack.tracks)
     end
 end
 ns.retailAreas = ns.retailAreas or {}
-placeRetail(ns.retailTracks)
+ns.foreverAt, ns.foreverAreas = ns.foreverAt or {}, ns.foreverAreas or {}
+for _, track in ipairs(ns.builtinTracks) do track.at = ns.foreverAt[track.id] end
+placeTracks(ns.builtinTracks)
+placeTracks(ns.retailTracks)

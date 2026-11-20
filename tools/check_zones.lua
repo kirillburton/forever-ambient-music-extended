@@ -43,7 +43,7 @@ UnitFactionGroup = function() return "Alliance" end
 -- --- load the addon ------------------------------------------------------
 
 local ns = {}
-for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     local chunk, err = loadfile(ROOT .. "/" .. file)
     if not chunk then
         io.stderr:write("SYNTAX ERROR in " .. file .. ": " .. tostring(err) .. "\n")
@@ -153,9 +153,17 @@ end
 
 -- --- per-zone pools ------------------------------------------------------
 
-local function poolFor(prof, night)
+-- What the zone draws from without the retail pack: tracks that fit by tag,
+-- plus FAME's own tracks the Forever client plays anywhere in the zone
+-- (ForeverPlaces.lua).  Subzone-only placements aren't counted.
+local function poolFor(prof, night, mapID)
     FAME.pool, FAME.poolProf = nil, nil
-    return FAME:Pool(prof, night)
+    local pool, seen = {}, {}
+    for _, t in ipairs(FAME:Pool(prof, night)) do pool[#pool + 1] = t; seen[t] = true end
+    for _, t in ipairs(mapID and FAME:NativeFor(mapID, nil, night) or {}) do
+        if not seen[t] then pool[#pool + 1] = t; seen[t] = true end
+    end
+    return pool
 end
 
 local only = tonumber(arg[1])
@@ -167,7 +175,7 @@ if only then
         os.exit(1)
     end
     for _, phase in ipairs({ { "day", false }, { "night", true } }) do
-        local pool = poolFor(prof, phase[2])
+        local pool = poolFor(prof, phase[2], only)
         io.write(("\n=== uiMapID %d, %s: %d eligible\n"):format(only, phase[1], #pool))
         table.sort(pool, function(a, b)
             return table.concat(a.tags, " ") < table.concat(b.tags, " ")
@@ -198,8 +206,8 @@ io.write("uiMapID   day  night\n")
 local thin = {}
 for _, zoneID in ipairs(ids) do
     local prof = ns.zones[zoneID]
-    local d = #poolFor(prof, false)
-    local n = #poolFor(prof, true)
+    local d = #poolFor(prof, false, zoneID)
+    local n = #poolFor(prof, true, zoneID)
     io.write(("%-9d %4d  %5d\n"):format(zoneID, d, n))
     if d < 8 or n < 8 then thin[#thin + 1] = { zoneID, d, n } end
 end

@@ -385,6 +385,10 @@ ns.zones = {
 -- releases the music channel the moment you step into an instance.
 
 -- Goblin towns, attached after the fact so town() can copy the zone.
+-- Map IDs that are the same place as another: one entry in the music window,
+-- and the player's per-zone choices shared between them.
+ns.zoneAlias = { [2665] = 2521 }   -- Zephras Isle, continent-level map
+
 ns.zones[1413].towns = ns.zones[1413].towns or {}
 ns.zones[1413].towns[392] = town(ns.zones[1413])   -- Ratchet
 ns.zones[1434].towns = ns.zones[1434].towns or {}

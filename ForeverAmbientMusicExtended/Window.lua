@@ -67,7 +67,9 @@ local zoneList
 local function zones()
     if not zoneList then
         zoneList = {}
-        for mapID in pairs(ns.zones) do zoneList[#zoneList + 1] = mapID end
+        for mapID in pairs(ns.zones) do
+            if not (ns.zoneAlias and ns.zoneAlias[mapID]) then zoneList[#zoneList + 1] = mapID end
+        end
         table.sort(zoneList, function(a, b) return zoneName(a) < zoneName(b) end)
     end
     return zoneList
@@ -301,6 +303,28 @@ local function create()
     head.unbanAll = button(head, "Unban all", 100, function() FAME:UnbanAll() end)
     head.unbanAll:SetPoint("RIGHT", -8, 0)
 
+    -- On the Zones tab the zone's name is a dropdown of every zone, between
+    -- the arrows: the game's own dropdown (Blizzard_Menu), which Forever's
+    -- gamepad layer can drive.  Without it, the name stays plain text and
+    -- the arrows still step through.
+    local okDropdown, dropdown = pcall(CreateFrame, "DropdownButton", nil, head, "WowStyle1DropdownTemplate")
+    if okDropdown and dropdown and dropdown.SetupMenu then
+        dropdown:SetWidth(260)
+        dropdown:SetPoint("CENTER", head, "CENTER", 0, 7)
+        -- Kept on the frame as well, so the smoke test can open it.
+        dropdown.fameMenu = function(_, root)
+            if root.SetScrollMode then root:SetScrollMode(22 * 18) end
+            for _, mapID in ipairs(zones()) do
+                root:CreateRadio(zoneName(mapID),
+                    function() return state.zone == mapID end,
+                    function() ui:ShowZone(mapID) end)
+            end
+        end
+        dropdown:SetupMenu(dropdown.fameMenu)
+        dropdown:Hide()
+        head.zone = dropdown
+    end
+
     -- The inset holds the list and its pager ---------------------------------
     inset:ClearAllPoints()
     inset:SetPoint("TOPLEFT", 4, -148)
@@ -353,6 +377,7 @@ local function create()
 
     frame:SetScript("OnShow", function()
         state.zone = state.zone or (FAME.ctx and FAME.ctx.mapID) or zones()[1]
+        state.zone = (ns.zoneAlias and ns.zoneAlias[state.zone]) or state.zone
         ui:WireNavigation()
         ui:SelectTab(state.tab)
         local manager = gamepad()
@@ -403,6 +428,10 @@ end
 local function rows()
     local head = frame.head
     head.prev:Hide(); head.next:Hide(); head.unbanAll:Hide()
+    if head.zone then head.zone:Hide() end
+    head.title:Show()
+    head.count:ClearAllPoints()
+    head.count:SetPoint("TOP", head, "CENTER", 0, -2)
     local data = {}
     local empty
 
@@ -418,7 +447,7 @@ local function rows()
         if state.tab == TAB_HERE then
             local ctx = FAME.ctx
             if ctx then
-                mapID, profs, area = ctx.mapID, { ctx.prof }, ctx.retailArea
+                mapID, profs, area = ctx.mapID, { ctx.prof }, ctx.placeArea
                 where = ctx.inn or zoneName(ctx.mapID)
             else
                 head.title:SetText("Here")
@@ -431,6 +460,11 @@ local function rows()
             profs = nil
             where = zoneName(mapID)
             head.prev:Show(); head.next:Show()
+            if head.zone then
+                head.zone:Show()
+                -- The selection text follows arrows and clicks alike.
+                if head.zone.GenerateMenu then head.zone:GenerateMenu() end
+            end
         end
         local list = profs and FAME:TracksFor(profs, mapID, area) or FAME:ZoneTracks(mapID)
         local on = 0
@@ -445,6 +479,11 @@ local function rows()
         local missing = (mapID and not inn) and FAME:RetailMissing(mapID, packArea) or 0
         if missing > 0 then data[#data + 1] = { pack = { count = missing } } end
         head.title:SetText(where)
+        -- With the dropdown showing, it names the zone; the count sits below it.
+        local dropdownShown = head.zone and head.zone:IsShown()
+        head.title:SetShown(not dropdownShown)
+        head.count:ClearAllPoints()
+        head.count:SetPoint("TOP", head, "CENTER", 0, dropdownShown and -8 or -2)
         head.count:SetFormattedText("%d of %d extended tracks play here", on, #list)
         empty = "No extended tracks fit here. The game's own music plays as usual."
     end
@@ -578,9 +617,16 @@ function ui:WireNavigation()
         end)
     end
 
-    -- The band: < and > straight to each other.
-    set(head.prev, "RIGHT", head.next); set(head.next, "LEFT", head.prev)
-    for b, left in pairs({ [head.prev] = true, [head.next] = false, [head.unbanAll] = false }) do
+    -- The band: <, the zone dropdown, > in a row.
+    if head.zone then
+        set(head.prev, "RIGHT", head.zone); set(head.zone, "LEFT", head.prev)
+        set(head.zone, "RIGHT", head.next); set(head.next, "LEFT", head.zone)
+    else
+        set(head.prev, "RIGHT", head.next); set(head.next, "LEFT", head.prev)
+    end
+    local band = { [head.prev] = true, [head.next] = false, [head.unbanAll] = false }
+    if head.zone then band[head.zone] = true end
+    for b, left in pairs(band) do
         set(b, "UP", function() return nowSide(left) end)
         set(b, "DOWN", function() return rowEnd(true, left) or pagerSide(left) or tabSide(left) end)
     end
@@ -622,6 +668,11 @@ function ui:WireNavigation()
             return pagerSide(left) or rowEnd(false, left) or headSide(left) or nowSide(left)
         end)
     end
+end
+
+function ui:ShowZone(mapID)
+    state.zone = mapID
+    self:Rebuild(false)
 end
 
 function ui:StepZone(step)

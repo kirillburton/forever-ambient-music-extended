@@ -92,7 +92,7 @@ tracks play more often, so the same few don't come round again and again.
 **Settings > AddOns > FAME** goes from what most players want to what few do:
 
 1. **Extend the zone music**: FAME on or off.
-2. **Music from**: one checkbox per era, Classic, the Forever soundtrack,
+2. **Music from**: one checkbox per era, Classic, Forever,
    then Cataclysm through Midnight, each with its number of tracks beside it. Unticking an era takes its tracks out of
    the extended pool everywhere. The game's own music always plays.
 3. **Minimap button**: off unless you turn it on.

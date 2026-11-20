@@ -76,7 +76,7 @@ local function areaName(areaID)
         if zm.area == areaID then return zm.name end
         for _, row in ipairs(zm.sub) do if row[1] == areaID then return row[2] end end
     end
-    if ns.retailAreas and ns.retailAreas[areaID] then return ns.retailAreas[areaID][2] end
+    local e = ns.retailAreas and (ns.retailAreas[areaID] or ns.foreverAreas[areaID]); if e then return e[2] end
     return nil
 end
 C_Map = {
@@ -137,7 +137,7 @@ print = function(...)
 end
 
 ns = {}
-for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     assert(loadfile(ROOT .. "/" .. file))(ADDON, ns)
 end
 local FAME = ns.core
@@ -1300,8 +1300,29 @@ frames.main:Show()
 -- Zones tab, and the D-pad paths on it.
 ns.ui:SelectTab(2)
 local W = frames.main
-check(padFrom(W.head.prev, "right") == W.head.next and padFrom(W.head.next, "left") == W.head.prev,
-    "the D-pad goes straight from < to > and back, without dropping into the list")
+check(W.head.zone and padFrom(W.head.prev, "right") == W.head.zone and padFrom(W.head.zone, "right") == W.head.next
+      and padFrom(W.head.next, "left") == W.head.zone and padFrom(W.head.zone, "left") == W.head.prev,
+    "the D-pad goes < to the zone dropdown to > and back, without dropping into the list")
+do
+    -- The dropdown: every zone, the shown one selected, picking one shows it.
+    local radios = {}
+    local root = { CreateRadio = function(_, text, isSelected, select)
+        radios[#radios + 1] = { text = text, isSelected = isSelected, select = select }
+    end }
+    W.head.zone.fameMenu(W.head.zone, root)
+    local nZones = 0
+    for mapID in pairs(ns.zones) do if not ns.zoneAlias[mapID] then nZones = nZones + 1 end end
+    local selected = 0
+    for _, radio in ipairs(radios) do if radio.isSelected() then selected = selected + 1 end end
+    check(#radios == nZones and selected == 1, ("the zone dropdown lists all %d zones, one selected"):format(#radios))
+    check(W.head.zone:IsShown() and not W.head.title:IsShown(), "on the Zones tab it stands in for the zone's name")
+    local before = W.head.title:GetText()
+    local pick = radios[#radios].isSelected() and radios[1] or radios[#radios]
+    pick.select()
+    check(W.head.title:GetText() ~= before and pick.isSelected(), "picking a zone shows that zone")
+    ns.ui:StepZone(1); ns.ui:StepZone(-1)
+    check(pick.isSelected(), "and the arrows step on from there")
+end
 check(padFrom(W.now.skip, "down") == W.head.prev and padFrom(W.now.ban, "down") == W.head.next,
     "from the playing controls, down lands on the zone switcher")
 check(padFrom(W.head.prev, "down") == list.rows[1].check and padFrom(W.head.next, "down") == list.rows[1].preview,
@@ -1504,7 +1525,7 @@ local function freshSession()
     for _, t in ipairs(pending) do t.dead = true end
     local ns2 = {}
     ns = ns2
-    for _, file in ipairs({ "Tracks.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+    for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
         assert(loadfile(ROOT .. "/" .. file))(ADDON, ns2)
     end
     FAME = ns2.core
@@ -1596,7 +1617,7 @@ check(has(FAME:RetailFor(1442, 467), 441527) and not has(stonetalon, 441527),
     "Stonetalon Peak's night elf music plays at the Peak, and only there")
 state.sub = "Stonetalon Peak"
 fire("ZONE_CHANGED")
-check(FAME.ctx and FAME.ctx.retailArea == 467, "the Peak is recognised from the subzone name")
+check(FAME.ctx and FAME.ctx.placeArea == 467, "the Peak is recognised from the subzone name")
 check(has(FAME:ExtendedChoices(FAME.ctx.prof), 441527), "and its music is in the running there")
 state.sub = ""
 fire("ZONE_CHANGED")
@@ -1626,6 +1647,35 @@ check(FAME:RetailMissing(1442, true) == 0, "with all of it imported, nothing is 
 local counts = FAME:RetailEraCounts()
 check(counts.cata and counts.cata.imported > 0 and counts.cata.missing == 0, "and Settings counts it all as imported")
 FAMERetailPack = nil
+
+------------------------------------------------------------------------------
+realPrint("\nwhere the Forever client plays FAME's own tracks")
+freshSession()
+do
+    local function named(list, name)
+        for _, track in ipairs(list) do if track.name == name then return true end end
+        return false
+    end
+    check(ns.ERA_LABEL.forever == "Forever", "the era is called just \"Forever\", like the others")
+    local felwood = FAME:ExtendedChoices(ns.zones[1448], 1448)
+    check(named(felwood, "mus_c_cursed_land_1") and not named(FAME:Pool(ns.zones[1448], false), "mus_c_cursed_land_1"),
+        "Felwood's cursed-land music plays in Felwood, where Forever puts it, though its tags alone wouldn't")
+    local sub, subArea
+    for area, entry in pairs(ns.foreverAreas) do
+        if entry[1] == 2548 then sub, subArea = entry[2], area break end
+    end
+    local onlyThere
+    for _, track in ipairs(FAME:NativeFor(2548, subArea)) do
+        local zoneWide = false
+        for _, t in ipairs(FAME:NativeFor(2548, nil)) do if t == track then zoneWide = true end end
+        if not zoneWide then onlyThere = track break end
+    end
+    check(sub and onlyThere, ("Riverglades' subzones have Forever music of their own (%s)"):format(tostring(sub)))
+    check(onlyThere and not named(FAME:NativeFor(2548, nil), onlyThere.name), "and it stays in its subzone")
+    local inFelwood = 0
+    for _, track in ipairs(felwood) do if track.rid then inFelwood = inFelwood + 1 end end
+    check(inFelwood == 0, "without the pack, still no retail tracks")
+end
 
 realPrint(("\n%d failures"):format(failures))
 os.exit(failures > 0 and 1 or 0)
