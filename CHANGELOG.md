@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.1.0
+
+Music from modern WoW, if you want it, placed with care. Plus finer control over what plays where.
+
+Features:
+- music from modern WoW (optional):
+  - FAME can now play zone music from every era of the retail game - The Burning Crusade to Midnight, and the Classic pieces Forever lacks. Blizzard's music can't ship with an addon, so a small script puts it on your own computer: copied from your installed retail game if you have one, otherwise downloaded from Blizzard's own servers. Every file is checked against Blizzard's checksum
+  - Settings > AddOns > FAME > Import music (right under the eras), or /fame import, shows where to get the script and what you have. It runs on Windows, Mac, Linux and the Steam Deck, and only uses what your system already has
+  - it all goes into its own addon folder, ForeverAmbientMusicExtended_RetailPack. Updating FAME never touches it, and deleting that folder removes it
+  - placed with care, not sprinkled everywhere. Cataclysm rebuilt the old world's music area by area, and Forever kept the areas, so that music plays exactly where retail plays it - Stonetalon Peak's night elf themes at the Peak, not across Stonetalon. Everything else plays only where it fits a zone's own land and people, at most 80 tracks a zone, mixed across expansions so no single one takes over
+  - The Burning Crusade and Wrath of the Lich King appear in Settings once you have their music, and every era shows how many retail tracks it adds
+- Not in this zone - a new button next to Never play again, and /fame remove. Takes the playing track out of this zone only, instead of banning it everywhere. Tick it again in the music window to undo
+- the zone name on the Zones tab opens a menu of every zone, grouped by continent. Pick one with the mouse or the D-pad; the arrows still step through them
+- Forever's own music now also plays wherever the Forever client itself puts it, subzone by subzone - Felwood's cursed-land music in Felwood, the Forever themes in Riverglades' and Zephras Isle's subzones
+
+Changes:
+- the minimap button is on by default. Left-click opens the music window, right-click Settings. If you turned it off, it stays off
+- Import music sits right under the eras in Settings, where the retail counts point
+- the "Forever soundtrack" era is now just "Forever"
+- tracks that only play in some subzones say so in the zone view ("only in Stonetalon Peak")
+- Zephras Isle appears once in the music window, and your choices cover both of its maps
+- with a gamepad, the import window's address is selected too, ready for Ctrl+C
+
+What's next:
+- the Windows import script is new: if you try it, please report how it went
+- adding tracks to a zone, any track, anywhere you like
+- evening out volume between tracks
+
 ## 2.0.0
 
 FAME gets its first UI: a settings page and a music window. Both are built from the game's own parts, so they look and behave like the rest of the interface, and both work fully with a gamepad - nothing needs a mouse.

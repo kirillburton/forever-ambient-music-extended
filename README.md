@@ -17,8 +17,13 @@ more variety. When you want a say in what plays, there's a settings page and
 a music window, both built from the game's own parts and fully playable with
 a gamepad.
 
+Optionally, it can also play zone music from modern WoW, which
+[a small script](https://kirillburton.github.io/forever-ambient-music-extended/import/)
+puts on your own computer (see [Music from modern WoW](#music-from-modern-wow-optional)).
+
 **No Blizzard audio is bundled with or distributed by this addon.** Every
-track it plays is a file your Forever client already has.
+track it plays is a file your Forever client already has, or one you
+imported yourself.
 
 - [For players](#for-players): install, what to expect, commands
 - [For developers](#for-developers): how tracks are chosen, the data
@@ -79,6 +84,10 @@ its tags is welcome (see [How a track gets chosen](#how-a-track-gets-chosen)).
 A zone with nothing suitable plays only the game's own music rather than
 reaching for something that doesn't fit.
 
+FAME's tracks also play wherever the Forever client itself puts them, subzone
+by subzone, whatever their tags say: Felwood's cursed-land music in Felwood,
+the Forever themes in Riverglades' subzones.
+
 ### Coverage
 
 All 46 Classic zones and cities, plus the new Forever zones: Mount Hyjal,
@@ -87,16 +96,46 @@ have 20–60 extended tracks to draw from; none has fewer than twelve. If you
 narrow a place down below eight (switching most eras off, say), the game's own
 tracks play more often, so the same few don't come round again and again.
 
+## Music from modern WoW (optional)
+
+FAME can also play zone music from every era of the retail game: The
+Burning Crusade to Midnight, and the Classic pieces Forever lacks. That
+music is Blizzard's, so FAME can't ship it. Instead, a small script puts it
+on your own computer, copied from your installed retail game if you have
+one, otherwise downloaded from Blizzard's own servers, with every file
+checked against Blizzard's checksum.
+
+1. Open **Settings > AddOns > FAME > Import music** (or type `/fame import`)
+   for the address, or go straight to
+   [the instructions page](https://kirillburton.github.io/forever-ambient-music-extended/import/).
+2. Paste one line into PowerShell (Windows), Terminal (Mac) or a terminal
+   (Linux, Steam Deck), and pick the expansions you want.
+3. Restart the game.
+
+The music goes into its own addon folder,
+`_forever_/Interface/AddOns/ForeverAmbientMusicExtended_RetailPack`.
+Updating FAME never touches it, and deleting the folder removes it all.
+Run the script again any time to add or remove expansions.
+
+It's placed with care. Cataclysm rebuilt the old world's music area by
+area and Forever kept the areas, so that music plays exactly where retail
+plays it: Stonetalon Peak's night elf themes at the Peak, not across
+Stonetalon. Everything else plays only where it fits a zone's own land and
+people, at most 80 tracks a zone, mixed across expansions. The Burning
+Crusade and Wrath of the Lich King appear in Settings once you have their
+music.
+
 ## Settings and the music window
 
 **Settings > AddOns > FAME** goes from what most players want to what few do:
 
 1. **Extend the zone music**: FAME on or off.
 2. **Music from**: one checkbox per era, Classic, Forever,
-   then Cataclysm through Midnight, each with its number of tracks beside it. Unticking an era takes its tracks out of
-   the extended pool everywhere. The game's own music always plays. Right
-   under them, **Import music** shows how to add music from modern WoW, and
-   what you already have.
+   then Cataclysm through Midnight, each with its number of tracks beside it
+   ("89 tracks · +36 from retail" with the retail pack). Unticking an era
+   takes its tracks out of the extended pool everywhere. The game's own
+   music always plays. Right under them, **Import music** shows how to add
+   music from modern WoW, and what you already have.
 3. **Minimap button**: on unless you turn it off.
    Left-click opens the music window, right-click these settings. It finds
    a spot clear of other addons' minimap buttons; drag it with the mouse to
@@ -110,14 +149,19 @@ tracks play more often, so the same few don't come round again and again.
 "Open the music window" (Key Bindings > AddOns), or the minimap button.
 
 - **Now playing** across the top: the track, its era and time, with
-  **Skip**, **Play extended now** and **Never play again**.
+  **Skip**, **Play extended now**, **Not in this zone** (out of this zone
+  only, as unticking it below does) and **Never play again** (everywhere).
 - **Here**: every extended track that fits where you're standing. Untick a
   track to stop it playing in this zone. Other zones keep it. **Preview**
   plays its first 20 seconds, then the music carries on as if a track had
   ended. A track that's banned, from an era you've turned off, or plays only
-  by day or by night says so in its row.
-- **Zones**: the same for any zone, stepped through with `<` and `>`.
-  Choices for a zone also cover the towns and coves inside it.
+  by day or by night says so in its row. Without the retail pack, the list
+  ends with a greyed **Retail music pack** row saying how many tracks it
+  would add here.
+- **Zones**: the same for any zone. Step through with `<` and `>`, or press
+  the zone's name for a menu of every zone, grouped by continent. Choices
+  for a zone also cover the towns and coves inside it, and tracks that play
+  only in some subzones say where.
 - **Banned**: your bans, with **Unban** and **Unban all**.
 
 ### With a gamepad
@@ -130,7 +174,8 @@ Long lists come in pages of ten with Previous and Next page buttons rather
 than a scrolling list, since the gamepad navigation moves through plain
 buttons best. Every D-pad direction is set explicitly: left and right stay
 within a row of controls, up and down stay in a column, and the zone
-switcher's `<` and `>` lead straight to each other. Nothing needs a mouse:
+switcher runs `<`, zone name, `>` in a row, with down from the name landing
+on the shown zone in its menu. Nothing needs a mouse:
 no hovering, right-clicking, dragging or typing.
 
 The window closes when combat starts and opens again once it ends. In
@@ -147,10 +192,12 @@ setting's current value.
 |---|---|
 | `/fame ui` | open the music window |
 | `/fame settings` | open FAME's page in Settings |
+| `/fame import` | music from modern WoW: where to get it, and what you have |
 | `/fame status` | what's playing, how far in, and what comes next |
 | `/fame skip` | end this track the way it would end anyway: into the usual silence, or straight to the next track with Loop Music on |
 | `/fame next` | play an extended track now |
-| `/fame ban` | stop this track and never play it again |
+| `/fame remove` | stop this track and never play it in this zone again |
+| `/fame ban` | stop this track and never play it again, anywhere |
 | `/fame banlist` | your banned tracks, with the zone each was banned in |
 | `/fame unban <id>` \| `all` | allow one banned track again, or all of them |
 | `/fame chance <0-100>` | share of tracks that are the game's own (default 40) |
@@ -161,7 +208,7 @@ setting's current value.
 |---|---|
 | `/fame where` | where FAME thinks you are, which music set applies, silences, Loop Music, volume |
 | `/fame pool [n]` | the extended tracks that fit here |
-| `/fame play <id>` | play a track by its file ID |
+| `/fame play <id>` | play a track by its file ID (or retail ID, for an imported one) |
 | `/fame scan <id> …` | check which file IDs your client has |
 | `/fame debug` | print every decision to chat |
 
@@ -212,15 +259,19 @@ meantime, `/fame ban` gets rid of it.
 
 ```
 ForeverAmbientMusicExtended/   the addon, exactly as it ships
-  Core.lua                     scheduler, location, volume, commands
+  Core.lua                     scheduler, location, volume, commands, placement
   Options.lua                  the Settings page
-  Window.lua                   the music window, key binding, minimap entry
+  Window.lua                   the music window, zone menu, key binding, minimap entry
+  Import.lua                   the "Music from modern WoW" window
   Bindings.xml                 the "Open the music window" key binding
-  Zones.lua                    zone profiles, towns, coves, inns   (hand-written)
+  Zones.lua                    zone profiles, towns, coves, inns, retail fit   (hand-written)
   Tracks.lua                   the extended pool                  (generated)
+  ForeverPlaces.lua            where the Forever client plays those tracks   (generated)
+  RetailTracks.lua             the retail pack's tracks: IDs, tags, places, no audio   (generated)
   Originals.lua                the game's own music rules         (generated)
   LocalTracks.lua              your own audio files               (generated, ships empty)
   Media/                       logo, and a generated silent mp3
+docs/import/                   the import page, scripts and track list (GitHub Pages)
 tools/                         data pipeline, tests, packaging
 art/                           logo source (SVG) and a 512 px PNG
 ```
@@ -267,7 +318,7 @@ Each track carries tags on three axes, plus an optional time of day:
 - **culture**: `human` `dwarf` `gnome` `nightelf` `highelf` `orc` `tauren`
   `troll` `undead` `goblin` `naga` `draenei` `pandaren` `dragon` `demon`
   `centaur` `tuskarr` `earthen` `arathi` `kultiran` `drust` `vrykul`
-  `nerubian` `pirate` `wild`
+  `nerubian` `pirate` `titan` `wild`
 - **mood**: `calm` `melancholy` `mysterious` `eerie` `ominous` `heroic`
   `sacred` `festive` `somber` `tense` `grand` `playful`
 - **time**: `day` or `night`, or neither for a track that fits any hour
@@ -312,6 +363,32 @@ bans (everywhere), eras switched off in Settings (each track's `era` field in
 `Tracks.lua`), and tracks unticked for one zone in the music window (saved
 per uiMapID). They apply only to the extended pool. The game's own tracks,
 its silences and intros are never filtered by them.
+
+**Where the Forever client puts a track.** `ForeverPlaces.lua` records, for
+each of FAME's tracks, the areas whose music set includes it in the Forever
+client's own `AreaTable`/`ZoneMusic`. A track is in the pool there whatever
+its tags say: anywhere in the zone for the zone's own area, only in that
+subzone for a subzone (recognised by `GetSubZoneText()`, in the client's
+language). Areas named "DELETE ME" or "UNUSED" are left out.
+
+**The retail pack** (`RetailTracks.lua`, only the tracks the player's
+`Pack.lua` lists) doesn't go through the open matching: it's several times
+FAME's own pool and would bury every zone's character. Two routes instead:
+
+- *Where retail plays it.* Cataclysm's old-world music is placed area by
+  area, and Forever kept the area IDs, so each track's `at` lists the Forever
+  areas retail plays it in, zone-wide or per subzone, as above.
+- *Fitting the zone's strict list,* `ns.retailFit` in `Zones.lua`: only the
+  land and people that define the zone, plus kindred peoples (Drustvar's
+  music in Duskwood). The first biome is the zone's signature, which a track
+  naming no people must carry. Of the tracks that fit, the closest 80 are
+  kept, turn about by era, with at most 6 variations of one piece and 20
+  from one expansion (`RETAIL_CAP`, `PER_FAMILY`, `PER_ERA` in `Core.lua`).
+  The choice is made from the whole list, imported or not, so a zone's
+  music doesn't shift with which expansions a player imported.
+
+`lua tools/retail_report.lua` shows what every zone gets, and
+`lua tools/retail_report.lua 1442` one zone in full.
 
 **Small pools.** The extended share is capped at one eighth of the pool size
 (`SMALL_POOL` in `Core.lua`), so where fewer than eight extended tracks fit,
@@ -402,25 +479,36 @@ None is shipped: the `Music` folder and `LocalTracks.lua` are empty.
 Local files are checked once per session before their first play, and any
 the client can't load are skipped.
 
-### Retail music catalogue (groundwork)
+### The retail music pack
 
-`tools/retail_catalog.csv` lists every music file the retail client ships
-that Forever does not, with its era, length, where retail plays it and a
-first set of FAME tags. It is not used by the addon yet, and no zone
-lists it. Regenerate it with an installed retail client:
+The pack's data is built from an installed retail client, sharing the
+`Data` folder with Forever:
 
 ```
-python3 tools/retail_catalog.py
+python3 tools/retail_catalog.py      # tools/retail_catalog.csv: every retail-only music file, tagged
+python3 tools/make_retail_tracks.py  # RetailTracks.lua: the `world` and `sibling` rows, with retail's areas
+python3 tools/make_forever_places.py # ForeverPlaces.lua (Forever's own placements, no retail needed)
+python3 tools/make_import_list.py    # docs/import/retail-pack.tsv: what the import scripts fetch
+lua tools/retail_report.lua          # what each zone ends up with
 ```
 
-It reads both clients' manifests from the shared local `Data` folder. It
-uses retail's own zone-music tables (via wago.tools) to see where each track
-plays, and the wowdev community listfile for file names. Durations are
-measured from the local archives with ffprobe, and the audio is deleted at
-once. Tags come from `tools/retail_zone_tags.csv` (one row per zone),
-refined by the music set's name, with `tools/retail_tag_overrides.csv` for
-single tracks. The `status` column says which rows are ambient candidates:
-`world` and `sibling`, plus `reused` and `unlinked` after a look.
+- **`retail_catalog.py`** reads both clients' manifests from the local
+  `Data` folder, retail's zone-music tables to see where each track plays,
+  and the wowdev community listfile for names. Tags come from
+  `tools/retail_zone_tags.csv` (one row per zone), refined by the music set's
+  name. Old `zonemusic/<place>/` tracks that another zone borrows take
+  `<place>`'s tags instead. `tools/retail_tag_overrides.csv` has the final
+  word. The `status` column marks the pack: `world` and `sibling`.
+- **`make_import_list.py`** records, per track, its encoding key (also its
+  checksum), size, where it sits on Blizzard's CDN and its chunk layout, so
+  the scripts can fetch and unwrap it without understanding Blizzard's
+  formats. The scripts download this list every time they run, so
+  regenerating it and pushing fixes every player's next import.
+- **`docs/import/`** is published by GitHub Pages: the page, `import-retail.sh`
+  (Mac, Linux, Steam Deck: bash, curl, od, awk) and `import-retail.ps1`
+  (Windows PowerShell 5.1). Bump `VERSION` and both scripts'
+  `SCRIPT_VERSION` together when either changes, so older copies say to
+  update.
 
 ## Packaging and releases
 

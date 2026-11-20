@@ -17,19 +17,25 @@ variety.
 
 ---
 
-## New in 2.0: settings and a music window
+## New in 2.1: music from modern WoW, if you want it
 
-FAME now has a UI, built from the game's own parts so it looks and behaves
-like the rest of the interface, and **fully playable with a gamepad**.
+- **Optional: zone music from every era of the retail game**, from The
+  Burning Crusade to Midnight. Blizzard's music can't ship with an addon, so
+  a small script puts it on your own computer: copied from your retail game
+  if you have it, otherwise from Blizzard's own servers, every file checked.
+  **Settings > AddOns > FAME > Import music** shows where to get it. Windows,
+  Mac, Linux and Steam Deck.
+- **Placed with care.** Cataclysm's old-world music plays exactly where
+  retail plays it, subzone by subzone. Everything else plays only where it
+  fits a zone's own land and people, mixed across expansions.
+- **Not in this zone:** take the playing track out of one zone, instead of
+  banning it everywhere.
+- **A zone menu** in the music window: every zone, grouped by continent.
+- **Forever's own music** now also plays wherever the Forever client puts
+  it, subzone by subzone.
 
-- **Choose your eras.** Only here for the Cataclysm pieces? Untick the rest.
-- **Edit tracklists.** See every extended track that can play in a zone,
-  preview it for 20 seconds, and untick what doesn't fit for you.
-- **Bans in one place.** Everything you've banned, with Unban and Unban all.
-- **A minimap button**, if you want one.
-
-This is the first version of the UI. For now tracklists let you take tracks
-out of a zone; adding tracks to a zone is planned for the next release.
+Without the import, FAME works exactly as before: everything it plays is
+already in your Forever client.
 
 ---
 
@@ -73,9 +79,11 @@ its tags fit. A night elf lament won't wander into Orgrimmar.
 **Settings > AddOns > FAME**, from what most players want to what few do:
 
 - turn FAME on or off;
-- **Music from:** one checkbox per era, with its number of tracks;
-- **Minimap button:** left-click for settings, right-click for the music
-  window. It sits down next to other addons' buttons, not on top of them;
+- **Music from:** one checkbox per era, with its number of tracks, and
+  **Import music** right under them;
+- **Minimap button** (on unless you turn it off): left-click for the music
+  window, right-click for settings. It sits down next to other addons'
+  buttons, not on top of them;
 - how often the game's own tracks play, and **Game's track on arrival**;
 - **Edit tracklists** and **Show banned tracks**.
 
@@ -85,9 +93,10 @@ its tags fit. A night elf lament won't wander into Orgrimmar.
 - **Here:** every extended track that can play where you're standing.
   Untick one to stop it playing in this zone, or preview it.
 - **Zones:** the same for any zone, so you can tune Westfall from Stormwind.
+  Press the zone's name for a menu of every zone.
 - **Banned:** everything you've banned.
-- Along the top, what's playing, with **Skip**, **Play extended now** and
-  **Never play again**.
+- Along the top, what's playing, with **Skip**, **Play extended now**,
+  **Not in this zone** and **Never play again**.
 
 **With a gamepad:** the window opens like any game window, so Forever's own
 gamepad navigation moves through it. D-pad to move, A to tick, preview or
@@ -115,10 +124,12 @@ Everything is also in the UI, but if you prefer chat:
 |---|---|
 | `/fame ui` | open the music window |
 | `/fame settings` | open FAME's settings |
+| `/fame import` | music from modern WoW: where to get it |
 | `/fame status` | what's playing, and what comes next |
 | `/fame skip` | end this track as it would end anyway |
 | `/fame next` | play an extended track now |
-| `/fame ban` | never play this track again |
+| `/fame remove` | never play this track in this zone again |
+| `/fame ban` | never play this track again, anywhere |
 | `/fame banlist` | banned tracks, and where |
 | `/fame unban <id>` or `/fame unban all` | allow banned tracks again |
 | `/fame on`, `/fame off` | run FAME, or leave the music to the game |
@@ -136,7 +147,8 @@ Forever soundtrack, and 116 across Cataclysm, Mists, Warlords, Legion,
 Battle for Azeroth, Shadowlands, Dragonflight, The War Within and Midnight.
 
 **No Blizzard audio is bundled with or distributed by this addon.** Every
-track FAME plays is a file your Forever client already has.
+track FAME plays is a file your Forever client already has, or one you
+imported yourself.
 
 ## Plays well with Spoken Quests
 
