@@ -19,14 +19,20 @@
 #   bash import-retail.sh --local-only       never download; retail must be installed
 #   bash import-retail.sh --cdn-only         ignore an installed retail game
 #
+# On Linux and the Steam Deck it finds the game inside Steam's Proton
+# prefixes (SD cards included), Lutris, Bottles or ~/.wine; --wow also takes
+# a prefix folder.  Run it as yourself, not with sudo.
+#
 # Safe to stop and run again: tracks already in place are skipped.
-# Needs only what macOS ships with: bash, curl, xxd, awk, md5.
+# Needs only what macOS and Linux ship with: bash, curl, od, awk, md5 or md5sum.
 #
 # Instructions and the latest version: https://kirillburton.github.io/forever-ambient-music-extended/import/
 
 set -u
+# Plain C conventions for every tool: ls columns, decimal points, sorting.
+export LC_ALL=C
 
-SCRIPT_VERSION=1
+SCRIPT_VERSION=2
 LIST_FORMAT=1
 PAGE="https://kirillburton.github.io/forever-ambient-music-extended/import/"
 PACK_NAME="ForeverAmbientMusicExtended_RetailPack"
@@ -74,7 +80,11 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-for tool in curl xxd awk head tail; do
+# Files made by root inside the user's game folder couldn't be changed or
+# removed by them afterwards.
+[ "$(id -u)" != 0 ] || die "Please run this as yourself, without sudo: it only writes into your own game folder."
+
+for tool in curl od awk head tail fold; do
     command -v "$tool" >/dev/null 2>&1 || die "This script needs '$tool', which isn't installed."
 done
 if command -v md5 >/dev/null 2>&1; then md5of() { md5 -q "$1"; }
@@ -104,7 +114,73 @@ fi
 # Find World of Warcraft
 # --------------------------------------------------------------------------
 
-is_wow() { [ -f "$1/.build.info" ] && [ -d "$1/_forever_" ]; }
+# On Linux, Battle.net runs under Wine or Proton, and the folders inside a
+# prefix are case-sensitive while the game isn't: a hand-made "Addons" is the
+# same folder to the game as "AddOns".  So every path below the game folder is
+# looked up without regard to case, and an existing folder is always used
+# rather than a second one made beside it.
+ci_path() {  # ci_path DIR NAME -> DIR/<NAME as it exists on disk>, or DIR/NAME
+    local e want
+    if [ -e "$1/$2" ]; then printf '%s' "$1/$2"; return; fi
+    want=$(printf '%s' "$2" | tr 'A-Z' 'a-z')
+    for e in "$1"/* "$1"/.[!.]*; do
+        [ -e "$e" ] || continue
+        if [ "$(basename "$e" | tr 'A-Z' 'a-z')" = "$want" ]; then printf '%s' "$e"; return; fi
+    done
+    printf '%s' "$1/$2"
+}
+is_wow() { [ -f "$1/.build.info" ] && [ -d "$(ci_path "$1" _forever_)" ]; }
+
+# Every World of Warcraft folder with WoW: Forever in it, one per line.
+find_wow() {
+    local roots="" r lib prefix d
+    # Steam (native, Debian, Flatpak, Snap): Battle.net added as a non-Steam
+    # game runs in a Proton prefix, steamapps/compatdata/<number>/pfx.  Every
+    # library Steam knows, which is how an SD card is found on the Deck.
+    for r in "$HOME/.local/share/Steam" "$HOME/.steam/steam" "$HOME/.steam/debian-installation" \
+             "$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam" \
+             "$HOME/.var/app/com.valvesoftware.Steam/data/Steam" \
+             "$HOME/snap/steam/common/.local/share/Steam"; do
+        [ -d "$r/steamapps" ] || continue
+        roots="$roots$r"$'\n'
+        for lib in "$r/steamapps/libraryfolders.vdf" "$r/config/libraryfolders.vdf"; do
+            [ -f "$lib" ] && roots="$roots$(sed -n 's/^[[:space:]]*"path"[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$lib")"$'\n'
+        done
+    done
+    # Libraries on removable drives Steam may not list (an SD card on the Deck).
+    for r in /run/media/*/steamapps /run/media/*/*/steamapps /media/*/*/steamapps; do
+        [ -d "$r" ] && roots="$roots$(dirname "$r")"$'\n'
+    done
+    {
+        printf '%s' "$roots" | while IFS= read -r r; do
+            [ -n "$r" ] || continue
+            for prefix in "$r"/steamapps/compatdata/*/pfx; do printf '%s\n' "$prefix"; done
+        done
+        # Lutris (~/Games/<name>), Bottles (native or Flatpak), plain Wine.
+        for prefix in "$HOME"/Games/* "$HOME/.wine" "$HOME"/.local/share/bottles/bottles/* \
+                      "$HOME"/.var/app/com.usebottles.bottles/data/bottles/bottles/*; do
+            printf '%s\n' "$prefix"
+        done
+    } | while IFS= read -r prefix; do
+        for d in "$prefix/drive_c/Program Files (x86)/World of Warcraft" \
+                 "$prefix/drive_c/Program Files/World of Warcraft"; do
+            is_wow "$d" && (cd "$d" && pwd -P)
+        done
+    done
+    # macOS.
+    for d in "/Applications/World of Warcraft" "$HOME/Applications/World of Warcraft" \
+             "$HOME/Games/World of Warcraft"; do
+        is_wow "$d" && (cd "$d" && pwd -P)
+    done
+}
+
+# --wow may name the game folder, or a Wine/Proton prefix holding it.
+if [ -n "$WOW" ] && ! is_wow "$WOW"; then
+    for d in "$WOW/drive_c/Program Files (x86)/World of Warcraft" "$WOW/drive_c/Program Files/World of Warcraft" \
+             "$WOW/pfx/drive_c/Program Files (x86)/World of Warcraft" "$WOW/pfx/drive_c/Program Files/World of Warcraft"; do
+        if is_wow "$d"; then WOW="$d"; break; fi
+    done
+fi
 if [ -z "$WOW" ]; then
     # Run from inside the game folder (e.g. from FAME's own folder)?  Walk up.
     d=$(cd "$(dirname "$0")" && pwd)
@@ -114,15 +190,29 @@ if [ -z "$WOW" ]; then
     done
 fi
 if [ -z "$WOW" ]; then
-    for d in "/Applications/World of Warcraft" "$HOME/Applications/World of Warcraft" \
-             "$HOME/Games/World of Warcraft"; do
-        if is_wow "$d"; then WOW="$d"; break; fi
-    done
+    FOUND=$(find_wow | awk '!seen[$0]++')
+    count=$(printf '%s' "$FOUND" | awk 'NF' | wc -l | tr -d ' ')
+    if [ "$count" = 1 ]; then
+        WOW="$FOUND"
+    elif [ "$count" -gt 1 ]; then
+        say "World of Warcraft: Forever is installed in more than one place:"
+        printf '%s\n' "$FOUND" | awk 'NF { printf "  %d  %s\n", NR, $0 }'
+        [ "$ASSUME_YES" = 1 ] && die "Say which with --wow \"/path/to/World of Warcraft\"."
+        printf 'Which one should the music go into? Its number: '
+        read -r pick || pick=""
+        WOW=$(printf '%s\n' "$FOUND" | awk -v n="$pick" 'NF && NR == n')
+        [ -n "$WOW" ] || die "No such number. Run again, or say which with --wow \"/path/to/World of Warcraft\"."
+        say ""
+    fi
 fi
-[ -n "$WOW" ] || die "Couldn't find World of Warcraft. Tell the script where it is:
-  bash import-retail.sh --wow \"/path/to/World of Warcraft\""
+[ -n "$WOW" ] || die "Couldn't find World of Warcraft: Forever. Tell the script where it is:
+  bash import-retail.sh --wow \"/path/to/World of Warcraft\"
+On Linux that's inside the Wine or Proton prefix Battle.net runs in, e.g.
+  ~/.local/share/Steam/steamapps/compatdata/<number>/pfx/drive_c/Program Files (x86)/World of Warcraft"
 is_wow "$WOW" || die "\"$WOW\" doesn't look like the World of Warcraft folder (no _forever_ or .build.info in it)."
-ADDONS="$WOW/_forever_/Interface/AddOns"
+FOREVER_DIR=$(ci_path "$WOW" _forever_)
+INTERFACE_DIR=$(ci_path "$FOREVER_DIR" Interface)
+ADDONS=$(ci_path "$INTERFACE_DIR" AddOns)
 [ -d "$ADDONS" ] || die "No _forever_/Interface/AddOns folder. Start WoW: Forever once, then run this again."
 ok "World of Warcraft: $WOW"
 
@@ -185,10 +275,10 @@ LOCAL="$WORK/local.tsv"
 if [ "$USE_LOCAL" = 1 ]; then
     printf '  reading the retail archive index…'
     le32() {  # little-endian uint32 at byte $2 of file $1
-        local h; h=$(xxd -p -s "$2" -l 4 "$1")
+        local h; h=$(od -An -v -tx1 -j "$2" -N 4 "$1" | tr -d ' \n')
         printf '%d' "$((16#${h:6:2}${h:4:2}${h:2:2}${h:0:2}))"
     }
-    for idx in $(ls "$WOW/Data/data" | awk '/^[0-9a-f]{10}\.idx$/ {
+    for idx in $(ls "$WOW/Data/data" | awk 'length($0) == 14 && /^[0-9a-f]+\.idx$/ {
                      b = substr($0, 1, 2); v = substr($0, 3, 8)
                      if (!(b in best) || v > best[b]) { best[b] = v; name[b] = $0 } }
                  END { for (b in name) print name[b] }'); do
@@ -197,7 +287,8 @@ if [ "$USE_LOCAL" = 1 ]; then
         pos=$(( (8 + hs + 15) / 16 * 16 ))
         len=$(le32 "$f" "$pos")
         # 18-byte records: 9-byte key, 5-byte big-endian archive/offset, 4-byte LE size
-        xxd -p -c 18 -s $((pos + 8)) -l "$len" "$f"
+        od -An -v -tx1 -j $((pos + 8)) -N "$len" "$f" | tr -d ' \n' | fold -w 36
+        echo
     done | awk -v want_file="$LIST" '
         function hex(s,   i, n) { n = 0; for (i = 1; i <= length(s); i++) n = n * 16 + index("0123456789abcdef", substr(s, i, 1)) - 1; return n }
         BEGIN { while ((getline line < want_file) > 0) if (line !~ /^#/) { split(line, f, "\t"); w[substr(f[4], 1, 18)] = 1 } }
@@ -216,8 +307,8 @@ fi
 # Which expansions
 # --------------------------------------------------------------------------
 
-PACK="$ADDONS/$PACK_NAME"
-MUSIC="$PACK/Music"
+PACK=$(ci_path "$ADDONS" "$PACK_NAME")
+MUSIC=$(ci_path "$PACK" Music)
 mkdir -p "$MUSIC" || die "Couldn't create $MUSIC"
 
 # What's already there: "<fileDataID> <bytes>" for every finished track.
@@ -232,7 +323,7 @@ awk -F'\t' -v have_file="$HAVE" '
     $1 == "# era" { n++; key[n] = $2; label[n] = $3; idx[$2] = n; next }
     /^#/ { next }
     { e = idx[$2]; t[e]++; b[e] += $5; s[e] += $3; if (have[$1] == $5) a[e]++ }
-    END { for (i = 1; i <= n; i++) printf "%d\t%s\t%s\t%d\t%d\t%.1f\t%d\n", i, key[i], label[i], t[i], b[i], s[i] / 3600, a[i] }
+    END { for (i = 1; i <= n; i++) printf "%d\t%s\t%s\t%d\t%.0f\t%.1f\t%d\n", i, key[i], label[i], t[i], b[i], s[i] / 3600, a[i] }
 ' "$LIST" > "$ERA_TABLE"
 
 say ""
@@ -241,7 +332,8 @@ while IFS=$'\t' read -r n key label tracks bytes hours already; do
     mark=""; [ "$already" -gt 0 ] && mark=" ${GRN}($already already imported)${R}"
     printf '  %2d  %-24s %5d tracks  %5s h  %9s%s\n' "$n" "$label" "$tracks" "$hours" "$(human "$bytes")" "$mark"
 done < "$ERA_TABLE"
-total_bytes=$(awk -F'\t' '{ s += $5 } END { print s }' "$ERA_TABLE")
+# Byte counts pass 2 GB: printed with %.0f, which every awk keeps whole.
+total_bytes=$(awk -F'\t' '{ s += $5 } END { printf "%.0f", s }' "$ERA_TABLE")
 say "      ${DIM}all of them: $(human "$total_bytes")${R}"
 say ""
 
@@ -285,7 +377,7 @@ awk -F'\t' -v sel="$SELECTED" -v have_file="$HAVE" '
     /^#/ { next }
     index(sel, " " $2 " ") > 0 && have[$1] != $5' "$LIST" > "$TODO"
 todo_n=$(wc -l < "$TODO" | tr -d ' ')
-todo_bytes=$(awk -F'\t' '{ s += $5 } END { print s + 0 }' "$TODO")
+todo_bytes=$(awk -F'\t' '{ s += $5 } END { printf "%.0f", s }' "$TODO")
 
 if [ "$todo_n" = 0 ]; then
     ok "Everything you chose is already imported."
@@ -405,7 +497,7 @@ ls -ln "$MUSIC" | awk '$9 ~ /^[0-9]+\.mp3$/ { sub(/\.mp3$/, "", $9); print $9, $
         /^#/ { next }
         have[$1] == $5 { n++; bytes += $5; line[n] = "        [" $1 "] = \"" $2 "\"," }
         END {
-            printf "    bytes = %d,\n    tracks = {\n", bytes
+            printf "    bytes = %.0f,\n    tracks = {\n", bytes
             for (i = 1; i <= n; i++) print line[i]
             print "    },"
         }' "$LIST"

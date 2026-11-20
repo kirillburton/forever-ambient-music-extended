@@ -4,127 +4,258 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FAME Retail Music Import</title>
-<meta name="description" content="Add music from modern World of Warcraft to Forever Ambient Music Extended, from your own computer.">
+<meta name="description" content="Add zone music from modern World of Warcraft to Forever Ambient Music Extended, from your own computer.">
 <style>
 :root {
-    --bg: #f6f4ef; --panel: #ffffff; --ink: #1d1b16; --muted: #6b665c; --line: #e2ddd2;
-    --accent: #7a5a12; --code-bg: #f1ede4; --warn: #8a5a00;
+    --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b16; --muted: #6b665c; --line: #e4dfd4;
+    --accent: #8a6514; --accent-soft: #f3ead6; --code-bg: #f1ede4;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-    :root { --bg: #16140f; --panel: #1f1c16; --ink: #ece7dc; --muted: #a39d90; --line: #36312a;
-            --accent: #d8b25a; --code-bg: #2a261f; --warn: #e0b04f; }
+    :root { --bg: #15130f; --panel: #1e1b15; --ink: #ece7dc; --muted: #a39d90; --line: #343028;
+            --accent: #dcb65e; --accent-soft: #2c261a; --code-bg: #29251e; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink);
        font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-main { max-width: 760px; margin: 0 auto; padding: 40px 16px 72px; }
-h1 { font-size: 28px; line-height: 1.25; margin: 0 0 8px; }
-h2 { font-size: 20px; margin: 40px 0 12px; }
-h3 { font-size: 16px; margin: 24px 0 8px; }
-p, li { max-width: 68ch; }
-.lede { font-size: 18px; color: var(--muted); margin: 0 0 24px; }
+main { max-width: 700px; margin: 0 auto; padding: 48px 16px 80px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; letter-spacing: -0.01em; }
+h2 { font-size: 21px; margin: 48px 0 14px; }
+p { margin: 0 0 12px; }
 a { color: var(--accent); }
-code { font-family: var(--mono); font-size: .9em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
-pre { font-family: var(--mono); font-size: 14px; background: var(--code-bg); padding: 14px 16px;
-      border-radius: 8px; overflow-x: auto; position: relative; margin: 10px 0 16px; padding-right: 76px; }
-pre code { background: none; padding: 0; }
-.copy { position: absolute; top: 8px; right: 8px; font: 12px/1 -apple-system, sans-serif; padding: 6px 10px;
-        border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); cursor: pointer; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 16px 0; }
-.note { border-left: 3px solid var(--warn); padding: 2px 0 2px 14px; margin: 16px 0; }
-ol li, ul li { margin: 6px 0; }
+.lede { font-size: 18px; color: var(--muted); margin-bottom: 28px; }
+code { font-family: var(--mono); font-size: .88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+
+/* Three short facts */
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.fact b { display: block; margin-bottom: 4px; }
+.fact span { color: var(--muted); font-size: 14px; line-height: 1.5; display: block; }
+@media (max-width: 620px) { .facts { grid-template-columns: 1fr; } }
+
+/* Platform tabs */
+.tabs { display: flex; gap: 4px; padding: 4px; background: var(--code-bg); border-radius: 10px; margin-bottom: 14px; }
+.tabs button { flex: 1; font: inherit; font-size: 15px; padding: 8px 6px; border: 0; border-radius: 7px;
+               background: transparent; color: var(--muted); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--panel); color: var(--ink); font-weight: 600;
+                                     box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px 22px 12px; }
+.panel h3 { display: none; margin: 0 0 12px; font-size: 17px; }
+.no-js .tabs { display: none; }
+.no-js .panel { margin-bottom: 14px; }
+.no-js .panel h3 { display: block; }
+.steps { list-style: none; counter-reset: step; padding: 0; margin: 0; }
+.steps > li { counter-increment: step; position: relative; padding-left: 38px; margin: 0 0 16px; }
+.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px;
+                      border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+                      font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.cmd { position: relative; margin: 8px 0 4px; }
+.cmd pre { margin: 0; font-family: var(--mono); font-size: 13.5px; line-height: 1.5; background: var(--code-bg);
+           padding: 12px 84px 12px 14px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+.copy { position: absolute; top: 7px; right: 7px; font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        padding: 7px 12px; border: 0; border-radius: 6px; background: var(--accent); color: var(--panel); cursor: pointer; }
+.copy.done { background: #2f8a4a; color: #fff; }
+.tip { border-top: 1px solid var(--line); margin: 4px -22px 0; padding: 12px 22px 2px; font-size: 14px; color: var(--muted); }
+
+/* What you get */
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 15px; }
-th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+th, td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 600; font-size: 13px; }
 td.num, th.num { text-align: right; }
 tfoot td { font-weight: 600; border-bottom: 0; }
-.table-wrap { overflow-x: auto; }
-.muted { color: var(--muted); }
-footer { margin-top: 56px; font-size: 14px; color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 18px; }
+
+/* Questions */
+details { border-bottom: 1px solid var(--line); }
+details:first-of-type { border-top: 1px solid var(--line); }
+summary { cursor: pointer; padding: 13px 0; font-weight: 600; list-style: none; position: relative; padding-right: 24px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; position: absolute; right: 2px; top: 11px; color: var(--muted); font-weight: 400; font-size: 20px; }
+details[open] summary::after { content: "\2212"; }
+details > div { padding: 0 0 14px; }
+details > div p:last-child { margin-bottom: 0; }
+
+footer { margin-top: 56px; font-size: 13px; color: var(--muted); }
+
+/* Phones: the command gets the full width, with Copy under it. */
+td.num { white-space: nowrap; }
+@media (max-width: 560px) {
+    main { padding-top: 32px; }
+    h1 { font-size: 26px; }
+    .panel { padding: 18px 16px 8px; }
+    .tip { margin: 4px -16px 0; padding: 12px 16px 2px; }
+    .steps > li { padding-left: 34px; }
+    .cmd pre { padding-right: 14px; font-size: 13px; }
+    .copy { position: static; display: block; width: 100%; margin-top: 6px; padding: 10px; font-size: 14px; }
+    table { font-size: 14px; }
+    .card { padding: 6px 12px; }
+}
 </style>
 </head>
-<body>
+<body class="no-js">
 <main>
-<h1>Music from modern WoW for FAME</h1>
-<p class="lede">An optional add-on for <a href="https://github.com/kirillburton/forever-ambient-music-extended">Forever Ambient
-Music Extended</a>: over 3,000 zone music tracks from every era of the game, added to WoW: Forever's rotation.</p>
+<h1>Music from modern WoW</h1>
+<p class="lede">An optional add-on for <a href="https://github.com/kirillburton/forever-ambient-music-extended">Forever
+Ambient Music Extended</a>: zone music from every era of the game, mixed into WoW: Forever.</p>
 
-<p>FAME can't ship this music: it belongs to Blizzard. Instead, a small script puts it on your own
-computer. It copies each track from your installed retail game if you have one, and otherwise
-downloads it from Blizzard's own servers, the same ones the Battle.net app uses. Every file is
-checked against Blizzard's checksum. Nothing is hosted here or sent anywhere.</p>
-
-<p>The music goes into its own addon folder, <code>ForeverAmbientMusicExtended_RetailPack</code>, next to
-FAME. Updating FAME never touches it, and deleting that folder removes it all.</p>
-
-<h2>What you can add</h2>
-<p>Pick any of these when the script asks. All of it is music the game itself plays as open-world
-zone music; dungeon, raid, combat and cutscene music is left out.</p>
-<div class="card table-wrap">
-<table>
-  <thead><tr><th>Expansion</th><th class="num">Tracks</th><th class="num">Hours</th><th class="num">Size</th></tr></thead>
-  <tbody id="eras"><tr><td colspan="4" class="muted">Loading the track list…</td></tr></tbody>
-  <tfoot><tr><td>All</td><td class="num" id="t-tracks"></td><td class="num" id="t-hours"></td><td class="num" id="t-size"></td></tr></tfoot>
-</table>
-<p class="muted" id="list-meta" style="margin:10px 0 0;font-size:14px"></p>
+<div class="facts">
+  <div class="fact"><b>Your own copy</b><span>The music is Blizzard's, so FAME can't ship it. A small script puts it on your computer.</span></div>
+  <div class="fact"><b>Straight from Blizzard</b><span>Copied from your retail game if you have it, otherwise from Blizzard's servers. Every file is checked.</span></div>
+  <div class="fact"><b>Easy to remove</b><span>It goes into its own addon folder. Delete the folder and it's gone.</span></div>
 </div>
 
-<h2>On a Mac</h2>
-<ol>
-  <li>Quit World of Warcraft (or just restart it at the end).</li>
-  <li>Open <b>Terminal</b> (in Applications → Utilities).</li>
-  <li>Paste this and press Return. It downloads the script into your home folder and runs it:
-<pre><code>curl -fsSLO https://kirillburton.github.io/forever-ambient-music-extended/import/import-retail.sh &amp;&amp; bash import-retail.sh</code></pre>
-  </li>
-  <li>Type the numbers of the expansions you want (or <code>all</code>) and press Return.</li>
-  <li>Start WoW: Forever. FAME picks the music up by itself.</li>
-</ol>
-<p>Prefer to download it yourself? <a href="import-retail.sh" download>import-retail.sh</a>, then run
-<code>bash ~/Downloads/import-retail.sh</code>. It's plain text, so you can read it first. It needs nothing
-macOS doesn't already have.</p>
+<h2>Install</h2>
+<div class="tabs" role="tablist" aria-label="Your computer">
+  <button role="tab" id="tab-win" aria-controls="win" aria-selected="false">Windows</button>
+  <button role="tab" id="tab-mac" aria-controls="mac" aria-selected="false">Mac</button>
+  <button role="tab" id="tab-linux" aria-controls="linux" aria-selected="false">Linux &amp; Steam Deck</button>
+</div>
 
-<h2>On Windows</h2>
-<p>A PowerShell version is on its way.</p>
+<section class="panel" id="win" role="tabpanel" aria-labelledby="tab-win">
+  <h3>Windows</h3>
+  <ol class="steps">
+    <li>Open <b>PowerShell</b>: press Start, type <code>PowerShell</code>, press Enter.</li>
+    <li>Paste this line and press Enter:
+      <div class="cmd"><pre>curl.exe -fsSLO https://kirillburton.github.io/forever-ambient-music-extended/import/import-retail.ps1; powershell -ExecutionPolicy Bypass -File import-retail.ps1</pre></div>
+    </li>
+    <li>Type the numbers of the expansions you want, or <code>all</code>, and press Enter.</li>
+    <li>Restart WoW: Forever.</li>
+  </ol>
+  <p class="tip">If it says it can't write into the game folder, open PowerShell with <b>Run as administrator</b> and
+  paste the line again. <code>-ExecutionPolicy Bypass</code> only lets this one script run; no setting changes.</p>
+</section>
 
-<h2>Good to know</h2>
-<ul>
-  <li><b>Run it again any time</b> to add or remove expansions. Tracks you already have are skipped,
-  and a stopped import carries on where it left off.</li>
-  <li><b>Retail installed?</b> Then nothing is downloaded except what's missing from it. Not installed?
-  Everything comes from Blizzard's servers; about 6 GB takes 10–20 minutes on a typical connection.</li>
-  <li><b>WoW installed somewhere else?</b> Tell the script where:
-  <code>bash import-retail.sh --wow "/path/to/World of Warcraft"</code></li>
-  <li><b>No questions:</b> <code>--eras cata,mop</code> or <code>--all</code>. Use <code>--local-only</code> to never
-  download, <code>--cdn-only</code> to ignore an installed retail game.</li>
-  <li><b>A /reload isn't enough</b> after importing: the game only finds new addon files when it starts.</li>
-  <li><b>To remove it all,</b> delete <code>_forever_/Interface/AddOns/ForeverAmbientMusicExtended_RetailPack</code>.</li>
-</ul>
+<section class="panel" id="mac" role="tabpanel" aria-labelledby="tab-mac">
+  <h3>Mac</h3>
+  <ol class="steps">
+    <li>Open <b>Terminal</b> (Applications &rarr; Utilities).</li>
+    <li>Paste this line and press Return:
+      <div class="cmd"><pre>curl -fsSLO https://kirillburton.github.io/forever-ambient-music-extended/import/import-retail.sh &amp;&amp; bash import-retail.sh</pre></div>
+    </li>
+    <li>Type the numbers of the expansions you want, or <code>all</code>, and press Return.</li>
+    <li>Restart WoW: Forever.</li>
+  </ol>
+</section>
 
-<h2>If something fails</h2>
-<p>Download the script again with the command above: it fetches the current track list every time
-it runs, and this page always has the latest version. When Blizzard patches the game, some
-tracks can move; the list here is updated to follow. If a track still fails, please
-<a href="https://github.com/kirillburton/forever-ambient-music-extended/issues">open an issue</a> with what
-the script printed.</p>
+<section class="panel" id="linux" role="tabpanel" aria-labelledby="tab-linux">
+  <h3>Linux &amp; Steam Deck</h3>
+  <ol class="steps">
+    <li>On a Steam Deck, switch to Desktop Mode (Steam &rarr; Power &rarr; Switch to Desktop), open this page there,
+    and open <b>Konsole</b>. Elsewhere, open a terminal.</li>
+    <li>Paste this line (right-click &rarr; Paste) and press Enter:
+      <div class="cmd"><pre>curl -fsSLO https://kirillburton.github.io/forever-ambient-music-extended/import/import-retail.sh &amp;&amp; bash import-retail.sh</pre></div>
+    </li>
+    <li>Type the numbers of the expansions you want, or <code>all</code>, and press Enter.</li>
+    <li>Restart WoW: Forever (on the Deck, back in Gaming Mode).</li>
+  </ol>
+  <p class="tip">It finds the game in Steam's Proton folders (SD card included), Lutris, Bottles or Wine.
+  Run it as yourself, not with <code>sudo</code>.</p>
+</section>
+
+<p class="small muted" style="margin-top:12px">Restart the game rather than typing <code>/reload</code>: the game only notices new addon files when it starts.</p>
+
+<h2>What you get</h2>
+<p>Pick any mix when the script asks. FAME plays each track only in zones it suits, so the music stays in
+character wherever you are.</p>
+<div class="card">
+<table>
+  <thead><tr><th>Expansion</th><th class="num">Tracks</th><th class="num">Hours</th><th class="num">Size</th></tr></thead>
+  <tbody id="eras"><tr><td colspan="4" class="muted">Loading the track list&hellip;</td></tr></tbody>
+  <tfoot><tr><td>All</td><td class="num" id="t-tracks"></td><td class="num" id="t-hours"></td><td class="num" id="t-size"></td></tr></tfoot>
+</table>
+</div>
+<p class="small muted" id="list-meta" style="margin-top:8px"></p>
+
+<h2>Questions</h2>
+<details>
+  <summary>Can I add or remove expansions later?</summary>
+  <div><p>Yes: run the same line again and choose differently. Tracks you already have are skipped, and it
+  offers to remove the ones you didn't choose this time. A stopped import carries on where it left off.</p></div>
+</details>
+<details>
+  <summary>How long does it take?</summary>
+  <div><p>With the retail game installed, a few minutes: the music is copied from it. Without it, everything is
+  downloaded: all of it is about 6 GB, roughly 10&ndash;20 minutes on a typical connection.</p></div>
+</details>
+<details>
+  <summary>It can't find my game</summary>
+  <div><p>Add <code>--wow</code> and the path to your <code>World of Warcraft</code> folder to the end of the line, for example
+  <code>--wow "D:\Games\World of Warcraft"</code>. To find the folder: in the Battle.net app, click the gear next to
+  Play, then <i>Show in Explorer</i> (Windows) or <i>Show in Finder</i> (Mac). On Linux it's inside the Wine or Proton
+  folder Battle.net runs in, e.g. <code>~/.local/share/Steam/steamapps/compatdata/&lt;number&gt;/pfx</code>.</p></div>
+</details>
+<details>
+  <summary>Can I skip the questions?</summary>
+  <div><p>Add options to the end of the line: <code>--eras cata,mop</code> or <code>--all</code> to choose expansions,
+  <code>--yes</code> to answer yes, <code>--local-only</code> to never download, <code>--cdn-only</code> to ignore an
+  installed retail game.</p></div>
+</details>
+<details>
+  <summary>How do I remove it?</summary>
+  <div><p>Delete the folder <code>ForeverAmbientMusicExtended_RetailPack</code> in
+  <code>World of Warcraft/_forever_/Interface/AddOns</code>. Updating or removing FAME never touches it.</p></div>
+</details>
+<details>
+  <summary>Can I read the script first?</summary>
+  <div><p>Of course: <a href="import-retail.ps1" download>import-retail.ps1</a> for Windows,
+  <a href="import-retail.sh" download>import-retail.sh</a> for Mac and Linux. They're plain text and use only what
+  your system already has. Nothing is sent anywhere.</p></div>
+</details>
+<details>
+  <summary>Something failed</summary>
+  <div><p>Run the same line again: it always fetches the latest script and track list, and retries what failed.
+  If a track still fails, Blizzard has probably moved it; please
+  <a href="https://github.com/kirillburton/forever-ambient-music-extended/issues">open an issue</a> with what the
+  script printed.</p></div>
+</details>
 
 <footer>
-  <p>Script version <span id="version">…</span>. Not affiliated with Blizzard Entertainment. World of Warcraft
-  and its music are © Blizzard Entertainment; this project distributes none of it.</p>
+  <p>Script version <span id="version">&hellip;</span>. Not affiliated with Blizzard Entertainment. World of Warcraft and
+  its music are &copy; Blizzard Entertainment; this project distributes none of it.</p>
 </footer>
 </main>
 
 <script>
 "use strict";
-document.querySelectorAll("pre").forEach(pre => {
-    if (!navigator.clipboard) return;
+document.body.classList.remove("no-js");
+
+// Platform tabs: the visitor's own system first.
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+function select(id) {
+    for (const t of tabs) {
+        const on = t.getAttribute("aria-controls") === id;
+        t.setAttribute("aria-selected", on);
+        t.tabIndex = on ? 0 : -1;
+        document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    }
+}
+tabs.forEach((t, i) => {
+    t.addEventListener("click", () => select(t.getAttribute("aria-controls")));
+    t.addEventListener("keydown", e => {
+        const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        const next = tabs[(i + step + tabs.length) % tabs.length];
+        select(next.getAttribute("aria-controls")); next.focus();
+    });
+});
+const ua = navigator.userAgent;
+select(/Windows/.test(ua) ? "win" : /Mac/.test(ua) && !/iPhone|iPad/.test(ua) ? "mac" : /Linux|X11|CrOS/.test(ua) ? "linux" : "win");
+
+// Copy buttons.
+for (const box of document.querySelectorAll(".cmd")) {
+    if (!navigator.clipboard) break;
     const b = document.createElement("button");
     b.className = "copy"; b.type = "button"; b.textContent = "Copy";
-    b.onclick = () => navigator.clipboard.writeText(pre.innerText.replace(/Copy(ied)?$/, "").trim())
-        .then(() => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy", 1500); });
-    pre.appendChild(b);
-});
+    b.onclick = () => navigator.clipboard.writeText(box.querySelector("pre").textContent.trim()).then(() => {
+        b.textContent = "Copied"; b.classList.add("done");
+        setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1500);
+    });
+    box.appendChild(b);
+}
 
+// The expansion table, from the same list the scripts use.
 const human = b => b >= 1073741824 ? (b / 1073741824).toFixed(1) + " GB" : Math.round(b / 1048576) + " MB";
 fetch("VERSION").then(r => r.ok ? r.text() : "").then(t => { document.getElementById("version").textContent = t.trim() || "?"; });
 fetch("retail-pack.tsv").then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }).then(text => {
@@ -132,7 +263,7 @@ fetch("retail-pack.tsv").then(r => { if (!r.ok) throw new Error(r.status); retur
     for (const line of text.split("\n")) {
         if (!line) continue;
         const f = line.split("\t");
-        if (f[0] === "# era") { const e = { key: f[1], label: f[2], n: 0, s: 0, b: 0 }; eras.push(e); byKey[f[1]] = e; }
+        if (f[0] === "# era") { const e = { label: f[2], n: 0, s: 0, b: 0 }; eras.push(e); byKey[f[1]] = e; }
         else if (f[0].startsWith("# ")) meta[f[0].slice(2)] = f[1];
         else if (byKey[f[1]]) { const e = byKey[f[1]]; e.n++; e.s += +f[2]; e.b += +f[4]; }
     }
@@ -149,8 +280,7 @@ fetch("retail-pack.tsv").then(r => { if (!r.ok) throw new Error(r.status); retur
     document.getElementById("t-tracks").textContent = n;
     document.getElementById("t-hours").textContent = (s / 3600).toFixed(1);
     document.getElementById("t-size").textContent = human(b);
-    document.getElementById("list-meta").textContent =
-        "Track list for retail " + meta.retail + ", updated " + meta.generated + ".";
+    document.getElementById("list-meta").textContent = "Track list for retail " + meta.retail + ", updated " + meta.generated + ".";
 }).catch(() => {
     document.getElementById("eras").innerHTML = '<tr><td colspan="4" class="muted">Couldn\'t load the track list.</td></tr>';
 });
