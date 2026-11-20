@@ -1575,6 +1575,8 @@ check(FAME.userVolume == 0.35 and ForeverAmbientMusicExtendedDB.userVolume == 0.
 
 ------------------------------------------------------------------------------
 realPrint("\nwith the retail music pack")
+-- A function of its own: Lua 5.4 allows 200 locals in the main chunk.
+;(function()
 local function countPack()
     local n, files = 0, true
     for _, track in ipairs(ns.allTracks) do
@@ -1662,11 +1664,12 @@ check(FAME:RetailMissing(1442, true) == 0, "with all of it imported, nothing is 
 local counts = FAME:RetailEraCounts()
 check(counts.cata and counts.cata.imported > 0 and counts.cata.missing == 0, "and Settings counts it all as imported")
 FAMERetailPack = nil
+end)()
 
 ------------------------------------------------------------------------------
 realPrint("\nwhere the Forever client plays FAME's own tracks")
 freshSession()
-do
+;(function()
     local function named(list, name)
         for _, track in ipairs(list) do if track.name == name then return true end end
         return false
@@ -1690,7 +1693,7 @@ do
     local inFelwood = 0
     for _, track in ipairs(felwood) do if track.rid then inFelwood = inFelwood + 1 end end
     check(inFelwood == 0, "without the pack, still no retail tracks")
-end
+end)()
 
 realPrint(("\n%d failures"):format(failures))
 os.exit(failures > 0 and 1 or 0)
