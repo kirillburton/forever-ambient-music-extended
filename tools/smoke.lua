@@ -1300,28 +1300,41 @@ frames.main:Show()
 -- Zones tab, and the D-pad paths on it.
 ns.ui:SelectTab(2)
 local W = frames.main
-check(W.head.zone and padFrom(W.head.prev, "right") == W.head.zone and padFrom(W.head.zone, "right") == W.head.next
+check(padFrom(W.head.prev, "right") == W.head.zone and padFrom(W.head.zone, "right") == W.head.next
       and padFrom(W.head.next, "left") == W.head.zone and padFrom(W.head.zone, "left") == W.head.prev,
-    "the D-pad goes < to the zone dropdown to > and back, without dropping into the list")
+    "the D-pad goes < to the zone button to > and back, without dropping into the list")
 do
-    -- The dropdown: every zone, the shown one selected, picking one shows it.
-    local radios = {}
-    local root = { CreateRadio = function(_, text, isSelected, select)
-        radios[#radios + 1] = { text = text, isSelected = isSelected, select = select }
-    end }
-    W.head.zone.fameMenu(W.head.zone, root)
+    -- The zone button: the list becomes every zone, the shown one marked.
+    local shown = W.head.zone:GetText()
+    check(W.head.zone:IsShown() and not W.head.title:IsShown() and shown == W.head.title:GetText(),
+        "on the Zones tab the zone's name is a button")
+    check(W.head.prev._point[5] == 0 and W.head.zone._point[5] == 0 and W.head.next._point[5] == 0
+          and W.head.zone._point[3] == "CENTER", "the arrows and the button sit on the band's middle line")
+    check(W.head.count._point[1] == "RIGHT", "with the count at the band's right end")
+    W.head.zone:Click()
     local nZones = 0
     for mapID in pairs(ns.zones) do if not ns.zoneAlias[mapID] then nZones = nZones + 1 end end
-    local selected = 0
-    for _, radio in ipairs(radios) do if radio.isSelected() then selected = selected + 1 end end
-    check(#radios == nZones and selected == 1, ("the zone dropdown lists all %d zones, one selected"):format(#radios))
-    check(W.head.zone:IsShown() and not W.head.title:IsShown(), "on the Zones tab it stands in for the zone's name")
-    local before = W.head.title:GetText()
-    local pick = radios[#radios].isSelected() and radios[1] or radios[#radios]
-    pick.select()
-    check(W.head.title:GetText() ~= before and pick.isSelected(), "picking a zone shows that zone")
-    ns.ui:StepZone(1); ns.ui:StepZone(-1)
-    check(pick.isSelected(), "and the arrows step on from there")
+    local menu = W.picker
+    check(menu:IsShown() and #menu.entries == nZones, ("pressed, it opens a menu of all %d zones, on one panel"):format(#menu.entries))
+    check(#list.rows == 0 and not W.pager:IsShown(), "over the track list, with no paging")
+    local current, other
+    for _, e in ipairs(menu.entries) do
+        if e.selected:IsShown() then current = e elseif not other then other = e end
+    end
+    check(current and current.text:GetText() == shown, "the zone shown is marked")
+    check(padFrom(W.head.zone, "down") == current, "down from the button lands on it")
+    local c1, c2 = menu.columns[1], menu.columns[2]
+    check(c1 and c2 and padFrom(c1[1], "down") == c1[2] and padFrom(c1[1], "right") == c2[1]
+          and padFrom(c1[1], "up") == W.head.zone, "the D-pad moves down the columns, across them, and back up to the band")
+    local target = other.text:GetText()
+    other:Click()
+    check(W.head.zone:GetText() == target and not menu:IsShown() and list.rows[1] and list.rows[1].check:IsShown(),
+        "picking a zone shows it, and closes the menu")
+    W.head.zone:Click(); W.head.zone:Click()
+    check(W.head.zone:GetText() == target and list.rows[1].check:IsShown(), "pressing the button again closes the list")
+    ns.ui:StepZone(1)
+    check(W.head.zone:GetText() ~= target, "and the arrows still step")
+    ns.ui:StepZone(-1)
 end
 check(padFrom(W.now.skip, "down") == W.head.prev and padFrom(W.now.ban, "down") == W.head.next,
     "from the playing controls, down lands on the zone switcher")

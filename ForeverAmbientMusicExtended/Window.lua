@@ -39,6 +39,8 @@ local TAB_HERE, TAB_ZONES, TAB_BANNED = 1, 2, 3
 ui.TAB_HERE, ui.TAB_ZONES, ui.TAB_BANNED = TAB_HERE, TAB_ZONES, TAB_BANNED
 
 local frame              -- created on first open
+local layoutBand          -- defined with the list, used when building it
+local buildPicker         -- the zone menu, built with the window
 local state = { tab = TAB_HERE, zone = nil, page = 1, data = {} }
 
 local function clock(seconds)
@@ -208,6 +210,101 @@ local function button(parent, text, width, onClick)
     return b
 end
 
+-- ---------------------------------------------------------------------------
+-- The zone menu
+-- ---------------------------------------------------------------------------
+
+-- What the zone button opens: every zone by name, grouped by continent in
+-- columns, laid over the track list.  A custom menu rather than Blizzard's
+-- dropdown, whose popup Forever's gamepad layer doesn't reach from an addon
+-- window: these are plain buttons in this window, so the D-pad walks them
+-- like any other (paths in ui:WireNavigation).  Names only, no paging.
+local PICK_COLUMNS, PICK_ROW = 3, 18
+
+local function continentOf(mapID)
+    local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
+    local parent = info and info.parentMapID
+    if parent == 1415 then return 1, "Eastern Kingdoms" end
+    if parent == 1414 then return 2, "Kalimdor" end
+    return 3, "Elsewhere"
+end
+
+buildPicker = function(inset)
+    local picker = CreateFrame("Frame", nil, inset)
+    picker:SetAllPoints()
+    picker:SetFrameLevel((inset:GetFrameLevel() or 0) + 20)
+    picker:EnableMouse(true)       -- clicks don't fall through to the rows
+    local shade = picker:CreateTexture(nil, "BACKGROUND")
+    shade:SetAllPoints()
+    shade:SetColorTexture(0.05, 0.04, 0.03, 0.96)
+    picker:Hide()
+    frame.picker = picker
+
+    -- The lines in reading order: a heading per continent, then its zones.
+    local groups = {}
+    for _, mapID in ipairs(zones()) do
+        local order, name = continentOf(mapID)
+        groups[order] = groups[order] or { name = name, zones = {} }
+        table.insert(groups[order].zones, mapID)
+    end
+    local lines = {}
+    for order = 1, 3 do
+        local g = groups[order]
+        if g then
+            lines[#lines + 1] = { heading = g.name }
+            for _, mapID in ipairs(g.zones) do lines[#lines + 1] = { zone = mapID } end
+        end
+    end
+
+    -- Down the columns, never leaving a heading at the foot of one.
+    local perColumn = math.ceil(#lines / PICK_COLUMNS) + 1
+    local width = (WIDTH - 40) / PICK_COLUMNS
+    local col, row = 1, 0
+    picker.entries, picker.columns = {}, {}
+    for i, line in ipairs(lines) do
+        if row >= perColumn or (line.heading and row >= perColumn - 1) then
+            col, row = col + 1, 0
+        end
+        if line.heading and row > 0 then row = row + 0.5 end   -- a little air above it
+        local x, y = 14 + (col - 1) * width, -12 - row * PICK_ROW
+        if line.heading then
+            local text = picker:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+            text:SetPoint("TOPLEFT", x + 6, y - 4)
+            text:SetText(line.heading)
+        else
+            local b = CreateFrame("Button", nil, picker)
+            b:SetSize(width - 8, PICK_ROW)
+            b:SetPoint("TOPLEFT", x, y)
+            b.text = b:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+            b.text:SetPoint("LEFT", 6, 0)
+            b.text:SetPoint("RIGHT", -2, 0)
+            b.text:SetJustifyH("LEFT")
+            b.text:SetWordWrap(false)
+            b.text:SetText(zoneName(line.zone))
+            b.selected = b:CreateTexture(nil, "BACKGROUND")
+            b.selected:SetAllPoints()
+            b.selected:SetColorTexture(1, 0.82, 0, 0.12)
+            b:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+            b.mapID = line.zone
+            b:SetScript("OnClick", function() ui:ShowZone(line.zone) end)
+            picker.entries[#picker.entries + 1] = b
+            picker.columns[col] = picker.columns[col] or {}
+            table.insert(picker.columns[col], b)
+            b.col, b.index = col, #picker.columns[col]
+        end
+        row = row + 1
+    end
+end
+
+-- Mark the zone on show, in gold.
+local function refreshPicker()
+    for _, b in ipairs(frame.picker.entries) do
+        local current = b.mapID == state.zone
+        b.selected:SetShown(current)
+        if current then b.text:SetTextColor(1, 0.82, 0) else b.text:SetTextColor(1, 1, 1) end
+    end
+end
+
 local function create()
     frame = CreateFrame("Frame", "FAMEMusicFrame", UIParent, "ButtonFrameTemplate")
     frame:SetSize(WIDTH, HEIGHT)
@@ -303,27 +400,19 @@ local function create()
     head.unbanAll = button(head, "Unban all", 100, function() FAME:UnbanAll() end)
     head.unbanAll:SetPoint("RIGHT", -8, 0)
 
-    -- On the Zones tab the zone's name is a dropdown of every zone, between
-    -- the arrows: the game's own dropdown (Blizzard_Menu), which Forever's
-    -- gamepad layer can drive.  Without it, the name stays plain text and
-    -- the arrows still step through.
-    local okDropdown, dropdown = pcall(CreateFrame, "DropdownButton", nil, head, "WowStyle1DropdownTemplate")
-    if okDropdown and dropdown and dropdown.SetupMenu then
-        dropdown:SetWidth(260)
-        dropdown:SetPoint("CENTER", head, "CENTER", 0, 7)
-        -- Kept on the frame as well, so the smoke test can open it.
-        dropdown.fameMenu = function(_, root)
-            if root.SetScrollMode then root:SetScrollMode(22 * 18) end
-            for _, mapID in ipairs(zones()) do
-                root:CreateRadio(zoneName(mapID),
-                    function() return state.zone == mapID end,
-                    function() ui:ShowZone(mapID) end)
-            end
-        end
-        dropdown:SetupMenu(dropdown.fameMenu)
-        dropdown:Hide()
-        head.zone = dropdown
-    end
+    -- On the Zones tab the zone's name is a button between the arrows.
+    -- Pressed, it turns the list below into the list of zones (ui:PickZone):
+    -- plain rows and buttons like the rest of the window, so the D-pad and
+    -- the mouse work there the same.  (Blizzard's dropdown menu is its own
+    -- popup, which Forever's gamepad layer doesn't reach from an addon.)
+    head.zone = button(head, "", 220, function() ui:PickZone(not state.picking) end)
+    head.zone.arrow = head.zone:CreateTexture(nil, "ARTWORK")
+    head.zone.arrow:SetTexture("Interface\\Buttons\\Arrow-Down-Up")
+    head.zone.arrow:SetSize(14, 14)
+    -- The texture draws its arrow above its own middle: lowered to sit on
+    -- the button's centre line.
+    head.zone.arrow:SetPoint("RIGHT", -10, -5)
+    head.zone:Hide()
 
     -- The inset holds the list and its pager ---------------------------------
     inset:ClearAllPoints()
@@ -359,6 +448,8 @@ local function create()
     pager.next:SetPoint("RIGHT", 0, 0)
     pager.label = pager:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     pager.label:SetPoint("CENTER", 0, 0)
+
+    buildPicker(inset)
 
     -- Tabs -----------------------------------------------------------------
     frame.Tabs = {}
@@ -424,14 +515,30 @@ function ui:RefreshNowPlaying()
     now.ban:SetEnabled(track ~= nil and FAME.ctx ~= nil)
 end
 
+-- The band's middle.  Here and Banned: the title just above the middle line,
+-- the count just below.  Zones: the arrows and the zone button centred on
+-- the middle line, and the count at the band's right end.
+layoutBand = function(head, zonesTab)
+    head.prev:ClearAllPoints(); head.prev:SetPoint("RIGHT", head, "CENTER", -116, 0)
+    head.next:ClearAllPoints(); head.next:SetPoint("LEFT", head, "CENTER", 116, 0)
+    head.zone:ClearAllPoints(); head.zone:SetPoint("CENTER", head, "CENTER", 0, 0)
+    head.count:ClearAllPoints()
+    if zonesTab then
+        head.count:SetPoint("RIGHT", head, "RIGHT", -12, 0)
+        head.count:SetJustifyH("RIGHT")
+    else
+        head.count:SetPoint("TOP", head, "CENTER", 0, -2)
+        head.count:SetJustifyH("CENTER")
+    end
+end
+
 -- The rows for the current tab, and its header.
 local function rows()
     local head = frame.head
     head.prev:Hide(); head.next:Hide(); head.unbanAll:Hide()
-    if head.zone then head.zone:Hide() end
+    head.zone:Hide()
     head.title:Show()
-    head.count:ClearAllPoints()
-    head.count:SetPoint("TOP", head, "CENTER", 0, -2)
+    layoutBand(head, false)
     local data = {}
     local empty
 
@@ -460,11 +567,8 @@ local function rows()
             profs = nil
             where = zoneName(mapID)
             head.prev:Show(); head.next:Show()
-            if head.zone then
-                head.zone:Show()
-                -- The selection text follows arrows and clicks alike.
-                if head.zone.GenerateMenu then head.zone:GenerateMenu() end
-            end
+            head.zone:SetText(zoneName(mapID))
+            head.zone:Show()
         end
         local list = profs and FAME:TracksFor(profs, mapID, area) or FAME:ZoneTracks(mapID)
         local on = 0
@@ -479,12 +583,12 @@ local function rows()
         local missing = (mapID and not inn) and FAME:RetailMissing(mapID, packArea) or 0
         if missing > 0 then data[#data + 1] = { pack = { count = missing } } end
         head.title:SetText(where)
-        -- With the dropdown showing, it names the zone; the count sits below it.
-        local dropdownShown = head.zone and head.zone:IsShown()
-        head.title:SetShown(not dropdownShown)
-        head.count:ClearAllPoints()
-        head.count:SetPoint("TOP", head, "CENTER", 0, dropdownShown and -8 or -2)
-        head.count:SetFormattedText("%d of %d extended tracks play here", on, #list)
+        -- On the Zones tab the button names the zone; the count sits below.
+        local zonesTab = head.zone:IsShown()
+        head.title:SetShown(not zonesTab)
+        layoutBand(head, zonesTab)
+        head.count:SetFormattedText(zonesTab and "%d of %d play here" or "%d of %d extended tracks play here",
+            on, #list)
         empty = "No extended tracks fit here. The game's own music plays as usual."
     end
     frame.empty:SetText(#data == 0 and empty or "")
@@ -501,6 +605,13 @@ local function renavigate()
 end
 
 local function drawPage()
+    frame.picker:SetShown(state.picking and state.tab == TAB_ZONES)
+    if frame.picker:IsShown() then
+        refreshPicker()
+        for _, row in ipairs(frame.rows) do row:Hide() end
+        frame.pager:Hide()
+        return
+    end
     local pages = math.max(1, math.ceil(#state.data / ROWS_PER_PAGE))
     state.page = math.min(math.max(1, state.page), pages)
     local first = (state.page - 1) * ROWS_PER_PAGE
@@ -548,7 +659,7 @@ function ui:StepPage(step)
 end
 
 function ui:SelectTab(tab)
-    state.tab = tab
+    state.tab, state.picking = tab, false
     PanelTemplates_SetTab(frame, tab)
     state.ctxKey = hereKey()
     self:Rebuild(false)
@@ -617,18 +728,42 @@ function ui:WireNavigation()
         end)
     end
 
-    -- The band: <, the zone dropdown, > in a row.
-    if head.zone then
-        set(head.prev, "RIGHT", head.zone); set(head.zone, "LEFT", head.prev)
-        set(head.zone, "RIGHT", head.next); set(head.next, "LEFT", head.zone)
-    else
-        set(head.prev, "RIGHT", head.next); set(head.next, "LEFT", head.prev)
+    -- The band: <, the zone button, > in a row.
+    set(head.prev, "RIGHT", head.zone); set(head.zone, "LEFT", head.prev)
+    set(head.zone, "RIGHT", head.next); set(head.next, "LEFT", head.zone)
+    local band = { [head.prev] = true, [head.zone] = true, [head.next] = false, [head.unbanAll] = false }
+    -- With the zone menu open, down from the band goes into it: from the zone
+    -- button to the zone shown, from an arrow to the nearest column's top.
+    local picker = frame.picker
+    local function pickerFrom(b, left)
+        if not picker:IsShown() then return nil end
+        if b == head.zone then
+            for _, e in ipairs(picker.entries) do if e.mapID == state.zone then return e end end
+        end
+        local cols = picker.columns
+        local col = cols[left and 1 or #cols]
+        return col and col[1]
     end
-    local band = { [head.prev] = true, [head.next] = false, [head.unbanAll] = false }
-    if head.zone then band[head.zone] = true end
     for b, left in pairs(band) do
         set(b, "UP", function() return nowSide(left) end)
-        set(b, "DOWN", function() return rowEnd(true, left) or pagerSide(left) or tabSide(left) end)
+        set(b, "DOWN", function()
+            return pickerFrom(b, left) or rowEnd(true, left) or pagerSide(left) or tabSide(left)
+        end)
+    end
+
+    -- Inside the menu: up and down within a column, left and right to the
+    -- same line of the next column; up from a column's top back to the band.
+    for c, column in ipairs(picker.columns) do
+        for i, e in ipairs(column) do
+            set(e, "UP", function() return column[i - 1] or head.zone end)
+            set(e, "DOWN", function() return column[i + 1] end)
+            for dir, step in pairs({ LEFT = -1, RIGHT = 1 }) do
+                set(e, dir, function()
+                    local other = picker.columns[c + step]
+                    return other and (other[i] or other[#other])
+                end)
+            end
+        end
     end
 
     -- Rows: checkbox and Preview side by side; up and down keep the column.
@@ -671,11 +806,18 @@ function ui:WireNavigation()
 end
 
 function ui:ShowZone(mapID)
-    state.zone = mapID
+    state.zone, state.picking = mapID, false
     self:Rebuild(false)
 end
 
+-- Open or close the zone menu.
+function ui:PickZone(open)
+    state.picking = open and true or false
+    self:Rebuild(true)
+end
+
 function ui:StepZone(step)
+    state.picking = false
     local list = zones()
     local index = 1
     for i, mapID in ipairs(list) do
