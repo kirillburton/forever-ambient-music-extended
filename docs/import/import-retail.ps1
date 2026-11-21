@@ -26,7 +26,7 @@
 #
 # Instructions and the latest version: https://kirillburton.github.io/forever-ambient-music-extended/import/
 
-$SCRIPT_VERSION = 2
+$SCRIPT_VERSION = 3
 $LIST_FORMAT = 1
 $PAGE = "https://kirillburton.github.io/forever-ambient-music-extended/import/"
 $PACK_NAME = "ForeverAmbientMusicExtended_RetailPack"
@@ -439,7 +439,7 @@ function Invoke-Import([string[]]$argv) {
         # Fetch, check, unwrap
         # ------------------------------------------------------------------
         $md5 = [System.Security.Cryptography.MD5]::Create()
-        $part = Join-Path $pack ".partial.mp3"
+        $part = Join-Path $music ".partial.mp3"  # beside the tracks, so the final move never crosses disks
         $dataDir = Join-Path (Join-Path $wow "Data") "data"
 
         # The blob is valid if the MD5 of its header (or of all of it, when it
@@ -485,7 +485,23 @@ function Invoke-Import([string[]]$argv) {
             return $null
         }
         # Every chunk is stored as-is behind a one-byte 'N': the audio is each
-        # chunk without its first byte, in order.
+        # chunk without its first byte, in order.  Each chunk is checked against
+        # its own MD5 in the header (24-byte entries from byte 12, the MD5 at
+        # +8), which the encoding key vouches for; with no header, the key
+        # covers the whole blob.
+        function Test-Chunks($blob, $t) {
+            if ($t.start -eq 8) { return $true }
+            $pos = $t.start; $i = 0
+            foreach ($c in $t.chunks) {
+                $c = [int]$c
+                if ($pos + $c -gt $blob.Length) { return $false }
+                $sum = -join ($md5.ComputeHash($blob, $pos, $c) | ForEach-Object { $_.ToString("x2") })
+                $want = -join ($blob[(20 + 24 * $i)..(35 + 24 * $i)] | ForEach-Object { $_.ToString("x2") })
+                if ($sum -ne $want) { return $false }
+                $pos += $c; $i++
+            }
+            return $true
+        }
         function Write-Audio($blob, $t, $out) {
             $fs = [System.IO.File]::Create($out)
             try {
@@ -509,6 +525,7 @@ function Invoke-Import([string[]]$argv) {
                 $blob = Get-FromCdn $t
                 if (Test-Blob $blob $t) { $got = "cdn" }
             }
+            if ($got -and -not (Test-Chunks $blob $t)) { $got = "" }
             if ($got) {
                 Write-Audio $blob $t $part
                 # .NET directly: a file starting with a dot is hidden to the

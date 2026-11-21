@@ -24,7 +24,8 @@
 # a prefix folder.  Run it as yourself, not with sudo.
 #
 # Safe to stop and run again: tracks already in place are skipped.
-# Needs only what macOS and Linux ship with: bash, curl, od, awk, md5 or md5sum.
+# Needs only what macOS and Linux ship with: bash, curl, od, awk, md5 or md5sum;
+# perl, where present, makes copying from the retail game much faster.
 #
 # Instructions and the latest version: https://kirillburton.github.io/forever-ambient-music-extended/import/
 
@@ -32,7 +33,7 @@ set -u
 # Plain C conventions for every tool: ls columns, decimal points, sorting.
 export LC_ALL=C
 
-SCRIPT_VERSION=2
+SCRIPT_VERSION=3
 LIST_FORMAT=1
 PAGE="https://kirillburton.github.io/forever-ambient-music-extended/import/"
 PACK_NAME="ForeverAmbientMusicExtended_RetailPack"
@@ -93,7 +94,7 @@ else die "This script needs 'md5' or 'md5sum'."
 fi
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/fame-import.XXXXXX") || die "Couldn't create a temporary folder."
-trap 'rm -rf "$WORK"' EXIT
+trap 'rm -rf "$WORK"; [ -z "${PART:-}" ] || rm -f "$PART"' EXIT
 trap 'say ""; warn "Stopped. Run the script again to continue where it left off."; exit 130' INT TERM
 
 say "${B}FAME retail music import${R} ${DIM}(script version $SCRIPT_VERSION)${R}"
@@ -272,8 +273,31 @@ fi
 # One .idx per bucket is current: the newest version of each.
 LOCAL="$WORK/local.tsv"
 : > "$LOCAL"
+
+FAST=0
+[ "$USE_LOCAL" = 1 ] && perl -MDigest::MD5 -e 1 2>/dev/null && FAST=1
 if [ "$USE_LOCAL" = 1 ]; then
     printf '  reading the retail archive index…'
+fi
+if [ "$FAST" = 1 ]; then
+    perl -e '
+        my ($dir, $list) = @ARGV; my (%want, %best, %seen);
+        open my $l, "<", $list or die; while (<$l>) { next if /^#/; my @f = split /\t/; $want{substr($f[3], 0, 18)} = 1 }
+        opendir my $d, $dir or die;
+        for (readdir $d) { $best{$1} = $_ if /^([0-9a-f]{2})([0-9a-f]{8})\.idx$/ && (!$best{$1} || $2 gt substr($best{$1}, 2, 8)) }
+        for my $idx (values %best) {
+            open my $fh, "<:raw", "$dir/$idx" or next; local $/; my $x = <$fh>;
+            my $pos = int((8 + unpack("V", $x) + 15) / 16) * 16;
+            my $end = $pos + 8 + unpack("V", substr($x, $pos, 4));
+            $end = length $x if $end > length $x;
+            for (my $i = $pos + 8; $i + 18 <= $end; $i += 18) {
+                # 9-byte key, 5-byte big-endian archive/offset, 4-byte LE size
+                my ($k, $hi, $lo, $size) = unpack "H18 C N V", substr($x, $i, 18);
+                next unless $want{$k} && !$seen{$k}++;
+                print "$k\t", ($hi << 2) | ($lo >> 30), "\t", $lo & 0x3fffffff, "\t$size\n";
+            }
+        }' "$WOW/Data/data" "$LIST" > "$LOCAL"
+elif [ "$USE_LOCAL" = 1 ]; then
     le32() {  # little-endian uint32 at byte $2 of file $1
         local h; h=$(od -An -v -tx1 -j "$2" -N 4 "$1" | tr -d ' \n')
         printf '%d' "$((16#${h:6:2}${h:4:2}${h:2:2}${h:0:2}))"
@@ -299,6 +323,8 @@ if [ "$USE_LOCAL" = 1 ]; then
             s = substr($0, 29, 8)
             print k "\t" archive "\t" (packed - archive * 1073741824) "\t" hex(substr(s, 7, 2) substr(s, 5, 2) substr(s, 3, 2) substr(s, 1, 2))
         }' > "$LOCAL"
+fi
+if [ "$USE_LOCAL" = 1 ]; then
     printf '\r'
     say "  $(wc -l < "$LOCAL" | tr -d ' ') of the pack's tracks are in the retail install       "
 fi
@@ -395,7 +421,7 @@ fi
 # --------------------------------------------------------------------------
 
 BLOB="$WORK/blob"
-PART="$PACK/.partial.mp3"
+PART="$MUSIC/.partial.mp3"  # beside the tracks, so the final rename never crosses disks
 
 # The blob is valid if the MD5 of its header (or of all of it, when it has
 # none: a chunk layout starting at byte 8) equals its encoding key.
@@ -437,19 +463,68 @@ from_cdn() {  # ekey, stored size, cdn location -> $BLOB, or fail
 }
 
 # Every chunk is stored as-is behind a one-byte 'N': the audio is each chunk
-# without its first byte, in order.
-unwrap() {  # chunks ("start:size,size,..."), out
-    local start="${1%%:*}" sizes="${1#*:}" pos c
+# without its first byte, in order.  Each chunk is checked against its own MD5
+# in the header (24-byte entries from byte 12, the MD5 at +8), which the
+# encoding key vouches for; with no header, the key covers the whole blob.
+unwrap() {  # chunks ("start:size,size,..."), out -> fails on a damaged chunk
+    local start="${1%%:*}" sizes="${1#*:}" pos c i=0 sums=""
     pos=$start
     : > "$2"
+    [ "$start" = 8 ] || sums=$(od -An -v -tx1 -j 12 -N $((start - 12)) "$BLOB" | tr -d ' \n')
     for c in $(printf '%s' "$sizes" | tr ',' ' '); do
-        tail -c +$((pos + 2)) "$BLOB" | head -c $((c - 1)) >> "$2"
-        pos=$((pos + c))
+        tail -c +$((pos + 1)) "$BLOB" | head -c "$c" > "$WORK/chunk"
+        [ -z "$sums" ] || [ "$(md5of "$WORK/chunk")" = "${sums:$((i * 48 + 16)):32}" ] || return 1
+        tail -c +2 "$WORK/chunk" >> "$2"
+        pos=$((pos + c)); i=$((i + 1))
     done
 }
 
 done_n=0; fail_n=0; from_local_n=0; from_cdn_n=0
 FAILED="$WORK/failed.txt"; : > "$FAILED"
+
+if [ "$FAST" = 1 ] && [ "$todo_n" -gt 0 ]; then
+    perl -MDigest::MD5=md5_hex -e '
+        my ($local, $todo, $rest, $data, $music, $part, $total) = @ARGV; my (%at, $n);
+        open my $l, "<", $local or die; while (<$l>) { chomp; my ($k, @v) = split /\t/; $at{$k} = \@v }
+        open my $t, "<", $todo or die; open my $r, ">", $rest or die;
+        $| = 1;
+        while (my $line = <$t>) {
+            my ($fid, $era, $sec, $ekey, $bytes, $stored, $cdn, $chunks) = split /\t/, $line; chomp $chunks;
+            my ($archive, $offset, $size) = @{ $at{substr($ekey, 0, 18)} || [] };
+            my ($blob, $out) = ("", "");
+            if (defined $size && $size > 30 && open my $fh, "<:raw", sprintf("%s/data.%03d", $data, $archive)) {
+                # 30-byte local header before the blob
+                seek $fh, $offset + 30, 0; read $fh, $blob, $size - 30;
+            }
+            # Valid if the MD5 of its header (all of it, when the chunks start at byte 8) is the key.
+            my ($start, $sizes) = split /:/, $chunks;
+            if (length $blob && md5_hex($start == 8 ? $blob : substr($blob, 0, $start)) eq $ekey) {
+                # Every chunk is stored as-is behind a one-byte N, and checked against its MD5 in the header.
+                my ($pos, $i) = ($start, 0);
+                for (split /,/, $sizes) {
+                    if ($start > 8 && md5_hex(substr($blob, $pos, $_)) ne unpack("H32", substr($blob, 20 + 24 * $i++, 16))) { $out = ""; last }
+                    $out .= substr($blob, $pos + 1, $_ - 1); $pos += $_;
+                }
+            }
+            # A track that cannot be written is left for the loop below, like a missing one.
+            if (length $out == $bytes && open my $o, ">:raw", $part) {
+                my $ok = print $o $out; $ok = close($o) && $ok;
+                if ($ok && rename $part, "$music/$fid.mp3") { printf "\r  %d / %d", ++$n, $total; next }
+                unlink $part;
+            }
+            print $r $line or die "$rest: $!\n";
+        }
+        close $r or die "$rest: $!\n";' "$LOCAL" "$TODO" "$WORK/rest.tsv" "$WOW/Data/data" "$MUSIC" "$PART" "$todo_n" \
+        && FAST_OK=1 || FAST_OK=0
+    if [ "$FAST_OK" = 1 ]; then
+        TODO="$WORK/rest.tsv"
+        from_local_n=$((todo_n - $(wc -l < "$TODO" | tr -d ' ')))
+        done_n=$from_local_n
+        USE_LOCAL=0
+    else
+        say ""; warn "The fast copy stopped; going on track by track."
+    fi
+fi
 while IFS=$'\t' read -r fid era seconds ekey bytes stored cdn chunks; do
     got=""
     if [ "$USE_LOCAL" = 1 ] && from_local "$ekey" && blob_ok "$ekey" "${chunks%%:*}"; then
@@ -458,8 +533,7 @@ while IFS=$'\t' read -r fid era seconds ekey bytes stored cdn chunks; do
         got=cdn
     fi
     if [ -n "$got" ]; then
-        unwrap "$chunks" "$PART"
-        if [ "$(wc -c < "$PART" | tr -d ' ')" = "$bytes" ]; then
+        if unwrap "$chunks" "$PART" && [ "$(wc -c < "$PART" | tr -d ' ')" = "$bytes" ]; then
             mv -f "$PART" "$MUSIC/$fid.mp3"
             done_n=$((done_n + 1))
             if [ "$got" = local ]; then from_local_n=$((from_local_n + 1)); else from_cdn_n=$((from_cdn_n + 1)); fi

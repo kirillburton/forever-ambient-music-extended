@@ -505,7 +505,7 @@ lua tools/retail_report.lua          # what each zone ends up with
   formats. The scripts download this list every time they run, so
   regenerating it and pushing fixes every player's next import.
 - **`docs/import/`** is published by GitHub Pages: the page, `import-retail.sh`
-  (Mac, Linux, Steam Deck: bash, curl, od, awk) and `import-retail.ps1`
+  (Mac, Linux, Steam Deck: bash, curl, od, awk; perl if present, for speed) and `import-retail.ps1`
   (Windows PowerShell 5.1). Bump `VERSION` and both scripts'
   `SCRIPT_VERSION` together when either changes, so older copies say to
   update.
