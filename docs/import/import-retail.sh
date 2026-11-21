@@ -94,7 +94,7 @@ else die "This script needs 'md5' or 'md5sum'."
 fi
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/fame-import.XXXXXX") || die "Couldn't create a temporary folder."
-trap 'rm -rf "$WORK"' EXIT
+trap 'rm -rf "$WORK"; [ -z "${PART:-}" ] || rm -f "$PART"' EXIT
 trap 'say ""; warn "Stopped. Run the script again to continue where it left off."; exit 130' INT TERM
 
 say "${B}FAME retail music import${R} ${DIM}(script version $SCRIPT_VERSION)${R}"
@@ -492,7 +492,7 @@ if [ "$FAST" = 1 ] && [ "$todo_n" -gt 0 ]; then
             my ($fid, $era, $sec, $ekey, $bytes, $stored, $cdn, $chunks) = split /\t/, $line; chomp $chunks;
             my ($archive, $offset, $size) = @{ $at{substr($ekey, 0, 18)} || [] };
             my ($blob, $out) = ("", "");
-            if (defined $size && $size == $stored + 30 && open my $fh, "<:raw", sprintf("%s/data.%03d", $data, $archive)) {
+            if (defined $size && $size > 30 && open my $fh, "<:raw", sprintf("%s/data.%03d", $data, $archive)) {
                 # 30-byte local header before the blob
                 seek $fh, $offset + 30, 0; read $fh, $blob, $size - 30;
             }
@@ -506,18 +506,24 @@ if [ "$FAST" = 1 ] && [ "$todo_n" -gt 0 ]; then
                     $out .= substr($blob, $pos + 1, $_ - 1); $pos += $_;
                 }
             }
-            if (length $out == $bytes) {
-                open my $o, ">:raw", $part or die "$part: $!\n";
-                print $o $out; close $o or die "$part: $!\n"; rename $part, "$music/$fid.mp3" or die "$fid.mp3: $!\n";
-                printf "\r  %d / %d", ++$n, $total;
-            } else { print $r $line or die "$rest: $!\n" }
+            # A track that cannot be written is left for the loop below, like a missing one.
+            if (length $out == $bytes && open my $o, ">:raw", $part) {
+                my $ok = print $o $out; $ok = close($o) && $ok;
+                if ($ok && rename $part, "$music/$fid.mp3") { printf "\r  %d / %d", ++$n, $total; next }
+                unlink $part;
+            }
+            print $r $line or die "$rest: $!\n";
         }
         close $r or die "$rest: $!\n";' "$LOCAL" "$TODO" "$WORK/rest.tsv" "$WOW/Data/data" "$MUSIC" "$PART" "$todo_n" \
-        || die "Couldn't write the tracks into $MUSIC"
-    TODO="$WORK/rest.tsv"
-    from_local_n=$((todo_n - $(wc -l < "$TODO" | tr -d ' ')))
-    done_n=$from_local_n
-    USE_LOCAL=0
+        && FAST_OK=1 || FAST_OK=0
+    if [ "$FAST_OK" = 1 ]; then
+        TODO="$WORK/rest.tsv"
+        from_local_n=$((todo_n - $(wc -l < "$TODO" | tr -d ' ')))
+        done_n=$from_local_n
+        USE_LOCAL=0
+    else
+        say ""; warn "The fast copy stopped; going on track by track."
+    fi
 fi
 while IFS=$'\t' read -r fid era seconds ekey bytes stored cdn chunks; do
     got=""
