@@ -580,6 +580,7 @@ function Invoke-Import([string[]]$argv) {
         $toc = "## Interface: $INTERFACE`n" +
                "## Title: FAME Retail Music Pack`n" +
                "## Notes: Music from modern World of Warcraft, imported from your own computer for Forever Ambient Music Extended. Made by import-retail.ps1; run it again to change what's in it.`n" +
+               "## IconTexture: Interface\AddOns\ForeverAmbientMusicExtended\Media\logo`n" +
                "## Version: $($meta['generated'])`n" +
                "## X-Generated-By: import-retail.ps1 $SCRIPT_VERSION`n`nPack.lua`n"
         [System.IO.File]::WriteAllText((Join-Path $pack "$PACK_NAME.toc"), $toc, $utf8)

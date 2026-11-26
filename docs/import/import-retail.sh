@@ -581,6 +581,7 @@ cat > "$PACK/$PACK_NAME.toc" <<EOF
 ## Interface: $INTERFACE
 ## Title: FAME Retail Music Pack
 ## Notes: Music from modern World of Warcraft, imported from your own computer for Forever Ambient Music Extended. Made by import-retail.sh; run it again to change what's in it.
+## IconTexture: Interface\AddOns\ForeverAmbientMusicExtended\Media\logo
 ## Version: $(meta generated)
 ## X-Generated-By: import-retail.sh $SCRIPT_VERSION
 
