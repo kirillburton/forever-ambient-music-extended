@@ -432,6 +432,7 @@ ns.inns = {
     ["Thunderbrew Distillery"] = "dwarf",    -- Kharanos, Dun Morogh
     ["Deepwater Tavern"] = "dwarf",          -- Menethil Harbor, Wetlands
     ["The Stonefire Tavern"] = "dwarf",      -- Ironforge
+    ["Cask 'n' Anvil"] = "dwarf",            -- Ironforge
     ["Gallows' End Tavern"] = "undead",      -- Brill, Tirisfal Glades
     ["The Salty Sailor Tavern"] = "pirate",  -- Booty Bay, Stranglethorn Vale
 }

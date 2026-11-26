@@ -54,6 +54,11 @@ local defaults = {
     -- Tracks the player has taken out of one zone in the music window, keyed
     -- by uiMapID, then by track: { [1453] = { [229800] = true } }.
     zoneOff = {},
+    -- Zones the player has set to the game's own music only: { [1453] = true }.
+    gameOnly = {},
+    -- Hold the music slider down while a track mastered louder than the
+    -- game's own plays (Loudness.lua).
+    evenLoudness = true,
     -- Show a FAME button on the minimap, and where on its edge (degrees).
     -- nil until the player drags it: it finds a spot clear of other buttons.
     minimap = true,
@@ -221,6 +226,33 @@ local function subzoneEntry(mapID, subName)
     return index[subName]
 end
 
+-- The same entries by area ID, for an interior that names the subzone it
+-- belongs to rather than the client's subzone text.
+local function subzoneByArea(mapID, areaID)
+    local zm = ns.zoneMusic[mapID]
+    for _, row in ipairs(zm and zm.sub or {}) do
+        if row[1] == areaID then return { area = row[1], set = row[3], intro = row[4] } end
+    end
+    return nil
+end
+
+-- Caves, mines, buildings and a city's districts are interiors, and the game
+-- gives many their own music: Jasperlode Mine plays its own, and every
+-- street and shop of Dalaran plays Dalaran's.  Inside one, the minimap names
+-- it (and sometimes the subzone text does too).  ns.interiors in
+-- Originals.lua lists the ones whose music differs from where they stand:
+-- { set (0 = its subzone's), subzone's area, indoors only }.
+local function interiorAt(mapID)
+    local rows = ns.interiors and ns.interiors[mapID]
+    if not rows then return nil end
+    local minimap = GetMinimapZoneText and GetMinimapZoneText()
+    for _, name in ipairs({ minimap or "", GetSubZoneText() or "" }) do
+        local row = rows[name]
+        if row and (not row[3] or (IsIndoors and IsIndoors())) then return row, name end
+    end
+    return nil
+end
+
 -- Which inn, if any, the player is standing in.  Inside an inn the minimap
 -- shows the building's own name ("Lion's Pride Inn"); ns.inns in Zones.lua
 -- says which of those FAME knows the race of.
@@ -285,6 +317,11 @@ local function resolveContext()
     local ctx = { mapID = mapID, prof = prof, setID = zm.set, area = zm.area, introID = zm.intro }
     ctx.placeArea = FAME:RetailAreaAt(mapID, GetSubZoneText())
     local sub = subzoneEntry(mapID, GetSubZoneText())
+    local interior, interiorName = interiorAt(mapID)
+    if interior and not sub then
+        sub = subzoneByArea(mapID, interior[2])
+        ctx.placeArea = ctx.placeArea or FAME:RetailAreaAt(mapID, C_Map and C_Map.GetAreaInfo and C_Map.GetAreaInfo(interior[2]))
+    end
     if sub then
         ctx.area, ctx.introID = sub.area, sub.intro
         if sub.set ~= 0 then ctx.setID = sub.set end
@@ -305,6 +342,13 @@ local function resolveContext()
         ctx.inn = innName
         ctx.key = "inn:" .. innName
     else
+        if interior and interior[1] ~= 0 then
+            -- The interior's own music, as the game plays it: only the game's
+            -- tracks, since nothing in the extended pool is chosen for a cave
+            -- or a single hall.
+            ctx.setID, ctx.area, ctx.introID = interior[1], "interior:" .. interiorName, 0
+            ctx.interior = interiorName
+        end
         ctx.key = "set:" .. ctx.setID
     end
 
@@ -787,6 +831,10 @@ end
 function FAME:ExtendedChoices(prof, mapID)
     mapID = mapID or (self.ctx and self.ctx.mapID)
     local out = {}
+    -- The game's own music only: the player's choice for the zone, or an
+    -- interior with music of its own.
+    if self:GameOnly(mapID) then return out end
+    if self.ctx and self.ctx.interior and self.ctx.mapID == mapID then return out end
     local seen = {}
     for _, track in ipairs(self:Pool(prof)) do
         if self:Allowed(track, mapID) then out[#out + 1] = track; seen[track] = true end
@@ -1133,8 +1181,37 @@ function FAME:RecoverGuard()
     end
 end
 
+-- Loudness: some eras are mastered far louder than the music Forever ships
+-- (tools/loudness.py measures them all; Loudness.lua lists the cut each needs,
+-- in dB).  The only control there is the slider, so a loud track plays with
+-- the slider held down -- to exactly the level a fade would hold it at, with
+-- the same marks and the same rules: the player's level is kept as the one to
+-- return to, put back when the track ends or anything interrupts it, and
+-- anyone else moving the slider meanwhile wins.
+local function gainFor(track)
+    if not db.evenLoudness then return 1 end
+    local cut = ns.loudness and ns.loudness[track.rid or track.id]
+    return cut and 10 ^ (-cut / 20) or 1
+end
+
+-- The level the slider should rest at while the current track plays.
+function FAME:Target()
+    return self.savedVolume * (self.gain or 1)
+end
+
+-- A loud track starting with nothing in the way: turn it down now.  (After a
+-- fade the volume is already down, and FadeBackIn stops at the target.)
+function FAME:HoldDown()
+    if self.savedVolume or self:Yielding() then return end
+    local current = readVolume()
+    if not current or current <= 0 or isOurs(current) or looksLikeOurs(current) then return end
+    self.savedVolume, self.lastWritten = current, readRaw()
+    saveGuard(self.savedVolume, self.lastWritten)
+    self:WriteStep(self:Target())
+end
+
 -- Hold the volume down through the client's crossfade, then bring it back
--- up gently to the player's own level.
+-- up gently to the player's own level -- or the track's lower one.
 function FAME:FadeBackIn()
     self:StopRamps()
     if not self.savedVolume then return end
@@ -1144,11 +1221,15 @@ function FAME:FadeBackIn()
         FAME.rampTicker = C_Timer.NewTicker(FADE_IN / FADE_STEPS, function()
             step = step + 1
             if not FAME.savedVolume then FAME:StopRamps(); return end
-            if step >= FADE_STEPS then
-                FAME.rampTicker = nil
-                FAME:RestoreVolume()
+            if step < FADE_STEPS then
+                FAME:WriteStep(FAME:Target() * step / FADE_STEPS)
+                return
+            end
+            FAME.rampTicker = nil
+            if (FAME.gain or 1) < 1 then
+                FAME:WriteStep(FAME:Target())
             else
-                FAME:WriteStep(FAME.savedVolume * step / FADE_STEPS)
+                FAME:RestoreVolume()
             end
         end, FADE_STEPS)
     end)
@@ -1219,6 +1300,8 @@ function FAME:FadeOut(seconds, andThen, quietAfter)
         self.previous = self.playing
         self.playing, self.kind = nil, nil
     end
+    -- Whatever follows is at full level unless it is a loud track too.
+    self.gain = 1
     if self.audible then
         self:RampDown(seconds, andThen, quietAfter)
     elseif self.savedVolume then
@@ -1281,9 +1364,11 @@ end
 
 function FAME:PlayTrack(track, kind)
     self:CancelTimer()
-    -- No volume handling here: when a fade hands over to this track the volume
-    -- is down on purpose, and the fade brings it back once the swap is done.
+    -- When a fade hands over to this track the volume is down on purpose, and
+    -- the fade brings it back once the swap is done, to this track's level.
+    self.gain = gainFor(track)
     PlayMusic(track.id or track.file)
+    if self.gain < 1 then self:HoldDown() end
     self.holding, self.audible = false, true
     self.playing, self.kind = track, kind
     self.startedAt = GetTime()
@@ -1470,6 +1555,33 @@ function FAME:Cutscene()
     self:SetState("cinematic")
 end
 
+-- Walking along a border, or in and out of a doorway, can flip the music
+-- back and forth every few steps.  So a change of music only goes ahead once
+-- the new place has held for SETTLE seconds; stepping back before then
+-- changes nothing.  Arriving from nowhere (a loading screen) and the reasons
+-- that are not about where you stand -- music off, dead, a cutscene, an
+-- instance -- act at once.
+FAME.SETTLE = 3
+local AT_ONCE = { off = true, muted = true, cinematic = true, dead = true, instance = true }
+
+-- True while a change to `key` is still settling.
+function FAME:Settling(key)
+    if not self.ctx or self.ctx.key == key or self.SETTLE <= 0 then
+        self.settleKey = nil
+        return false
+    end
+    if self.settleKey ~= key then
+        self.settleKey, self.settleSince = key, GetTime()
+        debugf("music would change here -- waiting %ds in case you step back", self.SETTLE)
+        if self.settleTimer then self.settleTimer:Cancel() end
+        self.settleTimer = C_Timer.NewTimer(self.SETTLE + 0.1, function()
+            FAME.settleTimer = nil
+            FAME:Evaluate()
+        end)
+    end
+    return GetTime() - self.settleSince < self.SETTLE
+end
+
 -- Work out where we are and react.  Runs on every location event and on a
 -- slow poll, so it has to be cheap and idempotent.
 function FAME:Evaluate()
@@ -1478,9 +1590,13 @@ function FAME:Evaluate()
     if self.state == "preview" then return end
     local ctx, why = resolveContext()
     if not ctx then
+        if not AT_ONCE[why] and self:Settling("away:" .. why) then return end
+        self.settleKey = nil
         if self.ctx or self.state ~= why then self:Release(why) end
         return
     end
+    if self:Settling(ctx.key) then return end
+    self.settleKey = nil
 
     if not self.ctx or self.ctx.key ~= ctx.key then
         debugf("music changes here: %s", ctx.set.name)
@@ -1575,6 +1691,9 @@ FAME:SetScript("OnEvent", function(self, event, arg1)
             -- missed subzone change, a music volume left stuck by something.
             self.poll = C_Timer.NewTicker(10, function()
                 FAME:CheckVolume()
+                -- A loud track that started while something else had the
+                -- slider (or the player just moved it) gets its cut now.
+                if FAME.playing and (FAME.gain or 1) < 1 and FAME.state ~= "silence" then FAME:HoldDown() end
                 FAME:Evaluate()
             end)
         end
@@ -1635,6 +1754,21 @@ end
 function FAME:SetEra(era, on)
     if on then db.eras[era] = nil else db.eras[era] = false end
     save("eras", db.eras)
+    self:Changed()
+end
+
+-- The game's own music only, in this zone.
+function FAME:GameOnly(mapID)
+    mapID = zoneKey(mapID)
+    return mapID ~= nil and db.gameOnly[mapID] == true
+end
+
+function FAME:SetGameOnly(mapID, on)
+    mapID = zoneKey(mapID)
+    if not mapID then return end
+    db.gameOnly[mapID] = on and true or nil
+    save("gameOnly", db.gameOnly)
+    -- An extended track playing here now ends the way it would anyway.
     self:Changed()
 end
 
@@ -2116,6 +2250,20 @@ if type(pack) == "table" and pack.format == ns.PACK_FORMAT and type(pack.tracks)
 end
 ns.retailAreas = ns.retailAreas or {}
 ns.foreverAt, ns.foreverAreas = ns.foreverAt or {}, ns.foreverAreas or {}
-for _, track in ipairs(ns.builtinTracks) do track.at = ns.foreverAt[track.id] end
+-- Where FAME's own tracks play regardless of tags: wherever the Forever
+-- client puts them, and, for the Cataclysm music the client ships, wherever
+-- retail does.
+ns.builtinRetailAt = ns.builtinRetailAt or {}
+for _, track in ipairs(ns.builtinTracks) do
+    local forever, retail = ns.foreverAt[track.id], ns.builtinRetailAt[track.id]
+    if forever and retail then
+        local at = {}
+        for _, a in ipairs(forever) do at[#at + 1] = a end
+        for _, a in ipairs(retail) do at[#at + 1] = a end
+        track.at = at
+    else
+        track.at = forever or retail
+    end
+end
 placeTracks(ns.builtinTracks)
 placeTracks(ns.retailTracks)

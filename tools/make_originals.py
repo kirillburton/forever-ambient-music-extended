@@ -25,7 +25,7 @@ import os
 import re
 import sys
 import urllib.request
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import wagolib
@@ -34,7 +34,7 @@ import probe_durations
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ADDON_DIR = os.path.join(ROOT, "ForeverAmbientMusicExtended")
 DB2_DIR = os.path.join(wagolib.CACHE_DIR, "db2")
-TABLES = ["UiMap", "AreaTable", "ZoneMusic", "ZoneIntroMusicTable", "SoundKitEntry"]
+TABLES = ["UiMap", "AreaTable", "ZoneMusic", "ZoneIntroMusicTable", "SoundKitEntry", "WMOAreaTable"]
 
 # Inn music has no dependable link to the area you are standing in: inns are
 # building interiors (WMOAreaTable), and most of those rows carry no parent
@@ -104,6 +104,13 @@ def main():
     for r in t["SoundKitEntry"]:
         kit_files[r["SoundKitID"]].append(r["FileDataID"])
 
+    wmo_by_area = defaultdict(list)
+    for w in t["WMOAreaTable"]:
+        wmo_by_area[w["AreaTableID"]].append(w)
+
+    def wmo_by_area_id_in(area_ids):
+        return [w for a in area_ids for w in wmo_by_area.get(a, [])]
+
     children = defaultdict(list)
     for a in areas.values():
         children[a["ParentAreaID"]].append(a)
@@ -143,18 +150,68 @@ def main():
                  "intro": int(zone["IntroSound"]), "sub": []}
         if zone["IntroSound"] != "0":
             used_intros.add(zone["IntroSound"])
-        for sub in descendants(zone["ID"]):
-            own_set = sub["ZoneMusic"] not in ("0", zone_set)
-            own_intro = sub["IntroSound"] != "0"
+        # A subzone with no music of its own plays its parent's: The Eventide
+        # is a street of Dalaran, so it plays Dalaran's music, not the zone's.
+        def music_of(a):
+            while a["ID"] != zone["ID"]:
+                if a["ZoneMusic"] != "0":
+                    return a["ZoneMusic"], a["IntroSound"]
+                a = areas.get(a["ParentAreaID"])
+                if a is None:
+                    break
+            return zone_set, "0"
+
+        inside = descendants(zone["ID"])
+        effective = {zone["ID"]: zone_set}
+        for sub in inside:
+            own, own_intro_id = sub["ZoneMusic"], sub["IntroSound"]
+            if own == "0":
+                own, inherited_intro = music_of(sub)
+                if own_intro_id == "0":
+                    own_intro_id = inherited_intro
+            effective[sub["ID"]] = own
+            own_set = own != zone_set
+            own_intro = own_intro_id != "0"
             is_town = sub["ID"] in towns.get(map_id, ())
             if not (own_set or own_intro or is_town):
                 continue
-            s = int(sub["ZoneMusic"]) if sub["ZoneMusic"] != "0" else 0
+            s = int(own) if own_set else 0
             if s:
                 used_sets.add(s)
             if own_intro:
-                used_intros.add(sub["IntroSound"])
-            entry["sub"].append((int(sub["ID"]), sub["AreaName_lang"], s, int(sub["IntroSound"])))
+                used_intros.add(own_intro_id)
+            entry["sub"].append((int(sub["ID"]), sub["AreaName_lang"], s, int(own_intro_id)))
+
+        # Interiors -- caves, mines, buildings, a city's districts -- are not
+        # areas but parts of a model (WMOAreaTable), and the game gives many
+        # of them music of their own: Jasperlode Mine plays cave music, not
+        # Elwynn's.  The client only says where you are by name, so they are
+        # keyed by name, and a name stands for whatever most of its rows do.
+        listed = {a for a, *_ in entry["sub"]}
+        area_names = {zone["AreaName_lang"]} | {a["AreaName_lang"] for a in inside}
+        rows = defaultdict(list)
+        for w in wmo_by_area_id_in(effective):
+            name = w["AreaName_lang"].strip()
+            if name:
+                rows[name].append((w["ZoneMusic"], w["AreaTableID"]))
+        entry["interiors"] = {}
+        for name, group in rows.items():
+            with_music = Counter(m for m, _ in group if m != "0" and m in sets)
+            if 2 * sum(with_music.values()) > len(group):
+                s = max(with_music, key=lambda m: (with_music[m], not sets[m]["SetName"].startswith("Moment"), -int(m)))
+                area = Counter(a for m, a in group if m == s).most_common(1)[0][0]
+                if s == effective[area]:
+                    s = None             # what its area plays anyway
+            else:
+                s = None
+                area = Counter(a for m, a in group if m == "0").most_common(1)[0][0] \
+                    if any(m == "0" for m, _ in group) else group[0][1]
+            if s is None and (name in area_names or int(area) not in listed):
+                continue                 # the name already says it all
+            # A name an outdoor area shares only counts indoors.
+            entry["interiors"][name] = (int(s) if s else 0, int(area), name in area_names)
+            if s:
+                used_sets.add(int(s))
         zones[map_id] = entry
 
     # The game's tables can name files the client does not ship: set 3161
@@ -275,6 +332,22 @@ def main():
         else:
             L.append("        sub = {} },")
     L += ["}", "",
+          "-- Interiors whose music is not their area's, by zone and by the English",
+          "-- name the client reports inside them: { set (0 = its area's), area,",
+          "-- indoors }.  `set` is the interior's own music; `area` is the subzone",
+          "-- it belongs to.  `indoors`: an outdoor area has the same name, so it",
+          "-- only counts while IsIndoors().  The client has no other way to name",
+          "-- an interior, so this only matches on English clients.",
+          "ns.interiors = {"]
+    for map_id in sorted(zones):
+        rows = zones[map_id]["interiors"]
+        if not rows:
+            continue
+        L.append("    [%d] = {" % map_id)
+        for nm, (s, a, indoors) in sorted(rows.items()):
+            L.append("        [%s] = { %d, %d%s }," % (lua_str(nm), s, a, ", true" if indoors else ""))
+        L.append("    },")
+    L += ["}", "",
           "-- Inn music, by the `inn` key Zones.lua gives each zone.",
           "ns.tavernSets = {"]
     for key, sid in TAVERN_SETS.items():
@@ -284,8 +357,9 @@ def main():
         f.write("\n".join(L))
 
     n_tracks = len({f for s in set_rows.values() for f in s["day"] + s["night"]})
-    print("Originals.lua: %d zones, %d music sets, %d intros, %d distinct tracks, %d subzone overrides"
-          % (len(zones), len(set_rows), len(intro_rows), n_tracks, sum(len(z["sub"]) for z in zones.values())))
+    print("Originals.lua: %d zones, %d music sets, %d intros, %d distinct tracks, %d subzone overrides, %d interiors"
+          % (len(zones), len(set_rows), len(intro_rows), n_tracks, sum(len(z["sub"]) for z in zones.values()),
+             sum(len(z["interiors"]) for z in zones.values())))
     if missing:
         print("no AreaTable match (FAME leaves these to the game):", missing)
     if dropped:

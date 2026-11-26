@@ -8,12 +8,30 @@ hundred hours you know every bar of Elwynn Forest.
 FAME widens the rotation without changing the rhythm. The game's own music
 schedule stays as it is: the same silences between tracks, the same intros on
 arrival, its own tracks still in the mix. But some of those tracks now come
-from a pool of **425 more**, each chosen to fit where you are standing:
+from a pool of **427 more**, each chosen to fit where you are standing:
 Classic pieces Forever doesn't use in those zones, the new Forever zone music,
 and selections from Cataclysm through Midnight.
 
 Install it and play. It sounds like the default ambient music, with more
 variety.
+
+---
+
+## New in 2.2
+
+- **Caves, mines and halls play their own music**, as in the game. Dalaran's
+  streets and halls play Dalaran's music instead of Alterac's.
+- **Loud tracks are turned down.** Later expansions are mastered louder than
+  the game's own music, The War Within and Midnight by about 4 dB. Every
+  track was measured, and FAME holds the volume down while a loud one plays.
+- **Only the game's own music**, per zone: one tick at the top of a zone's
+  tracklist.
+- **Night elf ruins** play Legion's Requiem for the Lost Cities and the other
+  Highborne themes, with the retail music pack.
+- **The Cataclysm music the Forever client ships** now plays where Cataclysm
+  put it.
+- Music no longer flips back and forth at borders and doorways, and the
+  minimap button shows what's playing.
 
 ---
 

@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.2.0
+
+Features:
+- caves, mines and halls play their own music, as in the game. Jasperlode Mine plays its own music rather than Elwynn's, the Violet Citadel its own theme, the High Seat the King's. Inside a place with music of its own, only the game's tracks play
+- loud tracks are turned down. Later expansions are mastered louder than the game's own music: The War Within and Midnight by about 4 dB, Battle for Azeroth by 2.5. While one of those plays, FAME turns the music volume down to match and puts your level back when it ends. Every track was measured; Settings > More options > Balance volume turns it off
+- Only the game's own music: a new first row in each zone's tracklist. Ticked, nothing extended plays in that zone; your ticks below are kept for when you untick it
+- the ruined night elf cities - Ameth'Aran, Bashal'Aran, Eldarath, Mathystra, Ordil'Aran, Isildien, Kel'Theril and more - play Legion's Requiem for the Lost Cities and the other Highborne themes of Azsuna, Val'sharah, Vashj'ir and Nazjatar, with the retail music pack. Thanks for the suggestion
+- hovering over the minimap button shows what's playing
+
+Fixes:
+- Dalaran's streets and halls (the Violet Hold, the Eventide and the rest) played Alterac's forest music instead of Dalaran's
+- walking along a border, or in and out of a doorway, could flip the music back and forth. A change of music now waits until you've been in the new place for three seconds
+- Ironforge's Cask 'n' Anvil plays dwarven tavern music
+- the Cataclysm music the Forever client ships now plays where Cataclysm put it: mus_westplaguea across Loch Modan, Redridge and Western Plaguelands, Arathi's own theme, the fire music of Burning Steppes and Searing Gorge, the Twilight camp in Winterspring, and the Caverns of Time's Tarren Mill music in Hillsbrad
+- with the retail music pack, Feathermoon Stronghold, the Shrine of Aviana and Stormwind Harbor get their Cataclysm music. Retail renumbered these places, so FAME missed them
+- the zone count no longer runs under the > button in the music window
+- searching the Settings panel for something like "show" could block an action and stop the gamepad from moving through Settings. FAME's buttons no longer appear in that search; its checkboxes still do
+
+What's next:
+- adding tracks to a zone, any track, anywhere you like
+- garrison themes in Stormwind and Orgrimmar, Forsaken Flame in Undercity and Brill (with the retail music pack)
+- stepping aside while the Soundtrack addon plays its combat or flight music
+
 ## 2.1.0
 
 Music from modern WoW, if you want it, placed with care. Plus finer control over what plays where.

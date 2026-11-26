@@ -52,6 +52,10 @@ local function trackName(track)
     return track.name or tostring(track.id or track.file)
 end
 
+-- What kind of track is playing, in words.
+local KIND = { original = "the game's own", intro = "intro", extended = "extended",
+    preview = "preview", test = "by request" }
+
 -- What the Here tab is showing: the music set, and the profile within it --
 -- walking into Ratchet keeps the Barrens' music but changes what fits.
 local function hereKey()
@@ -89,6 +93,7 @@ local function buildTrackRow(row)
     row.check:SetSize(28, 28)
     row.check:SetPoint("LEFT", 2, 0)
     row.check:SetScript("OnClick", function(self)
+        if row.gameOnlyMap then return FAME:SetGameOnly(row.gameOnlyMap, self:GetChecked()) end
         local data = row.data
         if data then FAME:SetZoneOff(data.mapID, data.track, not self:GetChecked()) end
     end)
@@ -132,6 +137,7 @@ end
 
 local function initTrackRow(row, data)
     if not row.built then buildTrackRow(row) end
+    row.gameOnlyMap = nil
     row.unban:Hide()
     row.check:Show(); row.preview:Show()
     row.data = data
@@ -152,7 +158,7 @@ local function initTrackRow(row, data)
     row.info:SetText(table.concat(notes, "  ·  "))
 
     -- Anything that keeps a track from playing greys its name out.
-    if inZone and eraOn and not banned then
+    if inZone and eraOn and not banned and not FAME:GameOnly(data.mapID) then
         row.name:SetTextColor(1, 1, 1)
     else
         row.name:SetTextColor(GREY[1], GREY[2], GREY[3])
@@ -166,7 +172,7 @@ end
 -- Unban button in the Preview button's place.
 local function initBanRow(row, data)
     if not row.built then buildTrackRow(row) end
-    row.data, row.action = nil, nil
+    row.data, row.action, row.gameOnlyMap = nil, nil, nil
     row.check:Hide(); row.preview:Hide()
     row.unban:SetText("Unban")
     row.unban:Show()
@@ -181,7 +187,7 @@ end
 -- button to the import window in the Preview button's place.
 local function initPackRow(row, data)
     if not row.built then buildTrackRow(row) end
-    row.data, row.banKey = nil, nil
+    row.data, row.banKey, row.gameOnlyMap = nil, nil, nil
     row.check:Hide(); row.preview:Hide()
     row.unban:SetText("Get it")
     row.unban:Show()
@@ -192,9 +198,26 @@ local function initPackRow(row, data)
         data.count == 1 and "" or "s"))
 end
 
+-- The first row of a zone's list: the game's own music only, here.  Ticked,
+-- every extended track below greys out and none of them plays in the zone;
+-- their own ticks are kept for when it's unticked.
+local function initGameOnlyRow(row, data)
+    if not row.built then buildTrackRow(row) end
+    row.data, row.banKey, row.action = nil, nil, nil
+    row.gameOnlyMap = data.mapID
+    row.unban:Hide(); row.preview:Hide()
+    row.check:Show()
+    local on = FAME:GameOnly(data.mapID)
+    row.check:SetChecked(on)
+    row.name:SetText("Only the game's own music")
+    row.name:SetTextColor(1, 0.82, 0)
+    row.info:SetText(on and "No extended tracks play in this zone" or "Tick to keep this zone as the game has it")
+end
+
 local function initRow(row, data)
     if data.ban then initBanRow(row, data.ban)
     elseif data.pack then initPackRow(row, data.pack)
+    elseif data.gameOnly then initGameOnlyRow(row, data.gameOnly)
     else row.action = nil; initTrackRow(row, data) end
 end
 
@@ -501,8 +524,7 @@ function ui:RefreshNowPlaying()
     local track = FAME.playing
     if track then
         local era = track.era and ns.ERA_LABEL[track.era]
-        local kind = ({ original = "the game's own", intro = "intro", extended = "extended",
-            preview = "preview", test = "by request" })[FAME.kind] or ""
+        local kind = KIND[FAME.kind] or ""
         now.track:SetFormattedText("%s  |cff9d9d9d%s%s · %s / %s|r", trackName(track),
             era and (era .. " · ") or "", kind, clock(GetTime() - (FAME.startedAt or GetTime())),
             clock(track.len))
@@ -524,8 +546,11 @@ layoutBand = function(head, zonesTab)
     head.zone:ClearAllPoints(); head.zone:SetPoint("CENTER", head, "CENTER", 0, 0)
     head.count:ClearAllPoints()
     if zonesTab then
+        -- Between the > button and the band's end, and no wider.
+        head.count:SetPoint("LEFT", head.next, "RIGHT", 8, 0)
         head.count:SetPoint("RIGHT", head, "RIGHT", -12, 0)
         head.count:SetJustifyH("RIGHT")
+        head.count:SetWordWrap(false)
     else
         head.count:SetPoint("TOP", head, "CENTER", 0, -2)
         head.count:SetJustifyH("CENTER")
@@ -553,7 +578,13 @@ local function rows()
         local mapID, profs, where, area
         if state.tab == TAB_HERE then
             local ctx = FAME.ctx
-            if ctx then
+            if ctx and ctx.interior then
+                -- A cave or hall with music of its own: the game's, as it has it.
+                head.title:SetText(ctx.interior)
+                head.count:SetText("")
+                frame.empty:SetText("This place has music of its own, so only the game's tracks play in here.")
+                return data
+            elseif ctx then
                 mapID, profs, area = ctx.mapID, { ctx.prof }, ctx.placeArea
                 where = ctx.inn or zoneName(ctx.mapID)
             else
@@ -578,6 +609,9 @@ local function rows()
             if FAME:Allowed(item.track, mapID) then on = on + 1 end
         end
         local inn = profs and profs[1] and profs[1].inn
+        local gameOnly = mapID and FAME:GameOnly(mapID)
+        if gameOnly then on = 0 end
+        if mapID and not inn and #list > 0 then table.insert(data, 1, { gameOnly = { mapID = mapID } }) end
         local packArea = area
         if not profs then packArea = true end      -- the Zones tab: every subzone
         local missing = (mapID and not inn) and FAME:RetailMissing(mapID, packArea) or 0
@@ -587,8 +621,12 @@ local function rows()
         local zonesTab = head.zone:IsShown()
         head.title:SetShown(not zonesTab)
         layoutBand(head, zonesTab)
-        head.count:SetFormattedText(zonesTab and "%d of %d play here" or "%d of %d extended tracks play here",
-            on, #list)
+        if gameOnly then
+            head.count:SetText(zonesTab and "Game's music only" or "Only the game's own music plays here")
+        else
+            head.count:SetFormattedText(zonesTab and "%d of %d play here" or "%d of %d extended tracks play here",
+                on, #list)
+        end
         empty = "No extended tracks fit here. The game's own music plays as usual."
     end
     frame.empty:SetText(#data == 0 and empty or "")
@@ -693,7 +731,7 @@ function ui:WireNavigation()
     end
     local function side(row, left)
         if left then return visible(row.check) or visible(row.unban) end
-        return visible(row.preview) or visible(row.unban)
+        return visible(row.preview) or visible(row.unban) or visible(row.check)
     end
     local function headSide(left)
         if left then return visible(head.prev) or visible(head.unbanAll) end
@@ -768,7 +806,8 @@ function ui:WireNavigation()
 
     -- Rows: checkbox and Preview side by side; up and down keep the column.
     for _, row in ipairs(frame.rows) do
-        set(row.check, "RIGHT", row.preview); set(row.preview, "LEFT", row.check)
+        set(row.check, "RIGHT", function() return visible(row.preview) or visible(row.unban) end)
+        set(row.preview, "LEFT", row.check)
         for b, left in pairs({ [row.check] = true, [row.preview] = false, [row.unban] = false }) do
             set(b, "UP", function()
                 local rows = shownRows()
@@ -985,6 +1024,16 @@ local function createMinimapButton()
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:AddLine("FAME")
+        -- What's playing, the way the music window's top line says it.
+        local track = FAME.playing
+        if track then
+            local era = track.era and ns.ERA_LABEL[track.era]
+            GameTooltip:AddLine(trackName(track), 1, 1, 1)
+            GameTooltip:AddLine((era and (era .. " · ") or "") .. (KIND[FAME.kind] or ""), 0.6, 0.6, 0.6)
+        else
+            GameTooltip:AddLine(FAME:StateText(), 0.6, 0.6, 0.6, true)
+        end
+        GameTooltip:AddLine(" ")
         GameTooltip:AddDoubleLine("Left-click", "Music window", 0.4, 1, 0.4, 1, 1, 1)
         GameTooltip:AddDoubleLine("Right-click", "Settings", 0.4, 1, 0.4, 1, 1, 1)
         GameTooltip:AddDoubleLine("Drag", "Move", 0.6, 0.6, 0.6, 1, 1, 1)

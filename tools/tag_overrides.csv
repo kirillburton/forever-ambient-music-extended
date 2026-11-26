@@ -1,7 +1,8 @@
 # Hand corrections on top of the keyword guess in tools/wagolib.py.
 #   fileDataID,tags
 # `tags` replaces the guess entirely.  An empty `tags` drops the track from
-# Tracks.lua.  Lines starting with # are ignored.
+# Tracks.lua.  `placed` keeps it with no tags: it then plays only where the
+# Forever client or retail puts it, never anywhere else.  Lines starting with # are ignored.
 #
 # Vocabulary -- keep to these so Zones.lua stays meaningful:
 #   biome    forest darkforest enchanted jungle swamp plains barrens desert
@@ -35,10 +36,12 @@
 3850513,
 6037118,
 # --- dropped: too tied to one encounter to float around the open world ---
-441610,
+# (these two only where retail plays them: Cataclysm's Burning Steppes,
+# Searing Gorge and Dustwallow, and Winterspring's Twilight camp)
+441610,placed
 441716,
 575699,
-441802,
+441802,placed
 441737,
 7692208,
 7692220,

@@ -43,7 +43,7 @@ UnitFactionGroup = function() return "Alliance" end
 -- --- load the addon ------------------------------------------------------
 
 local ns = {}
-for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Loudness.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     local chunk, err = loadfile(ROOT .. "/" .. file)
     if not chunk then
         io.stderr:write("SYNTAX ERROR in " .. file .. ": " .. tostring(err) .. "\n")
@@ -71,7 +71,13 @@ local tagUse = {}
 for _, track in ipairs(ns.allTracks) do
     local hasBiome = false
     for _, tag in ipairs(track.tags) do if ns.BIOME[tag] then hasBiome = true end end
-    if not hasBiome then
+    if #track.tags == 0 then
+        -- Kept untagged on purpose ("placed" in tag_overrides.csv): it plays
+        -- only where a client puts it, so it needs somewhere to be.
+        if not track.at then
+            complain("track %s is untagged and placed nowhere, so it can play nowhere", tostring(track.id or track.file))
+        end
+    elseif not hasBiome then
         complain("track %s has no biome tag, so it can play nowhere", tostring(track.id or track.file))
     end
     if not track.len or track.len < 1 then

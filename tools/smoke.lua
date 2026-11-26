@@ -137,11 +137,14 @@ print = function(...)
 end
 
 ns = {}
-for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Loudness.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     assert(loadfile(ROOT .. "/" .. file))(ADDON, ns)
 end
 local FAME = ns.core
 fameRef = FAME
+-- Most checks are about what happens on a change of place, not when: no
+-- settling delay, except where a check below turns it back on.
+FAME.SETTLE = 0
 -- Sample the volume slider at a moment in time (for the swap checks).
 local function volumeAt(seconds)
     quiet = true; advance(seconds); quiet = false
@@ -894,8 +897,12 @@ for _ = 1, 40 do
     speak(math.random(3, 15))
     go(30)
     -- An ordinary FAME fade may be running at this instant; let it finish.
-    for _ = 1, 20 do if not FAME:Fading() then break end go(1) end
-    if cvars.Sound_MusicVolume ~= START_VOLUME then stuck = stuck + 1 end
+    for _ = 1, 20 do if not FAME:Fading() or (FAME.gain or 1) < 1 then break end go(1) end
+    -- A loud track holds the slider at its own lower level on purpose.
+    local v, loudLevel = tonumber(cvars.Sound_MusicVolume), tonumber(START_VOLUME) * (FAME.gain or 1)
+    if cvars.Sound_MusicVolume ~= START_VOLUME and not (FAME.playing and math.abs(v - loudLevel) < 0.002) then
+        stuck = stuck + 1
+    end
 end
 go(30)
 check(stuck == 0, ("40 lines at random moments: the level is 40%% after every one (%d not)"):format(stuck))
@@ -1275,14 +1282,29 @@ local list = setmetatable({}, { __index = function(_, k)
 end })
 check(#list.rows > 0, ("the Here tab lists what fits in Stormwind (%d rows)"):format(#list.rows))
 check(navRefreshes > 0, "and tells the gamepad navigation its buttons changed")
-local row1 = list.rows[1]
-check(row1.check:GetChecked() == true and row1.preview:GetText() == "Preview", "each row: a ticked checkbox and a Preview button")
+-- First row: the game's own music only, for the zone.
+do
+local toggle = list.rows[1]
+check(toggle.gameOnlyMap == 1453 and toggle.check:GetChecked() == false and not toggle.preview:IsShown(),
+    "the first row is the zone's \"Only the game's own music\" toggle, off")
+toggle.check:SetChecked(true); toggle.check:Click()
+check(FAME:GameOnly(1453) and #FAME:ExtendedChoices(ns.zones[1453], 1453) == 0,
+    "ticked: no extended track can play in the zone")
+check(FAME:ZoneOffCount(1453) == 0, "and the tracks' own ticks are left as they were")
+local onlyGame = 0
+for _ = 1, 40 do FAME:Skip(); go(1); if FAME.kind ~= "extended" then onlyGame = onlyGame + 1 end end
+check(onlyGame == 40, "forty skips later, nothing but the game's own tracks")
+toggle.check:SetChecked(false); toggle.check:Click()
+check(not FAME:GameOnly(1453) and #FAME:ExtendedChoices(ns.zones[1453], 1453) > 0, "unticked: the extended tracks are back")
+end
+local row1 = list.rows[2]
+check(row1.check:GetChecked() == true and row1.preview:GetText() == "Preview", "each track row: a ticked checkbox and a Preview button")
 
 -- Untick: out of Stormwind, and the row stays where it is.
 local rowTrack = row1.data.track
 row1.check:SetChecked(false); row1.check:Click()
 check(FAME:ZoneOff(1453, rowTrack), "unticking a row takes the track out of this zone")
-check(list.rows[1] == row1 and row1.check:GetChecked() == false, "and redraws in place")
+check(list.rows[2] == row1 and row1.check:GetChecked() == false, "and redraws in place")
 row1.check:SetChecked(true); row1.check:Click()
 check(not FAME:ZoneOff(1453, rowTrack), "ticking it puts it back")
 
@@ -1338,11 +1360,14 @@ do
 end
 check(padFrom(W.now.skip, "down") == W.head.prev and padFrom(W.now.ban, "down") == W.head.next,
     "from the playing controls, down lands on the zone switcher")
-check(padFrom(W.head.prev, "down") == list.rows[1].check and padFrom(W.head.next, "down") == list.rows[1].preview,
-    "and down again on the first row, in the same column")
-check(padFrom(list.rows[1].check, "down") == list.rows[2].check and padFrom(list.rows[2].preview, "up") == list.rows[1].preview,
-    "up and down keep the column through the rows")
-check(padFrom(list.rows[1].check, "right") == list.rows[1].preview, "right goes from a checkbox to its Preview")
+check(padFrom(W.head.prev, "down") == list.rows[1].check and padFrom(W.head.next, "down") == list.rows[1].check,
+    "and down again on the first row, the zone's toggle, from either side")
+check(padFrom(list.rows[1].check, "down") == list.rows[2].check and padFrom(list.rows[2].preview, "up") == list.rows[1].check,
+    "from the toggle down to the tracks, and back up to it from either column")
+check(padFrom(list.rows[2].check, "down") == list.rows[3].check and padFrom(list.rows[3].preview, "up") == list.rows[2].preview,
+    "up and down keep the column through the track rows")
+check(padFrom(list.rows[2].check, "right") == list.rows[2].preview and padFrom(list.rows[1].check, "right") == nil,
+    "right goes from a checkbox to its Preview; the toggle has none")
 check(padFrom(list.rows[1].check, "up") == W.head.prev, "up from the first row goes back to the switcher")
 local firstZone = frames.main.head.title:GetText()
 ns.ui:StepZone(1)
@@ -1540,11 +1565,12 @@ local function freshSession()
     for _, t in ipairs(pending) do t.dead = true end
     local ns2 = {}
     ns = ns2
-    for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+    for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Loudness.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
         assert(loadfile(ROOT .. "/" .. file))(ADDON, ns2)
     end
     FAME = ns2.core
     fameRef = FAME
+    FAME.SETTLE = 0
     fire("ADDON_LOADED", ADDON)
     fire("PLAYER_ENTERING_WORLD")
 end
@@ -1693,6 +1719,115 @@ freshSession()
     local inFelwood = 0
     for _, track in ipairs(felwood) do if track.rid then inFelwood = inFelwood + 1 end end
     check(inFelwood == 0, "without the pack, still no retail tracks")
+    local function hasID(list, id)
+        for _, track in ipairs(list) do if track.id == id then return true end end
+        return false
+    end
+    check(hasID(FAME:NativeFor(1432, nil), 443307),
+        "Cataclysm music the client ships plays where Cataclysm put it (mus_westplaguea_gd01 across Loch Modan)")
+    local anywhere = false
+    for mapID, prof in pairs(ns.zones) do anywhere = anywhere or hasID(FAME:Pool(prof, false), 441610) end
+    check(not anywhere and hasID(FAME:NativeFor(1428, nil), 441610),
+        "a track kept only for its places (mus_fire_uu01) plays in Burning Steppes and never by tags")
+end)()
+
+------------------------------------------------------------------------------
+realPrint("\ninteriors: Dalaran's streets and halls, caves and mines")
+state.instance, state.dead, state.zoneText = false, false, nil
+state.map, state.sub, state.building, state.indoors = 1416, "Dalaran", nil, false
+freshSession()
+;(function()
+    local dalaranSet = ns.zoneMusic[1416].set
+    for _, row in ipairs(ns.zoneMusic[1416].sub) do if row[2] == "Dalaran" then dalaranSet = row[3] end end
+    check(FAME.ctx and FAME.ctx.setID == dalaranSet and dalaranSet ~= ns.zoneMusic[1416].set,
+        "in Dalaran, Dalaran's music rather than Alterac's")
+    state.sub = "The Eventide"; fire("ZONE_CHANGED")
+    check(FAME.ctx and FAME.ctx.setID == dalaranSet, "on The Eventide, a street with no music of its own: still Dalaran's")
+    state.sub, state.building, state.indoors = "", "The Violet Hold", true; fire("ZONE_CHANGED_INDOORS")
+    check(FAME.ctx and FAME.ctx.setID == dalaranSet and not FAME.ctx.interior,
+        "in the Violet Hold, which the client names instead of the subzone: Dalaran's")
+    state.building = "The Violet Citadel"; fire("ZONE_CHANGED_INDOORS")
+    check(FAME.ctx and FAME.ctx.interior == "The Violet Citadel" and ns.musicSets[FAME.ctx.setID].name:find("Spire"),
+        ("in the Violet Citadel, its own music, as in the game (%s)"):format(FAME.ctx and ns.musicSets[FAME.ctx.setID].name or "?"))
+    check(#FAME:ExtendedChoices(FAME.ctx.prof) == 0, "and only the game's tracks play in there")
+    local fine = true
+    for _ = 1, 20 do FAME:Skip(); go(1); fine = fine and FAME.kind ~= "extended" end
+    check(fine, "twenty skips later, still only the game's")
+
+    -- A mine in Elwynn: the name is a subzone outside, and the cave's own inside.
+    local row = ns.interiors[1429]["Jasperlode Mine"]
+    state.map, state.sub, state.building, state.indoors = 1429, "Jasperlode Mine", nil, false
+    fire("ZONE_CHANGED_NEW_AREA")
+    check(FAME.ctx and not FAME.ctx.interior, "at Jasperlode Mine's entrance, outdoors: the zone's music still")
+    state.indoors = true; fire("ZONE_CHANGED_INDOORS")
+    check(row and FAME.ctx and FAME.ctx.interior == "Jasperlode Mine" and FAME.ctx.setID == row[1],
+        "inside it, the mine's own music")
+    local here = FAME.ctx and FAME.ctx.key
+    -- Settling: stepping out and straight back in changes nothing.
+    FAME.SETTLE = 3
+    state.indoors = false; fire("ZONE_CHANGED_INDOORS")
+    go(2)
+    check(FAME.ctx and FAME.ctx.key == here, "stepping out of the mine: nothing changes for a few seconds")
+    state.indoors = true; fire("ZONE_CHANGED_INDOORS")
+    go(5)
+    check(FAME.ctx and FAME.ctx.key == here, "and stepping back in within them changes nothing at all")
+    state.indoors = false; fire("ZONE_CHANGED_INDOORS")
+    go(5)
+    check(FAME.ctx and FAME.ctx.key ~= here and not FAME.ctx.interior, "staying out: the zone's music after the wait")
+    state.instance = true; fire("ZONE_CHANGED_NEW_AREA")
+    check(FAME.state == "instance", "an instance hands back at once, no waiting")
+    state.instance = false
+    FAME.SETTLE = 0
+    state.building, state.indoors = nil, false
+end)()
+
+------------------------------------------------------------------------------
+realPrint("\nloud tracks play with the slider held down")
+state.map, state.sub = 1453, ""
+cvars.Sound_MusicVolume = "0.4"
+freshSession()
+;(function()
+    local loud
+    for _, track in ipairs(ns.allTracks) do
+        if not track.rid and not track.file and ns.loudness and ns.loudness[track.id] and ns.loudness[track.id] >= 3 then loud = track break end
+    end
+    if not loud then
+        ns.loudness = ns.loudness or {}
+        loud = ns.allTracks[1]
+        ns.loudness[loud.id] = 6
+    end
+    local cut = ns.loudness[loud.id]
+    local want = 0.4 * 10 ^ (-cut / 20)
+    go(6)          -- past the few seconds FAME gives way after reading the slider at login
+    run("play " .. loud.id)
+    go(loud.len * 0.5)
+    local v = tonumber(cvars.Sound_MusicVolume)
+    check(FAME.playing == loud and math.abs(v - want) < 0.01 and isMarked(v),
+        ("a track %.1f dB too loud plays at %.2f, not 0.40 (%.3f)"):format(cut, want, v))
+    go(loud.len)
+    check(math.abs(tonumber(cvars.Sound_MusicVolume) - 0.4) < 0.001 or FAME:Fading(),
+        "and the player's level is back once it ends")
+    run("play " .. loud.id)
+    go(5)
+    SetCVar("Sound_MusicVolume", "0.7")
+    go(21)         -- the next poll after the few seconds FAME gives way
+    local held = tonumber(cvars.Sound_MusicVolume)
+    check(FAME.playing == loud and math.abs(held - 0.7 * 10 ^ (-cut / 20)) < 0.01,
+        ("and the loud track is cut again from that level (%.3f)"):format(held))
+    FAME:Skip()
+    go(10)
+    check(cvars.Sound_MusicVolume == "0.7" and FAME.userVolume == 0.7,
+        "moving the slider meanwhile wins: the player's new level is the one kept")
+    run("play " .. loud.id)
+    go(5)
+    fire("PLAYER_LOGOUT")
+    check(cvars.Sound_MusicVolume == "0.7", "logging out puts the player's level back")
+    fire("PLAYER_ENTERING_WORLD")
+    ns.db.evenLoudness = false
+    run("play " .. loud.id)
+    go(5)
+    check(cvars.Sound_MusicVolume == "0.7", "with the setting off, it plays at the player's level")
+    ns.db.evenLoudness = true
 end)()
 
 realPrint(("\n%d failures"):format(failures))

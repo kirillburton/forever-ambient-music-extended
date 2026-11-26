@@ -65,15 +65,25 @@ track FAME plays is already in your Forever client. The folder is only for
   the rest open their areas on the game's own cooldowns.
 - **Subzones switch music where the game would.** Walking into the Crossroads
   switches to the Crossroads music. Moving between two places that share
-  music keeps the current track going.
+  music keeps the current track going. A change waits until you've been in
+  the new place for three seconds, so walking along a border or in and out of
+  a doorway doesn't flip the music back and forth.
+- **Caves, mines and halls play their own music, as in the game.** Jasperlode
+  Mine plays its own music rather than Elwynn's, the Violet Citadel its own theme, and every street
+  and shop of Dalaran plays Dalaran's. Inside a place with music of its own,
+  only the game's tracks play.
 - **Inns play their own race's tavern music:** dwarven songs in Thunderbrew
-  Distillery, human ones in the Lion's Pride, sea shanties in Booty Bay's
+  Distillery and Ironforge's taverns, human ones in the Lion's Pride, sea shanties in Booty Bay's
   Salty Sailor. An inn whose race isn't known is left to the game.
 - **Settlements and coves get their own music.** Goblin music plays only in
   goblin towns (Ratchet, Booty Bay, Gadgetzan, Steamwheedle Port, Everlook),
   and pirate music only there and in the pirate coves.
 - **Tracks fade** rather than cut off, and the same track never plays twice
   in a row.
+- **Loud tracks are turned down.** Later expansions are mastered louder than
+  the game's own music (The War Within by about 4 dB). While one of those
+  plays, FAME holds the music volume down to match, and puts your level back
+  when it ends.
 - **Some places are left entirely to the game:** dungeons, raids,
   battlegrounds, being dead or walking back to your corpse, ships on the
   open sea, cutscenes and movies, and anywhere you've turned music off. FAME steps aside there and
@@ -140,18 +150,22 @@ music.
    Left-click opens the music window, right-click these settings. It finds
    a spot clear of other addons' minimap buttons; drag it with the mouse to
    put it somewhere else.
-4. **More options**: the share of the game's own tracks, and **Game's track
-   on arrival**: whether a new place opens with one of them.
+4. **More options**: the share of the game's own tracks, **Game's track
+   on arrival** (whether a new place opens with one of them), and **Balance
+   volume** (turning loud tracks down to the game's level).
 5. **Edit tracklists** and **Show banned tracks**: open the music window on
    its Zones or Banned tab.
 
 **The music window** opens from that button, `/fame ui`, the key binding
 "Open the music window" (Key Bindings > AddOns), or the minimap button.
+Hovering over the minimap button shows what's playing.
 
 - **Now playing** across the top: the track, its era and time, with
   **Skip**, **Play extended now**, **Not in this zone** (out of this zone
   only, as unticking it below does) and **Never play again** (everywhere).
-- **Here**: every extended track that fits where you're standing. Untick a
+- **Here**: every extended track that fits where you're standing. The first
+  row, **Only the game's own music**, keeps the whole zone as the game has it:
+  ticked, every track below greys out and none of them plays there. Untick a
   track to stop it playing in this zone. Other zones keep it. **Preview**
   plays its first 20 seconds, then the music carries on as if a track had
   ended. A track that's banned, from an era you've turned off, or plays only
@@ -236,9 +250,10 @@ volume always ends up where you set it.
 
 ## Known limitations
 
-- **Inns are recognised by their English names.** On other client languages,
-  inns fall back to the game's own music. Everything else works in any
-  language.
+- **Inns and interiors are recognised by their English names.** On other
+  client languages, inns fall back to the game's own music, and caves and
+  halls play their area's music rather than their own. Everything else works
+  in any language.
 - **Interface version 16001.** If a client patch moves it, the addon may show
   as out of date until the `.toc` is updated. Check yours with
   `/run print((select(4, GetBuildInfo())))`.
@@ -268,6 +283,7 @@ ForeverAmbientMusicExtended/   the addon, exactly as it ships
   Tracks.lua                   the extended pool                  (generated)
   ForeverPlaces.lua            where the Forever client plays those tracks   (generated)
   RetailTracks.lua             the retail pack's tracks: IDs, tags, places, no audio   (generated)
+  Loudness.lua                 how far to turn down each loud track   (generated)
   Originals.lua                the game's own music rules         (generated)
   LocalTracks.lua              your own audio files               (generated, ships empty)
   Media/                       logo, and a generated silent mp3
@@ -298,7 +314,9 @@ random from its interval, and so does FAME.
 
 `PlayMusic()` loops and fires no end event, so each track is stopped on a
 timer, using durations measured from the actual files. Nothing in the API
-fades music, so fades ramp the `Sound_MusicVolume` CVar and restore it.
+fades music, so fades ramp the `Sound_MusicVolume` CVar and restore it. A
+loud track (`Loudness.lua`) is played as a fade that stops part way: the
+slider is held at the player's level minus the track's cut until it ends.
 FAME records every value it writes and yields as soon as it sees one it
 didn't. The slider's real value is saved, so a logout mid-fade is repaired
 at the next login.
@@ -448,10 +466,11 @@ lua tools/check_zones.lua && lua tools/smoke.lua
    from its local CASC storage. `make_originals.py` uses it to drop files
    the client doesn't have, and `--check-addon` confirms every track the
    addon references is present.
-5. **`make_originals.py`** reads `AreaTable`, `ZoneMusic`,
+5. **`make_originals.py`** reads `AreaTable`, `WMOAreaTable`, `ZoneMusic`,
    `ZoneIntroMusicTable` and `SoundKitEntry` for every zone in `Zones.lua`
-   and writes the game's own sets, silences, intros and subzone music to
-   `Originals.lua`. Adding a zone to `Zones.lua` and re-running it is all
+   and writes the game's own sets, silences, intros, subzone music and
+   interiors (caves, halls, a city's districts, by the name the client shows
+   inside them) to `Originals.lua`. Adding a zone to `Zones.lua` and re-running it is all
    it takes for FAME to know that zone's music.
 
 Filtered out of the extended pool (`tools/wagolib.py`): cinematic, event,
@@ -487,6 +506,7 @@ The pack's data is built from an installed retail client, sharing the
 ```
 python3 tools/retail_catalog.py      # tools/retail_catalog.csv: every retail-only music file, tagged
 python3 tools/make_retail_tracks.py  # RetailTracks.lua: the `world` and `sibling` rows, with retail's areas
+python3 tools/loudness.py            # Loudness.lua: measures every track against the game's own
 python3 tools/make_forever_places.py # ForeverPlaces.lua (Forever's own placements, no retail needed)
 python3 tools/make_import_list.py    # docs/import/retail-pack.tsv: what the import scripts fetch
 lua tools/retail_report.lua          # what each zone ends up with
@@ -499,6 +519,22 @@ lua tools/retail_report.lua          # what each zone ends up with
   name. Old `zonemusic/<place>/` tracks that another zone borrows take
   `<place>`'s tags instead. `tools/retail_tag_overrides.csv` has the final
   word. The `status` column marks the pack: `world` and `sibling`.
+- **`make_retail_tracks.py`** places FAME's own tracks by retail's tables
+  too (`ns.builtinRetailAt`): the Cataclysm music the Forever client ships
+  plays where Cataclysm put it. Where retail rebuilt an area under a new ID
+  (Feathermoon Stronghold), a retail area with the same name in the same
+  zone stands for Forever's, unless its music is from Legion on. A track
+  marked `placed` in `tag_overrides.csv` keeps no tags and plays only at
+  those places.
+- **`make_retail_tracks.py`** also reads `tools/retail_places.csv`: places
+  chosen by hand, beyond where retail plays a track. One row names Forever
+  subzones and the tracks (file names, `*` allowed) that belong there; the
+  ruined Highborne cities get Legion's Requiem for the Lost Cities this way.
+- **`loudness.py`** measures each track's integrated loudness (EBU R128,
+  with `ffmpeg`): the game's own and FAME's from the Forever client's local
+  storage, the pack's from its imported files. The baseline is the median of
+  the game's own; a track more than 1.5 dB above it is cut by the excess.
+  Results are cached in `tools/cache/loudness.json`.
 - **`make_import_list.py`** records, per track, its encoding key (also its
   checksum), size, where it sits on Blizzard's CDN and its chunk layout, so
   the scripts can fetch and unwrap it without understanding Blizzard's

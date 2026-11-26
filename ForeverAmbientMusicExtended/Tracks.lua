@@ -7,7 +7,7 @@
 -- PlayMusic() loops forever and fires no end event -- the addon stops the
 -- track on a timer, so a wrong length either truncates it or loops it.
 --
--- 425 tracks.
+-- 427 tracks.
 
 local ADDON, ns = ...
 
@@ -326,14 +326,16 @@ ns.builtinTracks = {
     { id = 8200694,  len =  109, era = "forever",  name = "mus_c_zulaman_amb_3",                   tags = { "jungle", "ominous", "troll" } },                                    -- forever/mus_c_zulaman_amb_3.mp3
     { id = 8200696,  len =   70, era = "forever",  name = "mus_c_zulaman_amb_4",                   tags = { "jungle", "ominous", "troll" } },                                    -- forever/mus_c_zulaman_amb_4.mp3
 
-    -- ===== Cataclysm (8) =====
+    -- ===== Cataclysm (10) =====
     { id = 441525,   len =  196, era = "cata",     name = "mus_alliancehero_uu01",                 tags = { "city", "heroic", "human", "grand" } },                              -- cataclysm/mus_alliancehero_uu01.mp3
     { id = 443286,   len =   68, era = "cata",     name = "mus_arathihighlandsa_gd01",             tags = { "plains", "arathi", "calm", "day" } },                               -- cataclysm/mus_arathihighlandsa_gd01.mp3
+    { id = 441610,   len =   62, era = "cata",     name = "mus_fire_uu01",                         tags = {  } },                                                                -- cataclysm/mus_fire_uu01.mp3
     { id = 441609,   len =  149, era = "cata",     name = "mus_firelands_gu01",                    tags = { "volcanic", "elemental", "ominous" } },                              -- cataclysm/mus_firelands_gu01.mp3
     { id = 441628,   len =   87, era = "cata",     name = "mus_goblin_uu17",                       tags = { "town", "goblin", "playful", "festive" } },                          -- cataclysm/mus_goblin_uu17.mp3
     { id = 441705,   len =  160, era = "cata",     name = "mus_nightelves_gu01",                   tags = { "forest", "nightelf", "sacred" } },                                  -- cataclysm/mus_nightelves_gu01.mp3
     { id = 441744,   len =  159, era = "cata",     name = "mus_skywall_gu01",                      tags = { "sky", "elemental", "grand" } },                                     -- cataclysm/mus_skywall_gu01.mp3
     { id = 441753,   len =  110, era = "cata",     name = "mus_skywall_gu10",                      tags = { "sky", "elemental", "mysterious" } },                                -- cataclysm/mus_skywall_gu10.mp3
+    { id = 441802,   len =   92, era = "cata",     name = "mus_twilightshammer_uu01",              tags = {  } },                                                                -- cataclysm/mus_twilightshammer_uu01.mp3
     { id = 443307,   len =   50, era = "cata",     name = "mus_westplaguea_gd01",                  tags = { "blighted", "undead", "somber", "day" } },                           -- cataclysm/mus_westplaguea_gd01.mp3
 
     -- ===== Mists of Pandaria (10) =====

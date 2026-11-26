@@ -48,7 +48,7 @@ end
 FAMERetailPack = { format = 1, tracks = ids }
 
 local ns = {}
-for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
+for _, file in ipairs({ "Tracks.lua", "ForeverPlaces.lua", "LocalTracks.lua", "RetailTracks.lua", "Loudness.lua", "Originals.lua", "Zones.lua", "Core.lua" }) do
     assert(loadfile(ROOT .. "/" .. file))(ADDON, ns)
 end
 local FAME = ns.core

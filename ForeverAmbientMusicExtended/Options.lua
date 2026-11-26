@@ -121,7 +121,7 @@ if CreateSettingsButtonInitializer then
     layout:AddInitializer(CreateSettingsButtonInitializer("Music from modern WoW", "Import music",
         function() if ns.ui.ShowImport then ns.ui:ShowImport() end end,
         "Zone music from later expansions that fits Forever's zones, fetched onto your own computer by a small script. Shows where to get it, and what you have.",
-        true))
+        false))   -- kept out of the Settings search: see NOT_SEARCHED
 end
 
 -- 3. Minimap entry, on unless turned off
@@ -157,6 +157,19 @@ checkbox("FirstOriginal", "Game's track on arrival",
     function(value) FAME:SetDisplaceFirst(not value) end,
     true)
 
+checkbox("EvenLoudness", "Balance volume",
+    "Some eras are mastered much louder than the game's own music. While one of those tracks plays, FAME turns the music volume down to match, and puts it back when the track ends.\n\nOff: every track plays at your music volume.",
+    function() return ns.db.evenLoudness end,
+    function(value) FAME:Save("evenLoudness", value) end,
+    true)
+
+-- NOT_SEARCHED: FAME's buttons stay out of the panel's search.  A search
+-- result row is drawn in Blizzard's own list, from frames it recycles for its
+-- own buttons, and FAME's click handler there looks to be enough to taint
+-- it: typing "show" brought up "Show banned tracks", the game then blocked
+-- an action, and the gamepad lost its way through Settings.  Searching still finds every
+-- checkbox; the buttons are one click away on FAME's page.
+
 -- 5. Full customisation, out of the way at the bottom.  Both open the music
 -- window above the Settings panel; closing it comes back here.  Settings is left alone: closing it from
 -- addon code is a protected action.
@@ -164,11 +177,11 @@ if CreateSettingsButtonInitializer then
     layout:AddInitializer(CreateSettingsButtonInitializer("Tracklists", "Edit tracklists",
         function() if ns.ui.Show then ns.ui:Show(ns.ui.TAB_ZONES) end end,
         "Choose which extended tracks play in each zone, and preview them.",
-        true))
+        false))   -- kept out of the Settings search: see NOT_SEARCHED
     layout:AddInitializer(CreateSettingsButtonInitializer("Banned tracks", "Show banned tracks",
         function() if ns.ui.Show then ns.ui:Show(ns.ui.TAB_BANNED) end end,
         "Tracks you've banned with Never play again, to unban them.",
-        true))
+        false))   -- kept out of the Settings search: see NOT_SEARCHED
 end
 
 Settings.RegisterAddOnCategory(category)

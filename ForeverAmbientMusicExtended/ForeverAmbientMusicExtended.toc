@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Forever Ambient Music Extended
 ## Notes: More zone music from every era of WoW, picked to fit where you are.
-## Version: 2.1.0
+## Version: 2.2.0
 ## Author: kirillburton8
 ## SavedVariables: ForeverAmbientMusicExtendedDB
 ## OptionalDeps: ForeverAmbientMusicExtended_RetailPack
@@ -11,6 +11,7 @@ Tracks.lua
 ForeverPlaces.lua
 LocalTracks.lua
 RetailTracks.lua
+Loudness.lua
 Originals.lua
 Zones.lua
 Core.lua

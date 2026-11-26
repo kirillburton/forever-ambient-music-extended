@@ -105,6 +105,11 @@ def main():
                 dropped["too_short"] += 1
                 continue
             tags = overrides.get(fdid, row["tags"].split())
+            if tags == ["placed"]:
+                # Kept with no tags: it plays only where a client puts it
+                # (ForeverPlaces.lua, or retail's placements in RetailTracks.lua).
+                by_era[row["era"]].append((int(fdid), path, int(round(seconds)), []))
+                continue
             if not tags:
                 dropped["override_drop" if fdid in overrides else "unplaceable"] += 1
                 continue
